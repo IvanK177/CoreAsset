@@ -1,0 +1,264 @@
+# CoreAsset ITAM — GraphQL Schema (schema-first)
+
+# ============================================
+# Types
+# ============================================
+
+type HardwareAsset {
+  id: String!
+  serialNumber: String!
+  name: String!
+  type: String!
+  brand: String!
+  model: String!
+  lifecycleState: String!
+  purchaseDate: String
+  warrantyEndDate: String
+  discoveryMetadata: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type User {
+  id: String!
+  employeeId: String!
+  fullName: String!
+  email: String!
+  department: String
+  position: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Workplace {
+  id: String!
+  name: String!
+  location: String
+  userId: String!
+  hardwareId: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type SoftwareCatalog {
+  id: String!
+  softwareName: String!
+  version: String!
+  publisher: String
+  category: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type License {
+  id: String!
+  licenseKey: String
+  concurrencyLimit: Int!
+  purchaseDate: String
+  expiryDate: String
+  price: Float
+  softwareId: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type SoftwareInstallation {
+  id: String!
+  hardwareId: String!
+  licenseId: String!
+  installedAt: String!
+  status: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type FaultHistoryIncident {
+  id: String!
+  hardwareId: String!
+  incidentDescription: String!
+  severity: String!
+  status: String!
+  reportedAt: String!
+  resolvedAt: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type DashboardStats {
+  totalHardware: Int!
+  activeHardware: Int!
+  totalUsers: Int!
+  totalWorkplaces: Int!
+  totalSoftware: Int!
+  totalLicenses: Int!
+  openFaults: Int!
+  hardwareByType: [TypeCount!]!
+  hardwareByLifecycle: [TypeCount!]!
+  usersByDepartment: [TypeCount!]!
+  recentFaults: [FaultHistoryIncident!]!
+}
+
+type TypeCount {
+  type: String!
+  count: Int!
+}
+
+# ============================================
+# Queries
+# ============================================
+
+type Query {
+  # Hardware
+  hardwareAssets(skip: Int, take: Int, lifecycleState: String, type: String, search: String): [HardwareAsset!]!
+  hardwareAsset(id: String!): HardwareAsset
+  hardwareBySerialNumber(serialNumber: String!): HardwareAsset
+
+  # Users
+  users(skip: Int, take: Int, search: String, department: String): [User!]!
+  user(id: String!): User
+
+  # Workplaces
+  workplaces(skip: Int, take: Int, search: String, location: String): [Workplace!]!
+  workplace(id: String!): Workplace
+
+  # Software
+  softwareCatalogs(skip: Int, take: Int, search: String, category: String): [SoftwareCatalog!]!
+  softwareCatalog(id: String!): SoftwareCatalog
+
+  # Licenses
+  licenses(skip: Int, take: Int, softwareId: String): [License!]!
+  license(id: String!): License
+
+  # Faults
+  faultHistoryIncidents(skip: Int, take: Int, hardwareId: String, status: String, severity: String): [FaultHistoryIncident!]!
+  faultHistoryIncident(id: String!): FaultHistoryIncident
+
+  # Dashboard
+  dashboardStats: DashboardStats!
+}
+
+# ============================================
+# Mutations
+# ============================================
+
+type Mutation {
+  # Hardware
+  createHardwareAsset(
+    serialNumber: String!
+    name: String!
+    type: String!
+    brand: String!
+    model: String!
+    lifecycleState: String = "active"
+    purchaseDate: String
+    warrantyEndDate: String
+    discoveryMetadata: String
+  ): HardwareAsset!
+
+  updateHardwareAsset(
+    id: String!
+    name: String
+    lifecycleState: String
+    brand: String
+    model: String
+    type: String
+    discoveryMetadata: String
+  ): HardwareAsset!
+
+  deleteHardwareAsset(id: String!): HardwareAsset!
+  cascadeDeleteHardwareAsset(id: String!): HardwareAsset!
+
+  # Users
+  createUser(
+    employeeId: String!
+    fullName: String!
+    email: String!
+    department: String
+    position: String
+  ): User!
+
+  updateUser(
+    id: String!
+    fullName: String
+    email: String
+    department: String
+    position: String
+  ): User!
+
+  deleteUser(id: String!): User!
+
+  # Workplaces
+  createWorkplace(
+    name: String!
+    userId: String!
+    hardwareId: String!
+    location: String
+  ): Workplace!
+
+  updateWorkplace(
+    id: String!
+    name: String
+    location: String
+    userId: String
+    hardwareId: String
+  ): Workplace!
+
+  deleteWorkplace(id: String!): Workplace!
+
+  # Software
+  createSoftwareCatalog(
+    softwareName: String!
+    version: String!
+    publisher: String
+    category: String
+  ): SoftwareCatalog!
+
+  updateSoftwareCatalog(
+    id: String!
+    softwareName: String
+    version: String
+    publisher: String
+    category: String
+  ): SoftwareCatalog!
+
+  deleteSoftwareCatalog(id: String!): SoftwareCatalog!
+
+  # Licenses
+  createLicense(
+    softwareId: String!
+    concurrencyLimit: Int! = 1
+    licenseKey: String
+    purchaseDate: String
+    expiryDate: String
+    price: Float
+  ): License!
+
+  updateLicense(
+    id: String!
+    concurrencyLimit: Int
+    licenseKey: String
+    expiryDate: String
+    price: Float
+  ): License!
+
+  deleteLicense(id: String!): License!
+  assignLicenseToHardware(hardwareId: String!, licenseId: String!): SoftwareInstallation!
+  unassignLicenseFromHardware(hardwareId: String!, licenseId: String!): SoftwareInstallation!
+
+  # Faults
+  createFaultHistoryIncident(
+    hardwareId: String!
+    incidentDescription: String!
+    severity: String = "medium"
+  ): FaultHistoryIncident!
+
+  updateFaultHistoryIncident(
+    id: String!
+    incidentDescription: String
+    severity: String
+    status: String
+  ): FaultHistoryIncident!
+
+  resolveFaultHistoryIncident(id: String!): FaultHistoryIncident!
+  deleteFaultHistoryIncident(id: String!): FaultHistoryIncident!
+}
