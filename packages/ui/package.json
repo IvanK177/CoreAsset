@@ -7,7 +7,7 @@
   "scripts": {
     "build": "echo 'UI package - no build step'",
     "dev": "echo 'UI package - no dev step'",
-    "clean": "rm -rf node_modules"
+    "clean": "rimraf node_modules"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.0",

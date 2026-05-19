@@ -12,7 +12,7 @@
     "db:studio": "prisma studio",
     "build": "prisma generate",
     "dev": "prisma studio",
-    "clean": "rm -rf node_modules"
+    "clean": "rimraf node_modules"
   },
   "dependencies": {
     "@prisma/client": "^6.7.0"
