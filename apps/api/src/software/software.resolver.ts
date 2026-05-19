@@ -1,8 +1,9 @@
 import { Resolver, Query, Mutation, Args, Int } from "@nestjs/graphql";
+import { SoftwareService } from "./software.service";
 
 @Resolver("SoftwareCatalog")
 export class SoftwareResolver {
-  constructor(private softwareService: any) {}
+  constructor(private softwareService: SoftwareService) {}
 
   @Query()
   async softwareCatalogs(

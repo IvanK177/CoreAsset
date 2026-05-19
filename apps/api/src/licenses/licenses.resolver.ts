@@ -1,8 +1,9 @@
 import { Resolver, Query, Mutation, Args, Int, Float } from "@nestjs/graphql";
+import { LicensesService } from "./licenses.service";
 
 @Resolver("License")
 export class LicensesResolver {
-  constructor(private licensesService: any) {}
+  constructor(private licensesService: LicensesService) {}
 
   @Query()
   async licenses(

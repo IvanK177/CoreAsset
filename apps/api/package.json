@@ -6,13 +6,13 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "nest start",
-    "start:prod": "node dist/main",
+    "start:prod": "node --env-file=../../.env dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "clean": "rimraf dist node_modules"
   },
   "dependencies": {
-    "@coreasset/database": "workspace:*",
     "@apollo/server": "^5.0.0",
+    "@coreasset/database": "workspace:*",
     "@nestjs/apollo": "^13.4.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",

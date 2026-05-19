@@ -1,8 +1,9 @@
 import { Resolver, Query, Mutation, Args, Int } from "@nestjs/graphql";
+import { FaultsService } from "./faults.service";
 
 @Resolver("FaultHistoryIncident")
 export class FaultsResolver {
-  constructor(private faultsService: any) {}
+  constructor(private faultsService: FaultsService) {}
 
   @Query()
   async faultHistoryIncidents(

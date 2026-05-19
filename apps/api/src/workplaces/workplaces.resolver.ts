@@ -1,8 +1,9 @@
 import { Resolver, Query, Mutation, Args, Int } from "@nestjs/graphql";
+import { WorkplacesService } from "./workplaces.service";
 
 @Resolver("Workplace")
 export class WorkplacesResolver {
-  constructor(private workplacesService: any) {}
+  constructor(private workplacesService: WorkplacesService) {}
 
   @Query()
   async workplaces(
