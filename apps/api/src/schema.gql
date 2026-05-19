@@ -17,6 +17,10 @@ type HardwareAsset {
   discoveryMetadata: String
   createdAt: String!
   updatedAt: String!
+  # Relations (match Prisma field names)
+  workplaces: [Workplace!]!
+  installations: [SoftwareInstallation!]!
+  faultIncidents: [FaultHistoryIncident!]!
 }
 
 type User {
@@ -28,6 +32,8 @@ type User {
   position: String
   createdAt: String!
   updatedAt: String!
+  # Relations
+  workplaces: [Workplace!]!
 }
 
 type Workplace {
@@ -38,6 +44,9 @@ type Workplace {
   hardwareId: String!
   createdAt: String!
   updatedAt: String!
+  # Relations
+  user: User!
+  hardware: HardwareAsset!
 }
 
 type SoftwareCatalog {
@@ -48,6 +57,8 @@ type SoftwareCatalog {
   category: String
   createdAt: String!
   updatedAt: String!
+  # Relations
+  licenses: [License!]!
 }
 
 type License {
@@ -60,6 +71,13 @@ type License {
   softwareId: String!
   createdAt: String!
   updatedAt: String!
+  # Relations
+  software: SoftwareCatalog!
+  installations: [SoftwareInstallation!]!
+  # Computed fields
+  usedCount: Int!
+  availableCount: Int!
+  isOverLimit: Boolean!
 }
 
 type SoftwareInstallation {
@@ -70,6 +88,9 @@ type SoftwareInstallation {
   status: String!
   createdAt: String!
   updatedAt: String!
+  # Relations
+  hardware: HardwareAsset!
+  license: License!
 }
 
 type FaultHistoryIncident {
@@ -82,25 +103,122 @@ type FaultHistoryIncident {
   resolvedAt: String
   createdAt: String!
   updatedAt: String!
+  # Relations
+  hardware: HardwareAsset!
 }
 
-type DashboardStats {
-  totalHardware: Int!
-  activeHardware: Int!
-  totalUsers: Int!
-  totalWorkplaces: Int!
-  totalSoftware: Int!
-  totalLicenses: Int!
-  openFaults: Int!
-  hardwareByType: [TypeCount!]!
-  hardwareByLifecycle: [TypeCount!]!
-  usersByDepartment: [TypeCount!]!
-  recentFaults: [FaultHistoryIncident!]!
+# ============================================
+# Paginated Wrapper Types
+# ============================================
+
+type HardwareAssetPaginated {
+  items: [HardwareAsset!]!
+  total: Int!
+}
+
+type UserPaginated {
+  items: [User!]!
+  total: Int!
+}
+
+type WorkplacePaginated {
+  items: [Workplace!]!
+  total: Int!
+}
+
+type SoftwareCatalogPaginated {
+  items: [SoftwareCatalog!]!
+  total: Int!
+}
+
+type LicensePaginated {
+  items: [License!]!
+  total: Int!
+}
+
+type FaultHistoryIncidentPaginated {
+  items: [FaultHistoryIncident!]!
+  total: Int!
+}
+
+# ============================================
+# Dashboard Nested Types
+# ============================================
+
+type HardwareStats {
+  total: Int!
+  byState: [StateCount!]!
+  byType: [TypeCount!]!
+}
+
+type StateCount {
+  state: String!
+  count: Int!
 }
 
 type TypeCount {
   type: String!
   count: Int!
+}
+
+type UserStats {
+  total: Int!
+}
+
+type WorkplaceStats {
+  total: Int!
+}
+
+type SoftwareStats {
+  total: Int!
+}
+
+type LicenseUsageStats {
+  id: String!
+  softwareName: String!
+  version: String!
+  concurrencyLimit: Int!
+  usedCount: Int!
+  availableCount: Int!
+  isOverLimit: Boolean!
+  expiryDate: String
+}
+
+type ExpiringLicense {
+  id: String!
+  softwareName: String!
+  expiryDate: String!
+}
+
+type LicenseStats {
+  total: Int!
+  stats: [LicenseUsageStats!]!
+  expiringSoon: [ExpiringLicense!]!
+}
+
+type FaultStats {
+  total: Int!
+  byStatus: [StatusCount!]!
+  bySeverity: [SeverityCount!]!
+}
+
+type StatusCount {
+  status: String!
+  count: Int!
+}
+
+type SeverityCount {
+  severity: String!
+  count: Int!
+}
+
+type DashboardStats {
+  hardware: HardwareStats!
+  users: UserStats!
+  workplaces: WorkplaceStats!
+  software: SoftwareStats!
+  licenses: LicenseStats!
+  faults: FaultStats!
 }
 
 # ============================================
@@ -109,28 +227,28 @@ type TypeCount {
 
 type Query {
   # Hardware
-  hardwareAssets(skip: Int, take: Int, lifecycleState: String, type: String, search: String): [HardwareAsset!]!
+  hardwareAssets(skip: Int, take: Int, lifecycleState: String, type: String, search: String): HardwareAssetPaginated!
   hardwareAsset(id: String!): HardwareAsset
   hardwareBySerialNumber(serialNumber: String!): HardwareAsset
 
   # Users
-  users(skip: Int, take: Int, search: String, department: String): [User!]!
+  users(skip: Int, take: Int, search: String, department: String): UserPaginated!
   user(id: String!): User
 
   # Workplaces
-  workplaces(skip: Int, take: Int, search: String, location: String): [Workplace!]!
+  workplaces(skip: Int, take: Int, search: String, location: String): WorkplacePaginated!
   workplace(id: String!): Workplace
 
   # Software
-  softwareCatalogs(skip: Int, take: Int, search: String, category: String): [SoftwareCatalog!]!
+  softwareCatalogs(skip: Int, take: Int, search: String, category: String): SoftwareCatalogPaginated!
   softwareCatalog(id: String!): SoftwareCatalog
 
   # Licenses
-  licenses(skip: Int, take: Int, softwareId: String): [License!]!
+  licenses(skip: Int, take: Int, softwareId: String): LicensePaginated!
   license(id: String!): License
 
   # Faults
-  faultHistoryIncidents(skip: Int, take: Int, hardwareId: String, status: String, severity: String): [FaultHistoryIncident!]!
+  faultHistoryIncidents(skip: Int, take: Int, hardwareId: String, status: String, severity: String): FaultHistoryIncidentPaginated!
   faultHistoryIncident(id: String!): FaultHistoryIncident
 
   # Dashboard
