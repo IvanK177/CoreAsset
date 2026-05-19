@@ -260,3 +260,123 @@ pnpm run dev
 | Сайт (деплой) | [core-asset.vercel.app](https://core-asset.vercel.app) |
 
 > ⏳ Проект в Supabase будет создан позже.
+
+
+
+## Проблемы в коде CoreAsset ITAM
+
+После тщательного анализа всего кода проекта, вот полный список проблем, разделённый по категориям:
+
+---
+
+### 🔴 Критические проблемы
+
+**1. Отсутствие аутентификации/авторизации**
+В API нет вообще никакого механизма auth — все GraphQL эндпоинты публично доступны. Нет JWT, сессий, guards. Любой может создавать, удалять, изменять данные.
+
+**2. Утечка учётных данных в [`.env.example`](.env.example:5)**
+Файл содержит реальный пароль `[Core_128500!]` в `DATABASE_URL`. `.env.example` должен содержать только placeholder-значения, не реальные секреты.
+
+**3. Отсутствует `DIRECT_URL` в конфигурации**
+В [`schema.prisma`](packages/database/prisma/schema.prisma:12) указано `directUrl = env("DIRECT_URL")`, но эта переменная не задана ни в `.env.example`, ни где-либо ещё. Для Supabase это обязательная переменная для миграций. Без неё `prisma migrate dev` и `prisma db push` не будут работать.
+
+**4. Критический баг синхронизации формы в [`hardware/[id]/edit/page.tsx`](apps/web/src/app/hardware/[id]/edit/page.tsx:83)**
+```tsx
+useState(() => {  // ❌ useState initializer не реагирует на изменения данных
+  if (hw) { setForm({...}); }
+});
+```
+Затем на строке 96 — антипаттерн React: `setState` во время рендера:
+```tsx
+if (hw && form.name === "" && hw.name !== "") {
+  setForm({...});  // ❌ setState during render
+}
+```
+Это должно быть `useEffect`, иначе возможны бесконечные рендеры или flickering.
+
+---
+
+### 🟠 Серьёзные проблемы
+
+**5. Тип `any` в инжекции сервисов в 5 из 7 резолверов**
+- [`users.resolver.ts`](apps/api/src/users/users.resolver.ts:5): `constructor(private usersService: any)`
+- [`workplaces.resolver.ts`](apps/api/src/workplaces/workplaces.resolver.ts:5): `constructor(private workplacesService: any)`
+- [`software.resolver.ts`](apps/api/src/software/software.resolver.ts:5): `constructor(private softwareService: any)`
+- [`licenses.resolver.ts`](apps/api/src/licenses/licenses.resolver.ts:5): `constructor(private licensesService: any)`
+- [`faults.resolver.ts`](apps/api/src/faults/faults.resolver.ts:5): `constructor(private faultsService: any)`
+Только `HardwareResolver` и `DashboardResolver` типизированы правильно.
+
+**6. Тип `any` в данных мутаций — во всех резолверах**
+Паттерн `const data: any = {}` используется повсеместно (hardware, users, workplaces, software, licenses, faults). Это полностью отключает проверку типов TypeScript.
+
+**7. Тип `any` на frontend — во всех страницах**
+`(item: any)`, `(wp: any)`, `(lic: any)`, `(inst: any)`, `(variables: any)` — повсеместно. Нет типизации для GraphQL-ответов.
+
+**8. Невозможно установить поля в пустое значение/null через мутации**
+Паттерн `if (name) data.name = name` в резолверах означает, что нельзя очистить поле (передать `""` или `null`). Например, нельзя удалить `department` у пользователя — `if (department)` пропустит пустую строку.
+
+**9. Двойной экземпляр Prisma Client**
+- [`packages/database/src/index.ts`](packages/database/src/index.ts:9): singleton `PrismaClient`
+- [`apps/api/src/prisma/prisma.service.ts`](apps/api/src/prisma/prisma.service.ts:5): `PrismaService extends PrismaClient`
+API использует `PrismaService`, но пакет `@coreasset/database` экспортирует другой singleton. Это путаница и потенциальная проблема с соединениями.
+
+**10. `@coreasset/database` как зависимость в [`apps/web/package.json`](apps/web/package.json:14)**
+Web-приложение включает `@coreasset/database` в зависимости, но никогда не использует его напрямую — общение идёт через GraphQL. Это лишняя зависимость, которая заставляет Next.js транслировать Prisma клиент (`transpilePackages` в [`next.config.ts`](apps/web/next.config.ts:4)).
+
+**11. `throw new Error()` вместо `ConflictException` в [`software.service.ts`](apps/api/src/software/software.service.ts:76)**
+```ts
+throw new Error(`Cannot delete software...`);  // ❌ Plain Error
+```
+Другие сервисы правильно используют `ConflictException`. Plain Error не будет корректно отформатирован NestJS для GraphQL-клиентов.
+
+---
+
+### 🟡 Проблемы средней тяжести
+
+**12. Несовпадение имени GraphQL-поля**
+В [`hardware/[id]/page.tsx`](apps/web/src/app/hardware/[id]/page.tsx:34) запрос использует `softwareInstallations`, но Prisma relation называется `installations`. Auto-generated schema может использовать `installations` — это вызовет ошибку GraphQL.
+
+**13. Отсутствуют страницы для CRUD**
+- `/workplaces/new` — ссылка есть в [`workplaces/page.tsx`](apps/web/src/app/workplaces/page.tsx:55), но страницы нет
+- `/licenses/new` — ссылка есть в [`licenses/page.tsx`](apps/web/src/app/licenses/page.tsx:80), но страницы нет
+- `/licenses/[id]` — ссылка есть, но страницы нет
+- `/workplaces/[id]` — ссылка есть, но страницы нет
+- Нет страниц для users detail/edit/create
+- Нет страницы для software catalog
+- Нет страницы для fault incidents
+
+**14. TODO-мутации не реализованы**
+- Delete hardware: `/* TODO: delete mutation */` в [`hardware/[id]/page.tsx`](apps/web/src/app/hardware/[id]/page.tsx:119)
+- Assign license: `/* TODO: assign license dialog */` в [`licenses/page.tsx`](apps/web/src/app/licenses/page.tsx:143)
+
+**15. Нет пагинации и поиска на frontend**
+Все GraphQL-запросы поддерживают `skip`, `take`, `search`, фильтры, но UI не реализует эти контролы. Все данные загружаются целиком.
+
+**16. Нет ссылки на Software Catalog в навигации**
+В [`layout.tsx`](apps/web/src/app/layout.tsx:25) навигация не включает Software/Faults, хотя backend поддерживает эти сущности.
+
+**17. `rm -rf` в скриптах clean — не работает на Windows**
+[`packages/database/package.json`](packages/database/package.json:16), [`apps/api/package.json`](apps/api/package.json:11), [`apps/web/package.json`](apps/web/package.json:11) — используют `rm -rf`, что не работает в cmd.exe на Windows 11.
+
+**18. Тестовые файлы в корне проекта**
+`test-db-connection.mjs`, `test-db-connection2.mjs`, `test-db-connection3.mjs` — debug-артефакты, не должны быть в коде.
+
+**19. Нет ESLint конфигурации для API**
+[`apps/api/package.json`](apps/api/src/main.ts:1) имеет `lint` скрипт с ESLint, но конфигурационного файла `.eslintrc.*` нет.
+
+**20. Пакет `@coreasset/ui` не используется**
+[`packages/ui/src/index.ts`](packages/ui/src/index.ts:1) экспортирует только `cn`, но web-приложение не импортирует `@coreasset/ui` (нет в зависимостях). Все стили — inline Tailwind.
+
+---
+
+### 🔵 Мелкие проблемы
+
+**21. Нет тестов** — Отсутствует `@nestjs/testing`, `jest`, нет тестовых файлов.
+
+**22. Нет path aliases в API tsconfig** — [`apps/api/tsconfig.json`](apps/api/tsconfig.json:1) не имеет `paths` для удобных импортов вроде `@/*`.
+
+**23. License keys видны в API** — `licenseKey` возвращается в GraphQL-ответах. Даже с маскированием на frontend, данные доступны в network tab.
+
+**24. Нет exception filter/interceptor** — Prisma ошибки возвращаются как raw NestJS errors без форматирования для GraphQL.
+
+**25. `@prisma/client` в зависимостях API** — [`apps/api/package.json`](apps/api/package.json:21) содержит `@prisma/client` напрямую, хотя уже получает его через `@coreasset/database`. Дублирование.
