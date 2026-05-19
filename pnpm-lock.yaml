@@ -50,6 +50,9 @@ importers:
       class-validator:
         specifier: ^0.14.1
         version: 0.14.4
+      dotenv:
+        specifier: ^16.5.0
+        version: 16.6.1
       graphql:
         specifier: ^16.10.0
         version: 16.14.0

@@ -26,3 +26,4 @@ packages/database/prisma/migrations/
 
 # Logs
 *.log
+.roo
