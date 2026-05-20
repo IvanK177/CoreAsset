@@ -49,29 +49,70 @@ export async function updateEmployee(id: string, formData: FormData) {
 }
 
 export async function deleteEmployee(id: string) {
-  const supabase = await createClient();
-  await supabase.from("employees").delete().eq("id", id);
+  let deleteError: string | null = null;
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("employees").delete().eq("id", id);
+    if (error) {
+      console.error("[deleteEmployee] Supabase error:", error.message);
+      deleteError = error.message;
+    }
+  } catch (err) {
+    console.error("[deleteEmployee] Unexpected error:", err);
+    deleteError = "Неожиданная ошибка при удалении сотрудника";
+  }
+
+  if (deleteError) return { error: deleteError };
+
   revalidatePath("/employees");
   redirect("/employees");
 }
 
 export async function dismissEmployee(id: string) {
-  const supabase = await createClient();
+  let actionError: string | null = null;
 
-  const { data: workplace } = await supabase
-    .from("workplaces")
-    .select("id, computer_id")
-    .eq("employee_id", id)
-    .maybeSingle();
+  try {
+    const supabase = await createClient();
 
-  await supabase.from("employees").update({ is_active: false }).eq("id", id);
+    const { data: workplace, error: wpError } = await supabase
+      .from("workplaces")
+      .select("id, computer_id")
+      .eq("employee_id", id)
+      .maybeSingle();
 
-  if (workplace?.computer_id) {
-    await supabase
-      .from("computers")
-      .update({ lifecycle_status: "storage" })
-      .eq("id", workplace.computer_id);
+    if (wpError) {
+      console.error("[dismissEmployee] Workplace query error:", wpError.message);
+      // Continue — workplace might not exist
+    }
+
+    const { error: updateError } = await supabase
+      .from("employees")
+      .update({ is_active: false })
+      .eq("id", id);
+
+    if (updateError) {
+      console.error("[dismissEmployee] Employee update error:", updateError.message);
+      actionError = updateError.message;
+    }
+
+    if (!actionError && workplace?.computer_id) {
+      const { error: compError } = await supabase
+        .from("computers")
+        .update({ lifecycle_status: "storage" })
+        .eq("id", workplace.computer_id);
+
+      if (compError) {
+        console.error("[dismissEmployee] Computer update error:", compError.message);
+        // Non-critical — employee is already dismissed
+      }
+    }
+  } catch (err) {
+    console.error("[dismissEmployee] Unexpected error:", err);
+    actionError = "Неожиданная ошибка при увольнении сотрудника";
   }
+
+  if (actionError) return { error: actionError };
 
   revalidatePath("/employees");
   revalidatePath("/computers");

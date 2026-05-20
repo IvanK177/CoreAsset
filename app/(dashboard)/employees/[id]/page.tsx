@@ -5,7 +5,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteEmployee, dismissEmployee } from "@/lib/actions/employees";
-import { formatDate } from "@/lib/utils";
+import { formatDate, extractJoinObject } from "@/lib/utils";
 import { Edit, User, UserX } from "lucide-react";
 
 export default async function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,9 +21,27 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
       .maybeSingle(),
   ]);
 
+  // Check for Supabase errors on the main entity
+  if (empRes.error) {
+    console.error("[EmployeeDetail] Supabase query error:", empRes.error.code, empRes.error.message);
+    // PGRST116 = ".single()" found 0 rows → genuine not-found
+    if (empRes.error.code === "PGRST116") notFound();
+    // Any other error (RLS, network, etc.) → throw to trigger Error Boundary
+    throw new Error(`Failed to fetch employee: ${empRes.error.message}`);
+  }
+
   if (!empRes.data) notFound();
   const emp = empRes.data;
+
+  // Workplace is optional — log errors but don't crash
+  if (workplaceRes.error) {
+    console.error("[EmployeeDetail] Workplace query error:", workplaceRes.error.code, workplaceRes.error.message);
+  }
   const workplace = workplaceRes.data;
+  // Supabase may return computers join as array or object — normalize with extractJoinObject
+  const workplaceComputer = extractJoinObject(
+    workplace?.computers as unknown
+  ) as { inventory_number: string } | null;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -57,7 +75,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
             </form>
           )}
           <DeleteConfirmDialog
-            onConfirm={async () => { await deleteEmployee(id); }}
+            onConfirm={async () => { "use server"; await deleteEmployee(id); }}
             description="Сотрудник будет удалён из системы безвозвратно."
           />
         </div>
@@ -77,7 +95,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
             <Row label="Кабинет" value={workplace.room} />
             <Row
               label="ПК"
-              value={(workplace.computers as { inventory_number: string } | null)?.inventory_number}
+              value={workplaceComputer?.inventory_number ?? null}
             />
           </>
         ) : (

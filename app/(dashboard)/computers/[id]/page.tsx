@@ -5,13 +5,11 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { ComputerStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteComputer } from "@/lib/actions/computers";
-import { formatDate } from "@/lib/utils";
+import { formatDate, extractJoinObject, safeHardware } from "@/lib/utils";
 import { Edit, Monitor } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
-
-type Hardware = { cpu?: string; ram?: string; storage?: string };
 
 export default async function ComputerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,11 +28,36 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
       .eq("computer_id", id),
   ]);
 
+  // Check for Supabase errors on the main entity
+  if (computerRes.error) {
+    console.error("[ComputerDetail] Supabase query error:", computerRes.error.code, computerRes.error.message);
+    if (computerRes.error.code === "PGRST116") notFound();
+    throw new Error(`Failed to fetch computer: ${computerRes.error.message}`);
+  }
+
   if (!computerRes.data) notFound();
   const computer = computerRes.data;
+
+  // Safely parse hardware JSON — validates types and ignores unknown fields (e.g. gpu)
+  const hw = safeHardware(computer.hardware);
+
+  // Incidents are supplementary — log errors but don't crash
+  if (incidentsRes.error) {
+    console.error("[ComputerDetail] Incidents query error:", incidentsRes.error.code, incidentsRes.error.message);
+  }
   const incidents = incidentsRes.data ?? [];
-  const installs = installsRes.data ?? [];
-  const hw = computer.hardware as Hardware | null;
+
+  // Software installations are supplementary — log errors but don't crash
+  if (installsRes.error) {
+    console.error("[ComputerDetail] Installations query error:", installsRes.error.code, installsRes.error.message);
+  }
+  const rawInstalls = installsRes.data ?? [];
+  // Normalize software join — Supabase may return as array or object depending on relationship
+  const installs = rawInstalls.map((inst) => ({
+    id: inst.id,
+    installed_at: inst.installed_at,
+    software: extractJoinObject(inst.software as unknown) as { id: string; name: string; version: string | null } | null,
+  }));
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -53,12 +76,10 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
           <Link href={`/computers/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" }) + " gap-2"}>
             <Edit className="w-4 h-4" /> Изменить
           </Link>
-          <form action={async () => { "use server"; await deleteComputer(id); }}>
             <DeleteConfirmDialog
-              onConfirm={async () => { await deleteComputer(id); }}
+              onConfirm={async () => { "use server"; await deleteComputer(id); }}
               description="Будут удалены все связанные тикеты инцидентов."
             />
-          </form>
         </div>
       </div>
 
@@ -71,9 +92,9 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
         </div>
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Характеристики</p>
-          <Row label="CPU" value={hw?.cpu} />
-          <Row label="RAM" value={hw?.ram} />
-          <Row label="Диск" value={hw?.storage} />
+          <Row label="CPU" value={hw.cpu} />
+          <Row label="RAM" value={hw.ram} />
+          <Row label="Диск" value={hw.storage} />
         </div>
       </div>
 
@@ -88,7 +109,7 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
         ) : (
           <div className="space-y-2">
             {installs.map((inst) => {
-              const sw = inst.software as { id: string; name: string; version: string | null } | null;
+              const sw = inst.software;
               return (
                 <div key={inst.id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                   <span className="text-sm">{sw?.name ?? "—"} {sw?.version ? `v${sw.version}` : ""}</span>

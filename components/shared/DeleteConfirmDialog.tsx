@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, startTransition } from "react";
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
 interface DeleteConfirmDialogProps {
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   description?: string;
 }
 
@@ -30,7 +30,7 @@ export function DeleteConfirmDialog({ onConfirm, description }: DeleteConfirmDia
           <Button variant="outline" onClick={() => setOpen(false)}>Отмена</Button>
           <Button
             variant="destructive"
-            onClick={() => { setOpen(false); onConfirm(); }}
+            onClick={() => { setOpen(false); startTransition(() => { onConfirm(); }); }}
           >
             Удалить
           </Button>

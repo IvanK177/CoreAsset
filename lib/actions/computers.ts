@@ -65,8 +65,22 @@ export async function updateComputer(id: string, formData: FormData) {
 }
 
 export async function deleteComputer(id: string) {
-  const supabase = await createClient();
-  await supabase.from("computers").delete().eq("id", id);
+  let deleteError: string | null = null;
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("computers").delete().eq("id", id);
+    if (error) {
+      console.error("[deleteComputer] Supabase error:", error.message);
+      deleteError = error.message;
+    }
+  } catch (err) {
+    console.error("[deleteComputer] Unexpected error:", err);
+    deleteError = "Неожиданная ошибка при удалении компьютера";
+  }
+
+  if (deleteError) return { error: deleteError };
+
   revalidatePath("/computers");
   redirect("/computers");
 }

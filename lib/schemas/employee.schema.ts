@@ -10,3 +10,30 @@ export const employeeSchema = z.object({
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;
+
+/** Schema for validating a single employee row fetched from the database */
+export const employeeRowSchema = z.object({
+  id: z.string(),
+  full_name: z.string(),
+  department: z.string().nullable(),
+  position: z.string().nullable(),
+  email: z.string().nullable(),
+  employee_number: z.string().nullable(),
+  is_active: z.boolean(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type EmployeeRow = z.infer<typeof employeeRowSchema>;
+
+/** Schema for validating workplace data with nested computer relation */
+export const workplaceWithComputerSchema = z.object({
+  id: z.string(),
+  room: z.string(),
+  computer_id: z.string().nullable(),
+  computers: z.object({
+    inventory_number: z.string(),
+  }).nullable(),
+}).nullable();
+
+export type WorkplaceWithComputer = z.infer<typeof workplaceWithComputerSchema>;
