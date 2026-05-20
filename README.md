@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CoreAsset
 
-## Getting Started
+**Система учёта рабочих мест, ИТ-оборудования и программных лицензий (ITAM)**
 
-First, run the development server:
+Тема практики №149 · IT.Москва · Колледж «ИТ.Бирюлёво» ИТ.Москва · 2026
+
+---
+
+## О проекте
+
+**CoreAsset** — веб-приложение для ИТ-отделов и системных администраторов:
+
+- Реестр сотрудников и рабочих мест
+- Инвентаризация оборудования и характеристик
+- Управление пулами лицензий ПО с контролем баланса
+- Service Desk: журнал неисправностей и тикеты
+- Дашборд с аналитикой
+
+---
+
+## Документация
+
+| Файл | Содержание |
+|------|-----------|
+| [docs/specification.md](docs/specification.md) | Спецификация ПО: функциональные и нефункциональные требования (КТ-1) |
+| [docs/features.md](docs/features.md) | Описание модулей и функций системы |
+| [docs/database.md](docs/database.md) | Схема БД, таблицы, индексы (КТ-2) |
+| [docs/ui-mockups-and-algorithms.md](docs/ui-mockups-and-algorithms.md) | Макеты UI (7 экранов), схема навигации, алгоритмы (КТ-2) |
+| [docs/architecture.md](docs/architecture.md) | Архитектура приложения, структура проекта |
+| [docs/roadmap.md](docs/roadmap.md) | Календарный план (20 рабочих дней практики) |
+| [docs/user-guide.md](docs/user-guide.md) | Руководство пользователя |
+
+---
+
+## Технологический стек
+
+| Слой | Технология |
+|------|-----------|
+| Фреймворк | Next.js 15 (App Router) |
+| Язык | TypeScript |
+| Стилизация | Tailwind CSS + shadcn/ui |
+| Формы / Валидация | React Hook Form + Zod |
+| База данных | Supabase (PostgreSQL) |
+| Supabase SDK | `@supabase/supabase-js` + `@supabase/ssr` |
+| Аутентификация | Supabase Auth (JWT) |
+| Иконки | lucide-react |
+| Даты | date-fns |
+| Деплой | Vercel |
+
+---
+
+## Быстрый старт (локально)
+
+### 1. Клонировать репозиторий
+
+```bash
+git clone https://github.com/TopMob/CoreAsset.git
+cd CoreAsset
+```
+
+### 2. Установить зависимости
+
+```bash
+npm install
+```
+
+### 3. Создать `.env.local`
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://XXXXX.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxciOixIUzI1N...
+```
+
+> Полный anon key находится в Supabase Dashboard → Project Settings → API.
+
+### 4. Запустить
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Приложение: `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Деплой на Vercel
 
-## Learn More
+1. Импортируйте репозиторий в [vercel.com](https://vercel.com)
+2. В разделе **Environment Variables** добавьте:
+   - `NEXT_PUBLIC_SUPABASE_URL` = `https://XXX.supabase.co`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = ваш anon key
+3. Нажмите **Deploy** — всё остальное Vercel сделает автоматически
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Ресурсы проекта
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Ресурс | Ссылка |
+|--------|--------|
+| Репозиторий | XXX |
+| Деплой | XXX |
+| База данных | XXX |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Структура репозитория
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+CoreAsset/
+├── docs/                          — проектная документация
+│   ├── specification.md           — спецификация ПО (КТ-1)
+│   ├── features.md                — описание функций по модулям
+│   ├── database.md                — схема БД (КТ-2)
+│   ├── ui-mockups-and-algorithms.md — макеты и алгоритмы (КТ-2)
+│   ├── architecture.md            — архитектура приложения
+│   ├── roadmap.md                 — план 20 дней практики
+│   └── user-guide.md              — руководство пользователя
+├── college_assignments/           — задания колледжа (исходники)
+└── README.md
+```
+
+---
+
+## Авторы
+
+Миняев и Копаев Иваны
+
+Главные инструменты: claude Sonnet 4.6, Gemini, GLM-5.1
