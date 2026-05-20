@@ -1,0 +1,215 @@
+# UI Mockups & Algorithms — CoreAsset
+
+Day 8–9 deliverable · КТ-2
+
+---
+
+## Navigation Structure
+
+```
+/ (root)
+├── /login                    — Auth page
+└── /dashboard                — Protected area
+    ├── /                     — Dashboard (main stats)
+    ├── /computers            — Computer list
+    │   ├── /new              — Add computer form
+    │   └── /[id]             — Computer detail card
+    ├── /employees            — Employee list
+    │   ├── /new              — Add employee form
+    │   └── /[id]             — Employee detail card
+    ├── /licenses             — License pools list
+    │   └── /new              — Add license pool form
+    └── /incidents            — All incidents list
+        └── /[id]             — Incident detail
+```
+
+---
+
+## Screen 1 — Login
+
+```
+┌─────────────────────────────┐
+│         CoreAsset           │
+│                             │
+│  Email: [________________]  │
+│  Password: [_____________]  │
+│                             │
+│       [ Sign In ]           │
+└─────────────────────────────┘
+```
+
+Fields: email, password. Button triggers Supabase Auth → redirects to `/dashboard`.
+
+---
+
+## Screen 2 — Dashboard
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ CoreAsset         [Search...]              [User] [Logout]│
+├──────────┬───────────────────────────────────────────────┤
+│ Dashboard│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐         │
+│ Computers│  │Total │ │Active│ │Repair│ │Vacant│         │
+│ Employees│  │  42  │ │  35  │ │  4   │ │  3   │         │
+│ Licenses │  └──────┘ └──────┘ └──────┘ └──────┘         │
+│ Incidents│                                               │
+│          │  Critical incidents: ██ 2                     │
+│          │  Licenses expiring:  ██ 1  (< 30 days)        │
+└──────────┴───────────────────────────────────────────────┘
+```
+
+---
+
+## Screen 3 — Computer List
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Computers                                    [+ Add Computer]   │
+│ Filter: [Status ▼] [Room ▼]   Search: [_____________________]  │
+├──────────────┬───────┬──────────┬────────┬──────────────────────┤
+│ Inv. Number  │ Type  │ Room     │ Status │ Employee             │
+├──────────────┼───────┼──────────┼────────┼──────────────────────┤
+│ PC-001       │ PC    │ 204      │ Active │ Ivanov I.I.          │
+│ PC-002       │ Laptop│ 205      │ Repair │ —                    │
+│ PC-003       │ PC    │ 204      │ Vacant │ —                    │
+└──────────────┴───────┴──────────┴────────┴──────────────────────┘
+```
+
+Columns sortable. Status badge color-coded: green / yellow / red / grey.
+
+---
+
+## Screen 4 — Computer Detail Card
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ ← Back    PC-001 · Active                  [Edit] [Delete]│
+├────────────────────────┬─────────────────────────────────┤
+│ Serial: SN-XYZ-001     │ Hardware:                       │
+│ Room: 204              │   CPU: Intel Core i5-12400      │
+│ Employee: Ivanov I.I.  │   RAM: 16 GB                    │
+│                        │   Storage: 512 GB SSD           │
+├────────────────────────┴─────────────────────────────────┤
+│ Installed Software                    [+ Add Software]    │
+│  • Microsoft Office 365  [pool: 10/20 used]  [Remove]    │
+│  • Windows 11 Pro        [pool: 42/50 used]  [Remove]    │
+├──────────────────────────────────────────────────────────┤
+│ Incident History                      [+ Create Ticket]  │
+│  #3 · Критический · В работе · 15.05.2026               │
+│  #1 · Средний     · Исправлен · 02.05.2026              │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Screen 5 — License Pools
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ License Pools                          [+ Add Pool]        │
+├─────────────────┬───────────┬───────────┬──────────────────┤
+│ Software        │ Type      │ Used/Total │ Expires          │
+├─────────────────┼───────────┼───────────┼──────────────────┤
+│ MS Office 365   │ Subscr.   │ 10 / 20   │ 2026-06-01 🔴    │
+│ Windows 11 Pro  │ Perpetual │ 42 / 50   │ —                │
+│ Adobe Acrobat   │ Subscr.   │ 5 / 10    │ 2027-01-01       │
+└─────────────────┴───────────┴───────────┴──────────────────┘
+```
+
+🔴 = expires in < 30 days.
+
+---
+
+## Screen 6 — Add / Edit Form (Computer example)
+
+```
+┌────────────────────────────────────┐
+│ Add Computer                       │
+│                                    │
+│ Inventory Number: [____________]   │
+│ Serial Number:    [____________]   │
+│ Type:             [PC / Laptop ▼]  │
+│ Room:             [____________]   │
+│ Status:           [Active ▼]       │
+│                                    │
+│ Hardware (optional):               │
+│   CPU: [____________]              │
+│   RAM: [____________]              │
+│   Storage: [_________]             │
+│                                    │
+│           [Cancel]  [Save]         │
+└────────────────────────────────────┘
+```
+
+Validated by Zod: inventory number required, format checked.
+
+---
+
+## Screen 7 — Delete Confirmation Modal
+
+```
+┌─────────────────────────────────┐
+│ ⚠ Delete Computer PC-001?       │
+│                                 │
+│ This will also delete all       │
+│ incident history for this PC.   │
+│                                 │
+│       [Cancel]  [Delete]        │
+└─────────────────────────────────┘
+```
+
+---
+
+## Key Business Algorithms
+
+### Algorithm 1 — License Seat Assignment
+
+```
+User clicks "+ Add Software" on computer card
+    │
+    ▼
+Fetch license_pools WHERE software_id = selected
+    │
+    ├── used_seats >= total_seats?
+    │       YES → Show error: "License pool exhausted"
+    │       NO  ↓
+    ▼
+INSERT into software_installations (computer_id, license_pool_id)
+    │
+    ▼
+UPDATE license_pools SET used_seats = used_seats + 1
+    │
+    ▼
+Revalidate page → show updated pool balance
+```
+
+### Algorithm 2 — Employee Dismissal (cascade to workplace)
+
+```
+Admin sets employee status → "Fired"
+    │
+    ▼
+UPDATE employees SET is_active = false WHERE id = ?
+    │
+    ▼
+DB constraint: ON DELETE SET NULL on workplaces.employee_id
+→ workplace.employee_id = NULL automatically
+→ computer lifecycle_status → "Vacant"
+    │
+    ▼
+Revalidate /employees and /computers pages
+```
+
+### Algorithm 3 — License Expiry Alert
+
+```
+On page load of /licenses:
+    │
+    ▼
+SELECT * FROM license_pools
+WHERE license_type = 'subscription'
+AND expires_at <= NOW() + INTERVAL '30 days'
+    │
+    ▼
+For each result → render red badge in table row
+```
