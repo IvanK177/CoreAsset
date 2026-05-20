@@ -10,7 +10,6 @@ export const employeeSchema = z.object({
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;
-<<<<<<< HEAD
 
 /** Schema for validating a single employee row fetched from the database */
 export const employeeRowSchema = z.object({
@@ -38,5 +37,3 @@ export const workplaceWithComputerSchema = z.object({
 }).nullable();
 
 export type WorkplaceWithComputer = z.infer<typeof workplaceWithComputerSchema>;
-=======
->>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
