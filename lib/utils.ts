@@ -13,6 +13,7 @@ export const daysUntilExpiry = (expiresAt: string | null | undefined): number | 
   const diff = new Date(expiresAt).getTime() - Date.now();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
+<<<<<<< HEAD
 
 /**
  * Supabase may return FK join results as either a single object or an array,
@@ -42,3 +43,5 @@ export function safeHardware(raw: unknown): { cpu?: string; ram?: string; storag
     storage: typeof obj.storage === "string" ? obj.storage : undefined,
   };
 }
+=======
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f

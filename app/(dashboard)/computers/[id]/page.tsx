@@ -5,12 +5,21 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { ComputerStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteComputer } from "@/lib/actions/computers";
+<<<<<<< HEAD
 import { formatDate, extractJoinObject, safeHardware } from "@/lib/utils";
+=======
+import { formatDate } from "@/lib/utils";
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
 import { Edit, Monitor } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 
+<<<<<<< HEAD
+=======
+type Hardware = { cpu?: string; ram?: string; storage?: string };
+
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
 export default async function ComputerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
@@ -28,6 +37,7 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
       .eq("computer_id", id),
   ]);
 
+<<<<<<< HEAD
   // Check for Supabase errors on the main entity
   if (computerRes.error) {
     console.error("[ComputerDetail] Supabase query error:", computerRes.error.code, computerRes.error.message);
@@ -58,6 +68,13 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
     installed_at: inst.installed_at,
     software: extractJoinObject(inst.software as unknown) as { id: string; name: string; version: string | null } | null,
   }));
+=======
+  if (!computerRes.data) notFound();
+  const computer = computerRes.data;
+  const incidents = incidentsRes.data ?? [];
+  const installs = installsRes.data ?? [];
+  const hw = computer.hardware as Hardware | null;
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -76,10 +93,19 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
           <Link href={`/computers/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" }) + " gap-2"}>
             <Edit className="w-4 h-4" /> Изменить
           </Link>
+<<<<<<< HEAD
             <DeleteConfirmDialog
               onConfirm={async () => { "use server"; await deleteComputer(id); }}
               description="Будут удалены все связанные тикеты инцидентов."
             />
+=======
+          <form action={async () => { "use server"; await deleteComputer(id); }}>
+            <DeleteConfirmDialog
+              onConfirm={async () => { await deleteComputer(id); }}
+              description="Будут удалены все связанные тикеты инцидентов."
+            />
+          </form>
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
         </div>
       </div>
 
@@ -92,9 +118,15 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
         </div>
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Характеристики</p>
+<<<<<<< HEAD
           <Row label="CPU" value={hw.cpu} />
           <Row label="RAM" value={hw.ram} />
           <Row label="Диск" value={hw.storage} />
+=======
+          <Row label="CPU" value={hw?.cpu} />
+          <Row label="RAM" value={hw?.ram} />
+          <Row label="Диск" value={hw?.storage} />
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
         </div>
       </div>
 
@@ -109,7 +141,11 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
         ) : (
           <div className="space-y-2">
             {installs.map((inst) => {
+<<<<<<< HEAD
               const sw = inst.software;
+=======
+              const sw = inst.software as { id: string; name: string; version: string | null } | null;
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
               return (
                 <div key={inst.id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                   <span className="text-sm">{sw?.name ?? "—"} {sw?.version ? `v${sw.version}` : ""}</span>

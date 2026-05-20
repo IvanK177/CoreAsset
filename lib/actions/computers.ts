@@ -65,6 +65,7 @@ export async function updateComputer(id: string, formData: FormData) {
 }
 
 export async function deleteComputer(id: string) {
+<<<<<<< HEAD
   let deleteError: string | null = null;
 
   try {
@@ -81,6 +82,10 @@ export async function deleteComputer(id: string) {
 
   if (deleteError) return { error: deleteError };
 
+=======
+  const supabase = await createClient();
+  await supabase.from("computers").delete().eq("id", id);
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
   revalidatePath("/computers");
   redirect("/computers");
 }

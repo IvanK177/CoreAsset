@@ -49,6 +49,7 @@ export async function updateEmployee(id: string, formData: FormData) {
 }
 
 export async function deleteEmployee(id: string) {
+<<<<<<< HEAD
   let deleteError: string | null = null;
 
   try {
@@ -65,11 +66,16 @@ export async function deleteEmployee(id: string) {
 
   if (deleteError) return { error: deleteError };
 
+=======
+  const supabase = await createClient();
+  await supabase.from("employees").delete().eq("id", id);
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
   revalidatePath("/employees");
   redirect("/employees");
 }
 
 export async function dismissEmployee(id: string) {
+<<<<<<< HEAD
   let actionError: string | null = null;
 
   try {
@@ -114,6 +120,25 @@ export async function dismissEmployee(id: string) {
 
   if (actionError) return { error: actionError };
 
+=======
+  const supabase = await createClient();
+
+  const { data: workplace } = await supabase
+    .from("workplaces")
+    .select("id, computer_id")
+    .eq("employee_id", id)
+    .maybeSingle();
+
+  await supabase.from("employees").update({ is_active: false }).eq("id", id);
+
+  if (workplace?.computer_id) {
+    await supabase
+      .from("computers")
+      .update({ lifecycle_status: "storage" })
+      .eq("id", workplace.computer_id);
+  }
+
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
   revalidatePath("/employees");
   revalidatePath("/computers");
   redirect("/employees");

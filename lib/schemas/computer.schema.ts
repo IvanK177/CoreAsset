@@ -16,6 +16,7 @@ export const computerSchema = z.object({
 });
 
 export type ComputerFormValues = z.infer<typeof computerSchema>;
+<<<<<<< HEAD
 
 /** Schema for validating hardware JSON field from the database */
 export const hardwareRowSchema = hardwareSchema;
@@ -65,3 +66,5 @@ export type SoftwareInstallationRow = z.infer<typeof softwareInstallationRowSche
 
 /** Schema for validating software installation row array */
 export const softwareInstallationArraySchema = z.array(softwareInstallationRowSchema);
+=======
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f

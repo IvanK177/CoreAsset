@@ -5,7 +5,11 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteEmployee, dismissEmployee } from "@/lib/actions/employees";
+<<<<<<< HEAD
 import { formatDate, extractJoinObject } from "@/lib/utils";
+=======
+import { formatDate } from "@/lib/utils";
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
 import { Edit, User, UserX } from "lucide-react";
 
 export default async function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,6 +25,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
       .maybeSingle(),
   ]);
 
+<<<<<<< HEAD
   // Check for Supabase errors on the main entity
   if (empRes.error) {
     console.error("[EmployeeDetail] Supabase query error:", empRes.error.code, empRes.error.message);
@@ -42,6 +47,11 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
   const workplaceComputer = extractJoinObject(
     workplace?.computers as unknown
   ) as { inventory_number: string } | null;
+=======
+  if (!empRes.data) notFound();
+  const emp = empRes.data;
+  const workplace = workplaceRes.data;
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -75,7 +85,11 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
             </form>
           )}
           <DeleteConfirmDialog
+<<<<<<< HEAD
             onConfirm={async () => { "use server"; await deleteEmployee(id); }}
+=======
+            onConfirm={async () => { await deleteEmployee(id); }}
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
             description="Сотрудник будет удалён из системы безвозвратно."
           />
         </div>
@@ -95,7 +109,11 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
             <Row label="Кабинет" value={workplace.room} />
             <Row
               label="ПК"
+<<<<<<< HEAD
               value={workplaceComputer?.inventory_number ?? null}
+=======
+              value={(workplace.computers as { inventory_number: string } | null)?.inventory_number}
+>>>>>>> 72a72aed7fd900b0efcd88a2585fb0bd1f99dd9f
             />
           </>
         ) : (
