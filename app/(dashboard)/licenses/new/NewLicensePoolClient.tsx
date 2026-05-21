@@ -13,6 +13,10 @@ import type { Tables } from "@/types/database.types";
 import Link from "next/link";
 
 type Software = Pick<Tables<"software">, "id" | "name" | "version">;
+const LICENSE_TYPE_ITEMS: Record<string, React.ReactNode> = {
+  perpetual: "Бессрочная",
+  subscription: "Подписка",
+};
 const initialState = { error: "" };
 
 export default function NewLicensePoolClient({ software }: { software: Software[] }) {
@@ -43,7 +47,7 @@ export default function NewLicensePoolClient({ software }: { software: Software[
             </Link>
           </div>
         ) : (
-          <Select value={selectedSoftwareId} onValueChange={(v) => setSelectedSoftwareId(v ?? "")}>
+          <Select value={selectedSoftwareId} onValueChange={(v) => setSelectedSoftwareId(v ?? "")} items={Object.fromEntries(software.map((s) => [s.id, s.name + (s.version ? ` v${s.version}` : "")]))}>
             <SelectTrigger>
               <SelectValue placeholder="Выберите ПО" />
             </SelectTrigger>
@@ -61,7 +65,7 @@ export default function NewLicensePoolClient({ software }: { software: Software[
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Тип *</Label>
-          <Select name="license_type" defaultValue="perpetual">
+          <Select name="license_type" defaultValue="perpetual" items={LICENSE_TYPE_ITEMS}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="perpetual">Бессрочная</SelectItem>

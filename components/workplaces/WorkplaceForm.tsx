@@ -23,6 +23,15 @@ interface WorkplaceFormProps {
 const initialState = { error: "" };
 
 export default function WorkplaceForm({ workplace, computers, employees, action }: WorkplaceFormProps) {
+  const computerItems: Record<string, React.ReactNode> = Object.fromEntries([
+    ["", "— Не выбран —"],
+    ...computers.map((c) => [c.id, c.inventory_number]),
+  ]);
+  const employeeItems: Record<string, React.ReactNode> = Object.fromEntries([
+    ["", "— Не назначен —"],
+    ...employees.map((e) => [e.id, e.full_name]),
+  ]);
+
   const [state, formAction, pending] = useActionState(
     async (_: typeof initialState, formData: FormData) => {
       const result = await action(formData);
@@ -40,7 +49,7 @@ export default function WorkplaceForm({ workplace, computers, employees, action 
 
       <div className="space-y-2">
         <Label>Компьютер</Label>
-        <Select name="computer_id" defaultValue={workplace?.computer_id ?? ""}>
+        <Select name="computer_id" defaultValue={workplace?.computer_id ?? ""} items={computerItems}>
           <SelectTrigger><SelectValue placeholder="Не выбран" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="">— Не выбран —</SelectItem>
@@ -53,7 +62,7 @@ export default function WorkplaceForm({ workplace, computers, employees, action 
 
       <div className="space-y-2">
         <Label>Сотрудник</Label>
-        <Select name="employee_id" defaultValue={workplace?.employee_id ?? ""}>
+        <Select name="employee_id" defaultValue={workplace?.employee_id ?? ""} items={employeeItems}>
           <SelectTrigger><SelectValue placeholder="Не назначен" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="">— Не назначен —</SelectItem>

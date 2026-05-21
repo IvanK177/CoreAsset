@@ -25,6 +25,7 @@ export async function createWorkplace(formData: FormData) {
 
   if (error) return { error: error.message };
   revalidatePath("/workplaces");
+  revalidatePath("/dashboard");
   redirect("/workplaces");
 }
 
@@ -50,6 +51,7 @@ export async function updateWorkplace(id: string, formData: FormData) {
   if (error) return { error: error.message };
   revalidatePath("/workplaces");
   revalidatePath(`/workplaces/${id}`);
+  revalidatePath("/dashboard");
   redirect(`/workplaces/${id}`);
 }
 
@@ -62,11 +64,13 @@ export async function assignEmployee(workplaceId: string, employeeId: string | n
   }).eq("id", workplaceId);
   revalidatePath("/workplaces");
   revalidatePath(`/workplaces/${workplaceId}`);
+  revalidatePath("/dashboard");
 }
 
 export async function deleteWorkplace(id: string) {
   const supabase = await createClient();
   await supabase.from("workplaces").delete().eq("id", id);
   revalidatePath("/workplaces");
+  revalidatePath("/dashboard");
   redirect("/workplaces");
 }

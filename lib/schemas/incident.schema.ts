@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const incidentSchema = z.object({
-  computer_id: z.string().uuid().optional().or(z.literal("")),
+  computer_id: z.string().uuid().optional(),
   incident_type: z.enum(["hardware", "software", "network", "other"]),
   description: z.string().min(1, "Обязательное поле"),
   priority: z.enum(["low", "medium", "high", "critical"]),

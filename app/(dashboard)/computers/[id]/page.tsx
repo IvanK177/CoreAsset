@@ -126,7 +126,7 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             История инцидентов ({incidents.length})
           </p>
-          <Link href={`/incidents?computer_id=${id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+          <Link href={`/incidents/new?computer_id=${id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
             + Создать тикет
           </Link>
         </div>

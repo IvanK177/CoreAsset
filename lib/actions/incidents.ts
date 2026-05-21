@@ -5,24 +5,40 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { incidentSchema } from "@/lib/schemas/incident.schema";
 
+/** Convert FormData entry values: null → undefined, empty string → undefined */
+function emptyToUndefined(value: FormDataEntryValue | null): string | undefined {
+  if (value === null || value === "") return undefined;
+  return value as string;
+}
+
 export async function createIncident(formData: FormData) {
   const supabase = await createClient();
   const parsed = incidentSchema.safeParse({
-    computer_id: formData.get("computer_id") || undefined,
-    incident_type: formData.get("incident_type"),
-    description: formData.get("description"),
-    priority: formData.get("priority"),
+    computer_id: emptyToUndefined(formData.get("computer_id")),
+    incident_type: emptyToUndefined(formData.get("incident_type")),
+    description: emptyToUndefined(formData.get("description")),
+    priority: emptyToUndefined(formData.get("priority")),
     status: "open",
   });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) {
+    console.error("[createIncident] Validation failed:", parsed.error.issues);
+    return { error: parsed.error.issues[0].message };
+  }
 
-  const { data, error } = await supabase.from("incidents").insert({
+  const insertData = {
     ...parsed.data,
     computer_id: parsed.data.computer_id || null,
-  }).select("id").single();
+  };
+  console.log("[createIncident] Inserting incident with computer_id:", insertData.computer_id);
 
-  if (error) return { error: error.message };
+  const { data, error } = await supabase.from("incidents").insert(insertData).select("id").single();
+
+  if (error) {
+    console.error("[createIncident] Supabase insert error:", error.code, error.message);
+    return { error: error.message };
+  }
   revalidatePath("/incidents");
+  revalidatePath("/dashboard");
   redirect(`/incidents/${data.id}`);
 }
 
@@ -35,11 +51,13 @@ export async function updateIncidentStatus(id: string, status: "open" | "in_prog
   }).eq("id", id);
   revalidatePath(`/incidents/${id}`);
   revalidatePath("/incidents");
+  revalidatePath("/dashboard");
 }
 
 export async function deleteIncident(id: string) {
   const supabase = await createClient();
   await supabase.from("incidents").delete().eq("id", id);
   revalidatePath("/incidents");
+  revalidatePath("/dashboard");
   redirect("/incidents");
 }

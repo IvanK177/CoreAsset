@@ -1,5 +1,6 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import ComputerTable from "@/components/computers/ComputerTable";
+import { ComputersClientView } from "@/components/computers/ComputersClientView";
 import PageHeader from "@/components/layout/PageHeader";
 
 export default async function ComputersPage() {
@@ -16,7 +17,9 @@ export default async function ComputersPage() {
         description="Список всего оборудования"
         action={{ label: "Добавить ПК", href: "/computers/new" }}
       />
-      <ComputerTable computers={computers ?? []} />
+      <Suspense fallback={<div className="text-muted-foreground text-sm">Загрузка...</div>}>
+        <ComputersClientView computers={computers ?? []} />
+      </Suspense>
     </div>
   );
 }

@@ -31,6 +31,7 @@ export async function createComputer(formData: FormData) {
 
   if (error) return { error: error.message };
   revalidatePath("/computers");
+  revalidatePath("/dashboard");
   redirect("/computers");
 }
 
@@ -61,6 +62,7 @@ export async function updateComputer(id: string, formData: FormData) {
   if (error) return { error: error.message };
   revalidatePath("/computers");
   revalidatePath(`/computers/${id}`);
+  revalidatePath("/dashboard");
   redirect(`/computers/${id}`);
 }
 
@@ -82,5 +84,6 @@ export async function deleteComputer(id: string) {
   if (deleteError) return { error: deleteError };
 
   revalidatePath("/computers");
+  revalidatePath("/dashboard");
   redirect("/computers");
 }

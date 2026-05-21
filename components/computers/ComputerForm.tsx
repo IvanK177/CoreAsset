@@ -18,6 +18,12 @@ interface ComputerFormProps {
   action: (formData: FormData) => Promise<{ error?: string } | void>;
 }
 
+const LIFECYCLE_STATUS_ITEMS: Record<string, React.ReactNode> = {
+  active: "Активен",
+  repair: "В ремонте",
+  storage: "Склад",
+  decommissioned: "Списан",
+};
 const initialState = { error: "" };
 
 export default function ComputerForm({ computer, action }: ComputerFormProps) {
@@ -57,7 +63,7 @@ export default function ComputerForm({ computer, action }: ComputerFormProps) {
 
       <div className="space-y-2">
         <Label>Статус *</Label>
-        <Select name="lifecycle_status" defaultValue={computer?.lifecycle_status ?? "active"}>
+        <Select name="lifecycle_status" defaultValue={computer?.lifecycle_status ?? "active"} items={LIFECYCLE_STATUS_ITEMS}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>

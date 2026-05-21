@@ -8,8 +8,7 @@ import { daysUntilExpiry } from "@/lib/utils";
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const [workplacesRes, computersRes, incidentsRes, licensesRes] = await Promise.all([
-    supabase.from("workplaces").select("id, employee_id, computer_id"),
+  const [computersRes, incidentsRes, licensesRes] = await Promise.all([
     supabase.from("computers").select("id, lifecycle_status"),
     supabase
       .from("incidents")
@@ -21,15 +20,16 @@ export default async function DashboardPage() {
       .eq("license_type", "subscription"),
   ]);
 
-  const workplaces = workplacesRes.data ?? [];
   const computers = computersRes.data ?? [];
   const allIncidents = incidentsRes.data ?? [];
   const allLicenses = licensesRes.data ?? [];
 
-  const total = workplaces.length;
-  const active = workplaces.filter((w) => w.employee_id && w.computer_id).length;
+  // All counters are consistently based on computers table
+  // "decommissioned" computers are excluded from total — they are no longer workplaces
+  const total = computers.filter((c) => c.lifecycle_status !== "decommissioned").length;
+  const active = computers.filter((c) => c.lifecycle_status === "active").length;
   const repair = computers.filter((c) => c.lifecycle_status === "repair").length;
-  const vacant = workplaces.filter((w) => !w.employee_id).length;
+  const vacant = computers.filter((c) => c.lifecycle_status === "storage").length;
 
   const criticalIncidents = allIncidents.filter((i) => i.priority === "critical");
 
@@ -43,10 +43,10 @@ export default async function DashboardPage() {
       <PageHeader title="Dashboard" description="Обзор состояния IT-инфраструктуры" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Всего рабочих мест" value={total} icon={Monitor} />
-        <StatCard label="Активных" value={active} icon={CheckCircle} color="green" />
-        <StatCard label="В ремонте" value={repair} icon={Wrench} color="amber" />
-        <StatCard label="Вакантных" value={vacant} icon={Package} color="blue" />
+        <StatCard label="Всего рабочих мест" value={total} icon={Monitor} href="/computers" />
+        <StatCard label="Активных" value={active} icon={CheckCircle} color="green" href="/computers?status=active" />
+        <StatCard label="В ремонте" value={repair} icon={Wrench} color="amber" href="/computers?status=repair" />
+        <StatCard label="Вакантных" value={vacant} icon={Package} color="blue" href="/computers?status=storage" />
       </div>
 
       <div className="space-y-3">

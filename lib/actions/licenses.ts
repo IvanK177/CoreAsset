@@ -44,6 +44,7 @@ export async function createLicensePool(formData: FormData) {
   });
   if (error) return { error: error.message };
   revalidatePath("/licenses");
+  revalidatePath("/dashboard");
   redirect("/licenses");
 }
 
@@ -51,6 +52,7 @@ export async function deleteLicensePool(id: string) {
   const supabase = await createClient();
   await supabase.from("license_pools").delete().eq("id", id);
   revalidatePath("/licenses");
+  revalidatePath("/dashboard");
   redirect("/licenses");
 }
 
@@ -80,6 +82,8 @@ export async function assignSoftware(computerId: string, softwareId: string) {
 
   revalidatePath(`/computers/${computerId}`);
   revalidatePath("/licenses");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard");
 }
 
 export async function removeSoftware(installationId: string, computerId: string) {
