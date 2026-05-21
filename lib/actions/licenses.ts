@@ -57,6 +57,9 @@ export async function deleteLicensePool(id: string) {
 export async function assignSoftware(computerId: string, softwareId: string) {
   const supabase = await createClient();
 
+  // Pre-check seat availability before inserting.
+  // The trigger trg_software_installations_seats will auto-increment used_seats on INSERT,
+  // so we must NOT manually update it here (would cause double-counting).
   const { data: pool } = await supabase
     .from("license_pools")
     .select("id, used_seats, total_seats")
@@ -75,11 +78,6 @@ export async function assignSoftware(computerId: string, softwareId: string) {
   });
   if (insertError) return { error: insertError.message };
 
-  await supabase
-    .from("license_pools")
-    .update({ used_seats: pool.used_seats + 1 })
-    .eq("id", pool.id);
-
   revalidatePath(`/computers/${computerId}`);
   revalidatePath("/licenses");
 }
@@ -87,28 +85,10 @@ export async function assignSoftware(computerId: string, softwareId: string) {
 export async function removeSoftware(installationId: string, computerId: string) {
   const supabase = await createClient();
 
-  const { data: inst } = await supabase
-    .from("software_installations")
-    .select("license_pool_id")
-    .eq("id", installationId)
-    .single();
-
+  // The trigger trg_software_installations_seats will auto-decrement used_seats on DELETE,
+  // so we must NOT manually update it here (would cause double-counting).
+  // Also removed the call to non-existent RPC "decrement_used_seats".
   await supabase.from("software_installations").delete().eq("id", installationId);
-
-  if (inst?.license_pool_id) {
-    await supabase.rpc("decrement_used_seats" as never, { pool_id: inst.license_pool_id } as never).maybeSingle();
-    const { data: pool } = await supabase
-      .from("license_pools")
-      .select("used_seats")
-      .eq("id", inst.license_pool_id)
-      .single();
-    if (pool) {
-      await supabase
-        .from("license_pools")
-        .update({ used_seats: Math.max(0, pool.used_seats - 1) })
-        .eq("id", inst.license_pool_id);
-    }
-  }
 
   revalidatePath(`/computers/${computerId}`);
   revalidatePath("/licenses");

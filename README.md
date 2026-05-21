@@ -54,7 +54,7 @@
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone https://github.com/TopMob/CoreAsset.git
+git clone https://github.com/IvanK177/CoreAsset.git
 cd CoreAsset
 ```
 
@@ -95,11 +95,11 @@ npm run dev
 
 ## Ресурсы проекта
 
-| Ресурс | Ссылка |
+| Ресурс | https://core-asset-api.vercel.app/dashboard |
 |--------|--------|
-| Репозиторий | XXX |
-| Деплой | XXX |
-| База данных | XXX |
+| Репозиторий | https://github.com/IvanK177/CoreAsset |
+| Деплой | https://vercel.com/ivank177s-projects/core-asset-api |
+| База данных | https://supabase.com/dashboard/project/tmivtbessykjksntdcwl |
 
 ---
 
@@ -123,6 +123,6 @@ CoreAsset/
 
 ## Авторы
 
-Миняев и Копаев Иваны
+Миняев Иван, Копаев Иван 
 
-Главные инструменты: claude Sonnet 4.6, Gemini, GLM-5.1
+Главные инструменты: Claude Sonnet 4.6, Gemini, GLM-5.1, VS Code
