@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { SubmitButton } from "@/components/shared/SubmitButton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
@@ -100,17 +101,17 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
           </Link>
           {emp.is_active && (
             <form action={async () => { "use server"; await dismissEmployee(id); }}>
-              <Button variant="outline" size="sm" type="submit" className="gap-2 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+              <SubmitButton variant="outline" size="sm" className="gap-2 text-amber-400 border-amber-500/30 hover:bg-amber-500/10" pendingText="Увольнение…">
                 <UserX className="w-4 h-4" /> Уволить
-              </Button>
+              </SubmitButton>
             </form>
           )}
           {!emp.is_active && (
             <>
               <form action={async () => { "use server"; await restoreEmployee(id); }}>
-                <Button variant="outline" size="sm" type="submit" className="gap-2 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10">
+                <SubmitButton variant="outline" size="sm" className="gap-2 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" pendingText="Восстановление…">
                   <UserCheck className="w-4 h-4" /> Вернуть
-                </Button>
+                </SubmitButton>
               </form>
               <DeleteConfirmDialog
                 onConfirm={async () => { "use server"; await deleteEmployee(id); }}

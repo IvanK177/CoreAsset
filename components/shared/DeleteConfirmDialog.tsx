@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, startTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 
 interface DeleteConfirmDialogProps {
   onConfirm: () => void | Promise<void>;
@@ -15,10 +15,11 @@ interface DeleteConfirmDialogProps {
 
 export function DeleteConfirmDialog({ onConfirm, description }: DeleteConfirmDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="destructive" size="sm" className="gap-2"><Trash2 className="w-4 h-4" /> Удалить</Button>} />
+      <DialogTrigger render={<Button variant="destructive" size="sm" className="gap-2" disabled={isPending}><Trash2 className="w-4 h-4" /> Удалить</Button>} />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Подтверждение удаления</DialogTitle>
@@ -27,12 +28,15 @@ export function DeleteConfirmDialog({ onConfirm, description }: DeleteConfirmDia
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Отмена</Button>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>Отмена</Button>
           <Button
             variant="destructive"
-            onClick={() => { setOpen(false); startTransition(() => { onConfirm(); }); }}
+            disabled={isPending}
+            className="gap-2"
+            onClick={() => { startTransition(() => { onConfirm(); }); }}
           >
-            Удалить
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            {isPending ? "Удаление…" : "Удалить"}
           </Button>
         </DialogFooter>
       </DialogContent>

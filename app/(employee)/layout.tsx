@@ -1,6 +1,5 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import PortalHeader from "@/components/portal/PortalHeader";
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
@@ -11,17 +10,6 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
   const cookieStore = await cookies();
   const demoRole = cookieStore.get("demo_role")?.value;
   const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
-
-  const isAuthenticated = !!user || !!demoRole;
-
-  if (!isAuthenticated) {
-    redirect("/login");
-  }
-
-  // If demo role is admin, redirect to dashboard
-  if (demoRole === "admin" && !user) {
-    redirect("/dashboard");
-  }
 
   // Get employee data
   let employeeData = null;

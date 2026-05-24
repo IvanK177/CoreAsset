@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -257,8 +258,9 @@ export function NewTicketDialog({
             <Button
               type="submit"
               disabled={pending}
-              className="flex-1 h-10 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium"
+              className="flex-1 h-10 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium gap-2"
             >
+              {pending && <Loader2 className="w-4 h-4 animate-spin" />}
               {pending ? "Отправка…" : "+ Отправить заявку"}
             </Button>
           </div>

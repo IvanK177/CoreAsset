@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { cn, formatDate } from "@/lib/utils";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { updateIncidentStatus } from "@/lib/actions/incidents";
-import { X, AlertTriangle, Monitor, Users, Calendar, CheckCircle } from "lucide-react";
+import { X, AlertTriangle, Monitor, Users, Calendar, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -48,6 +48,7 @@ export function IncidentsClientView({
 }: IncidentsClientViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId ?? null);
   const [activeTab, setActiveTab] = useState<"all" | IncidentStatus>("all");
+  const [isPending, startTransition] = useTransition();
 
   const filteredIncidents = activeTab === "all"
     ? incidents
@@ -164,18 +165,22 @@ export function IncidentsClientView({
             <div className="flex items-center gap-3">
               {selectedIncident.status === "open" && (
                 <button
-                  onClick={() => { updateIncidentStatus(selectedIncident.id, "in_progress"); setSelectedId(null); }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] text-white text-sm font-medium hover:bg-[#1d4ed8] transition-colors"
+                  onClick={() => { startTransition(() => { updateIncidentStatus(selectedIncident.id, "in_progress"); setSelectedId(null); }); }}
+                  disabled={isPending}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] text-white text-sm font-medium hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  🕐 Взять в работу
+                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🕐</span>}
+                  {isPending ? "Выполнение…" : "Взять в работу"}
                 </button>
               )}
               {selectedIncident.status === "in_progress" && (
                 <button
-                  onClick={() => { updateIncidentStatus(selectedIncident.id, "resolved"); setSelectedId(null); }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
+                  onClick={() => { startTransition(() => { updateIncidentStatus(selectedIncident.id, "resolved"); setSelectedId(null); }); }}
+                  disabled={isPending}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle className="w-4 h-4" /> Отметить исправленным
+                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  {isPending ? "Закрытие…" : "Отметить исправленным"}
                 </button>
               )}
               {selectedIncident.status === "resolved" && (

@@ -15,6 +15,7 @@ import {
   Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signOut } from "@/lib/actions/auth";
 
 interface SidebarProps {
   openIncidents: number;
@@ -118,7 +119,7 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
             <Link href="/dashboard" className="p-1.5 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
               <Clock className="w-4 h-4" />
             </Link>
-            <form action="/api/auth/signout" method="POST" className="inline">
+            <form action={signOut} className="inline">
               <button type="submit" className="p-1.5 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
                 <LogOut className="w-4 h-4" />
               </button>

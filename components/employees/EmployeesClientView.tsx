@@ -9,7 +9,7 @@ import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { cn, formatDate, extractJoinObject } from "@/lib/utils";
 import { restoreEmployeeDialog, dismissEmployeeDialog, deleteEmployeeDialog } from "@/lib/actions/employees";
 import { clearCache } from "@/lib/actions/revalidate";
-import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,6 +208,7 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
                   variant="outline"
                   size="sm"
                   className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
+                  disabled={isPending}
                   onClick={() => {
                     startTransition(async () => {
                       await dismissEmployeeDialog(selectedId!);
@@ -218,7 +219,8 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
                     });
                   }}
                 >
-                  <UserX className="w-4 h-4" /> Уволить
+                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserX className="w-4 h-4" />}
+                  {isPending ? "Увольнение…" : "Уволить"}
                 </Button>
               ) : (
                 <>
@@ -226,6 +228,7 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
                     variant="outline"
                     size="sm"
                     className="gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                    disabled={isPending}
                     onClick={() => {
                       startTransition(async () => {
                         await restoreEmployeeDialog(selectedId!);
@@ -237,7 +240,8 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
                       });
                     }}
                   >
-                    <UserCheck className="w-4 h-4" /> Вернуть
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
+                    {isPending ? "Восстановление…" : "Вернуть"}
                   </Button>
                   <DeleteConfirmDialog
                     onConfirm={async () => {

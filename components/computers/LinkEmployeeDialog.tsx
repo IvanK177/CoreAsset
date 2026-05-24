@@ -13,6 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -139,8 +140,9 @@ export function LinkEmployeeDialog({
             <Button
               type="submit"
               disabled={pending}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
+              className="bg-blue-500 hover:bg-blue-600 text-white gap-2"
             >
+              {pending && <Loader2 className="w-4 h-4 animate-spin" />}
               {pending ? "Сохранение…" : "Сохранить"}
             </Button>
           </div>

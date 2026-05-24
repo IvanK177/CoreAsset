@@ -1,21 +1,6 @@
 import { MonitorIcon, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-async function signOut() {
-  "use server";
-  const { createClient: createServerClient } = await import("@/lib/supabase/server");
-  const { cookies } = await import("next/headers");
-  const supabase = await createServerClient();
-  await supabase.auth.signOut();
-
-  // Clear demo cookies
-  const cookieStore = await cookies();
-  cookieStore.delete("demo_role");
-  cookieStore.delete("demo_employee_id");
-
-  const { redirect } = await import("next/navigation");
-  redirect("/login");
-}
+import { signOut } from "@/lib/actions/auth";
 
 interface PortalHeaderProps {
   employeeName: string;

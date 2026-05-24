@@ -10,6 +10,7 @@ import { deleteIncident, updateIncidentStatus } from "@/lib/actions/incidents";
 import { formatDate, extractJoinObject } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/shared/SubmitButton";
 import Link from "next/link";
 
 export default async function IncidentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -79,17 +80,17 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
         <div className="flex gap-3">
           {inc.status === "open" && (
             <form action={async () => { "use server"; await updateIncidentStatus(id, "in_progress"); }}>
-              <Button variant="outline" type="submit">→ В работу</Button>
+              <SubmitButton variant="outline" pendingText="Выполнение…">→ В работу</SubmitButton>
             </form>
           )}
           {inc.status === "in_progress" && (
             <form action={async () => { "use server"; await updateIncidentStatus(id, "resolved"); }}>
-              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">✓ Закрыть</Button>
+              <SubmitButton className="bg-emerald-600 hover:bg-emerald-700 gap-2" pendingText="Закрытие…">✓ Закрыть</SubmitButton>
             </form>
           )}
           {inc.status === "open" && (
             <form action={async () => { "use server"; await updateIncidentStatus(id, "resolved"); }}>
-              <Button variant="outline" type="submit" className="text-emerald-400 border-emerald-500/30">✓ Закрыть сразу</Button>
+              <SubmitButton variant="outline" className="text-emerald-400 border-emerald-500/30 gap-2" pendingText="Закрытие…">✓ Закрыть сразу</SubmitButton>
             </form>
           )}
         </div>

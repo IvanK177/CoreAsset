@@ -1,11 +1,12 @@
 "use client";
 
-import { startTransition } from "react";
+import { useTransition } from "react";
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface ConfirmActionDialogProps {
   open: boolean;
@@ -26,6 +27,8 @@ export function ConfirmActionDialog({
   confirmLabel = "Подтвердить",
   variant = "destructive",
 }: ConfirmActionDialogProps) {
+  const [isPending, startTransition] = useTransition();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -34,12 +37,15 @@ export function ConfirmActionDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Отмена</Button>
           <Button
             variant={variant}
-            onClick={() => { onOpenChange(false); startTransition(() => { onConfirm(); }); }}
+            disabled={isPending}
+            className="gap-2"
+            onClick={() => { startTransition(() => { onConfirm(); }); }}
           >
-            {confirmLabel}
+            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isPending ? `${confirmLabel}…` : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

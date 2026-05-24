@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,7 +78,8 @@ export default function WorkplaceForm({ workplace, computers, employees, action 
         <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{state.error}</p>
       )}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} className="gap-2">
+        {pending && <Loader2 className="w-4 h-4 animate-spin" />}
         {pending ? "Сохранение…" : workplace ? "Сохранить" : "Создать"}
       </Button>
     </form>
