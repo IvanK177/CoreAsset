@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+import { createServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -10,7 +13,7 @@ import { deleteSoftware } from "@/lib/actions/licenses";
 import { Trash2 } from "lucide-react";
 
 export default async function SoftwareCatalogPage() {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { data: software } = await supabase.from("software").select("*").order("name");
 
   return (

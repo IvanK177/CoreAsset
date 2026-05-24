@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import EmployeeForm from "@/components/employees/EmployeeForm";
 import PageHeader from "@/components/layout/PageHeader";
 import { createEmployee } from "@/lib/actions/employees";

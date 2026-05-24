@@ -6,40 +6,63 @@ import {
   LayoutDashboard,
   Monitor,
   Users,
-  Briefcase,
   Key,
+  BarChart2,
   AlertTriangle,
-  Shield,
+  MonitorIcon,
+  LogOut,
+  Clock,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface SidebarProps {
+  openIncidents: number;
+  expiringLicenses: number;
+  attentionCount: number;
+  userEmail?: string;
+}
+
 const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
   { href: "/computers", label: "Компьютеры", icon: Monitor },
   { href: "/employees", label: "Сотрудники", icon: Users },
-  { href: "/workplaces", label: "Рабочие места", icon: Briefcase },
   { href: "/licenses", label: "Лицензии", icon: Key },
+  { href: "/finances", label: "Финансы", icon: BarChart2 },
   { href: "/incidents", label: "Инциденты", icon: AlertTriangle },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ openIncidents, expiringLicenses, attentionCount, userEmail }: SidebarProps) {
   const pathname = usePathname();
 
+  const getBadge = (href: string) => {
+    if (href === "/licenses" && expiringLicenses > 0) return expiringLicenses;
+    if (href === "/incidents" && openIncidents > 0) return openIncidents;
+    return null;
+  };
+
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-sidebar border-r border-sidebar-border">
-      <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border shrink-0">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/15">
-          <Shield className="w-4 h-4 text-primary" />
+    <aside className="fixed inset-y-0 left-0 z-50 w-[220px] flex flex-col bg-[#1a2035] text-white">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-5 h-16 shrink-0">
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2563eb]">
+          <MonitorIcon className="w-5 h-5 text-white" />
         </div>
-        <span className="font-bold text-base tracking-tight">CoreAsset</span>
+        <div>
+          <span className="font-bold text-sm tracking-tight text-white">CoreAsset</span>
+          <p className="text-xs text-gray-400 leading-tight">IT Asset Management</p>
+        </div>
       </div>
 
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {nav.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/dashboard"
-              ? pathname === "/dashboard"
+              ? pathname === "/dashboard" || pathname === "/"
               : pathname.startsWith(href);
+          const badge = getBadge(href);
+
           return (
             <Link
               key={href}
@@ -47,19 +70,66 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  ? "bg-[#2563eb] text-white"
+                  : "text-gray-400 hover:bg-white/5 hover:text-white"
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
               {label}
+              {badge !== null && (
+                <span className={cn(
+                  "ml-auto flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+                  href === "/licenses" ? "bg-red-500 text-white" : "bg-orange-500 text-white"
+                )}>
+                  {badge}
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
 
-      <div className="px-3 py-3 border-t border-sidebar-border">
-        <p className="text-xs text-muted-foreground text-center">CoreAsset v1.0</p>
+      {/* Attention Banner */}
+      {attentionCount > 0 && (
+        <div className="px-3 pb-2">
+          <Link
+            href="/incidents"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/30 transition-colors"
+          >
+            <Bell className="w-4 h-4 shrink-0" />
+            {attentionCount} требуют внимания
+          </Link>
+        </div>
+      )}
+
+      {/* User Block */}
+      <div className="px-3 py-3 border-t border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#2563eb] text-white text-sm font-bold shrink-0">
+            {userEmail ? userEmail.charAt(0).toUpperCase() : "А"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white truncate">
+              {userEmail ?? "Администратор"}
+            </p>
+            <p className="text-xs text-gray-400">Администратор</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Link href="/dashboard" className="p-1.5 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+              <Clock className="w-4 h-4" />
+            </Link>
+            <form action="/api/auth/signout" method="POST" className="inline">
+              <button type="submit" className="p-1.5 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Version */}
+      <div className="px-3 py-2 border-t border-white/10">
+        <p className="text-xs text-gray-500 text-center">CoreAsset v1.0</p>
       </div>
     </aside>
   );

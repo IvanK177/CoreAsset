@@ -1,7 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED = ["/dashboard", "/computers", "/employees", "/workplaces", "/licenses", "/incidents"];
+const PROTECTED = [
+  "/dashboard",
+  "/computers",
+  "/employees",
+  "/workplaces",
+  "/licenses",
+  "/incidents",
+  "/finances",
+  "/portal",
+];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -26,17 +35,23 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
 
+  // Check demo mode cookies
+  const demoRole = request.cookies.get("demo_role")?.value;
+  const isAuthenticated = !!user || !!demoRole;
+
   const isProtected = PROTECTED.some((p) => pathname.startsWith(p));
 
-  if (!user && isProtected) {
+  if (!isAuthenticated && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === "/login") {
+  // Redirect authenticated users away from login page
+  if (isAuthenticated && pathname.startsWith("/login")) {
+    const redirectTo = demoRole === "employee" ? "/portal" : "/dashboard";
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = redirectTo;
     return NextResponse.redirect(url);
   }
 

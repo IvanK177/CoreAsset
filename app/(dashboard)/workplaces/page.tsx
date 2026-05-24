@@ -1,4 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+import { unstable_noStore as noStore } from 'next/cache';
+import { createServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -10,7 +14,8 @@ import { Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 export default async function WorkplacesPage() {
-  const supabase = await createClient();
+  noStore();
+  const supabase = createServiceClient();
   const { data: workplaces } = await supabase
     .from("workplaces")
     .select("*, computers(inventory_number), employees(full_name)")

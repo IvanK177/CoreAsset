@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -6,17 +9,17 @@ import { ComputerStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteComputer } from "@/lib/actions/computers";
 import { formatDate, extractJoinObject, safeHardware } from "@/lib/utils";
-import { Edit, Monitor } from "lucide-react";
+import { Edit, Monitor, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 
 export default async function ComputerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const [computerRes, incidentsRes, installsRes] = await Promise.all([
-    supabase.from("computers").select("*").eq("id", id).single(),
+    supabase.from("computers").select("*, employees(id, full_name, position, department, email)").eq("id", id).single(),
     supabase
       .from("incidents")
       .select("id, incident_type, description, priority, status, created_at")
@@ -37,6 +40,9 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
 
   if (!computerRes.data) notFound();
   const computer = computerRes.data;
+
+  // Extract joined employee — Supabase may return as array or object
+  const employee = extractJoinObject(computer.employees as unknown) as { id: string; full_name: string; position: string | null; department: string | null; email: string | null } | null;
 
   // Safely parse hardware JSON — validates types and ignores unknown fields (e.g. gpu)
   const hw = safeHardware(computer.hardware);
@@ -99,6 +105,27 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
       </div>
 
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Закреплённый сотрудник</p>
+        {employee ? (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary text-sm font-bold">
+              {employee.full_name.charAt(0)}
+            </div>
+            <div>
+              <Link href={`/employees/${employee.id}`} className="text-sm font-medium hover:underline">
+                {employee.full_name}
+              </Link>
+              <p className="text-xs text-muted-foreground">
+                {employee.position ?? "—"} · {employee.department ?? "—"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Не закреплён</p>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Установленное ПО ({installs.length})
@@ -136,7 +163,7 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
         ) : (
           <div className="space-y-3">
             {incidents.map((inc) => (
-              <Link key={inc.id} href={`/incidents/${inc.id}`} className="flex items-start gap-3 hover:bg-muted/30 rounded-lg p-2 transition-colors">
+              <Link key={inc.id} href={`/incidents?selectedId=${inc.id}`} className="flex items-start gap-3 hover:bg-muted/30 rounded-lg p-2 transition-colors">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate">{inc.description}</p>
                   <p className="text-xs text-muted-foreground">{formatDate(inc.created_at)} · {inc.incident_type}</p>

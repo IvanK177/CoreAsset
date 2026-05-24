@@ -1,74 +1,256 @@
-import { createClient } from "@/lib/supabase/server";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+import { unstable_noStore as noStore } from 'next/cache';
+import { createServiceClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { AlertBanner } from "@/components/dashboard/AlertBanner";
-import PageHeader from "@/components/layout/PageHeader";
-import { Monitor, CheckCircle, Wrench, Package } from "lucide-react";
-import { daysUntilExpiry } from "@/lib/utils";
+import { PriorityBadge } from "@/components/shared/PriorityBadge";
+import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
+import { cn, formatDate, daysUntilExpiry, extractJoinObject } from "@/lib/utils";
+import { Monitor, Package, Wrench, AlertTriangle, DollarSign, Clock, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  noStore();
+  const supabase = createServiceClient();
 
-  const [computersRes, incidentsRes, licensesRes] = await Promise.all([
-    supabase.from("computers").select("id, lifecycle_status"),
+  const [computersRes, incidentsRes, licensesRes, employeesRes, allIncidentsRes] = await Promise.all([
+    supabase.from("computers").select("id, lifecycle_status, inventory_number"),
     supabase
       .from("incidents")
-      .select("id, description, priority, status, computer_id")
-      .neq("status", "resolved"),
+      .select("id, description, priority, status, created_at, computer_id, computers(inventory_number)")
+      .neq("status", "resolved")
+      .order("created_at", { ascending: false })
+      .limit(10),
     supabase
       .from("license_pools")
-      .select("id, expires_at, software_id, software(name)")
+      .select("id, expires_at, used_seats, total_seats, price_per_unit, software_id, software(name, vendor)")
       .eq("license_type", "subscription"),
+    supabase.from("employees").select("id, is_active"),
+    supabase.from("incidents").select("id, status"),
   ]);
 
   const computers = computersRes.data ?? [];
-  const allIncidents = incidentsRes.data ?? [];
+  const openIncidents = incidentsRes.data ?? [];
   const allLicenses = licensesRes.data ?? [];
+  const employees = employeesRes.data ?? [];
+  const allIncidents = allIncidentsRes.data ?? [];
 
-  // All counters are consistently based on computers table
-  // "decommissioned" computers are excluded from total — they are no longer workplaces
+  // Metrics
   const total = computers.filter((c) => c.lifecycle_status !== "decommissioned").length;
-  const active = computers.filter((c) => c.lifecycle_status === "active").length;
+  const occupied = computers.filter((c) => c.lifecycle_status === "active").length;
+  const warehouse = computers.filter((c) => c.lifecycle_status === "storage").length;
   const repair = computers.filter((c) => c.lifecycle_status === "repair").length;
-  const vacant = computers.filter((c) => c.lifecycle_status === "storage").length;
+  const openTicketsCount = allIncidents.filter((i) => i.status !== "resolved").length;
+  const criticalHighCount = openIncidents.filter((i) => i.priority === "critical" || i.priority === "high").length;
 
-  const criticalIncidents = allIncidents.filter((i) => i.priority === "critical");
+  // Monthly cost
+  const monthlyCost = allLicenses.reduce((sum, l) => sum + (l.price_per_unit || 0) * l.used_seats, 0);
 
+  // Expiring licenses
   const expiringLicenses = allLicenses.filter((l) => {
     const days = daysUntilExpiry(l.expires_at);
     return days !== null && days <= 30;
   });
 
+  // Employee stats
+  const activeEmployees = employees.filter((e) => e.is_active).length;
+  const dismissedEmployees = employees.filter((e) => !e.is_active).length;
+  const resolvedTickets = allIncidents.filter((i) => i.status === "resolved").length;
+
+  // Current date formatted
+  const currentDate = new Intl.DateTimeFormat("ru-RU", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
+
+  // License usage data
+  const licenseUsage = allLicenses.map((l) => {
+    const sw = extractJoinObject(l.software as unknown) as { name: string; vendor: string | null } | null;
+    const pct = l.total_seats > 0 ? (l.used_seats / l.total_seats) * 100 : 0;
+    return {
+      name: sw?.name ?? "—",
+      used: l.used_seats,
+      total: l.total_seats,
+      pct,
+    };
+  });
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Dashboard" description="Обзор состояния IT-инфраструктуры" />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Всего рабочих мест" value={total} icon={Monitor} href="/computers" />
-        <StatCard label="Активных" value={active} icon={CheckCircle} color="green" href="/computers?status=active" />
-        <StatCard label="В ремонте" value={repair} icon={Wrench} color="amber" href="/computers?status=repair" />
-        <StatCard label="Вакантных" value={vacant} icon={Package} color="blue" href="/computers?status=storage" />
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Дашборд</h1>
+        <p className="text-sm text-gray-500 mt-1">{currentDate}</p>
       </div>
 
-      <div className="space-y-3">
-        <AlertBanner
-          title={`Критические инциденты (${criticalIncidents.length})`}
-          variant="critical"
-          items={criticalIncidents.map((i) => ({
-            id: i.id,
-            label: i.description,
-            href: `/incidents/${i.id}`,
-          }))}
+      {/* 5 Metric Cards */}
+      <div className="grid grid-cols-5 gap-4">
+        <StatCard
+          label="Занятые ПК"
+          value={occupied}
+          subtitle={`из ${total} всего`}
+          icon={Monitor}
+          iconBgColor="bg-[#dbeafe]"
+          iconTextColor="text-[#2563eb]"
+          href="/computers?filter=active"
         />
-        <AlertBanner
-          title={`Истекают лицензии (${expiringLicenses.length})`}
-          variant="warning"
-          items={expiringLicenses.map((l) => ({
-            id: l.id,
-            label: `${(l.software as { name: string } | null)?.name ?? "—"} — ${daysUntilExpiry(l.expires_at)} дн.`,
-            href: `/licenses`,
-          }))}
+        <StatCard
+          label="На складе"
+          value={warehouse}
+          subtitle="свободно для выдачи"
+          icon={Package}
+          iconBgColor="bg-[#dcfce7]"
+          iconTextColor="text-green-600"
+          href="/computers?filter=storage"
         />
+        <StatCard
+          label="В ремонте"
+          value={repair}
+          subtitle="на обслуживании"
+          icon={Wrench}
+          iconBgColor="bg-[#fef9c3]"
+          iconTextColor="text-yellow-600"
+          href="/computers?filter=repair"
+        />
+        <StatCard
+          label="Открытые тикеты"
+          value={openTicketsCount}
+          subtitle={`${criticalHighCount} критических/высоких`}
+          icon={AlertTriangle}
+          iconBgColor="bg-[#fee2e2]"
+          iconTextColor="text-red-600"
+          href="/incidents"
+        />
+        <StatCard
+          label="Расходы / месяц"
+          value={`${monthlyCost.toLocaleString("ru-RU")} ₽`}
+          subtitle="по активным подпискам"
+          icon={DollarSign}
+          iconBgColor="bg-[#ede9fe]"
+          iconTextColor="text-purple-600"
+          href="/finances"
+        />
+      </div>
+
+      {/* Bottom: Two columns */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* Left: Recent Incidents (2/3) */}
+        <div className="col-span-2 rounded-xl bg-white shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Последние заявки</h2>
+            <Link href="/incidents" className="text-sm text-[#2563eb] font-medium hover:underline flex items-center gap-1">
+              Все заявки <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {openIncidents.length === 0 ? (
+            <p className="text-sm text-gray-500 py-8 text-center">Нет открытых заявок</p>
+          ) : (
+            <div className="space-y-3">
+              {openIncidents.map((inc) => {
+                const computer = extractJoinObject(inc.computers as unknown) as { inventory_number: string } | null;
+                return (
+                  <Link
+                    key={inc.id}
+                    href={`/incidents?selectedId=${inc.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
+                        <span className="text-sm font-semibold text-gray-900 truncate">{inc.description}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {computer?.inventory_number ?? "—"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-4">
+                      <PriorityBadge priority={inc.priority} />
+                      <IncidentStatusBadge status={inc.status} />
+                      <span className="text-xs text-gray-400">{formatDate(inc.created_at)}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Right: Sidebar sections (1/3) */}
+        <div className="space-y-4">
+          {/* Expiring Licenses */}
+          {expiringLicenses.length > 0 && (
+            <div className="border border-red-200 bg-red-50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="w-4 h-4 text-red-500 shrink-0" />
+                <h3 className="text-sm font-semibold text-red-700">Истекают лицензии</h3>
+              </div>
+              <div className="space-y-2">
+                {expiringLicenses.map((l) => {
+                  const sw = extractJoinObject(l.software as unknown) as { name: string; vendor: string | null } | null;
+                  const days = daysUntilExpiry(l.expires_at);
+                  return (
+                    <div key={l.id} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{sw?.name ?? "—"}</p>
+                        <p className="text-xs text-gray-500">{sw?.vendor ?? "—"}</p>
+                      </div>
+                      <span className="text-xs font-medium text-red-600">через {days} дн.</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Employees */}
+          <div className="rounded-xl bg-white shadow-sm p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Сотрудники</h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Активных</span>
+                <span className="text-sm font-semibold text-gray-900">{activeEmployees}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Уволенных</span>
+                <span className="text-sm font-semibold text-gray-900">{dismissedEmployees}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Тикетов решено</span>
+                <span className="text-sm font-semibold text-gray-900">{resolvedTickets}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* License Usage */}
+          <div className="rounded-xl bg-white shadow-sm p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Использование лицензий</h3>
+            <div className="space-y-3">
+              {licenseUsage.map((lu) => (
+                <div key={lu.name}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-gray-700">{lu.name}</span>
+                    <span className="text-sm font-medium text-gray-900">{lu.used}/{lu.total}</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        lu.pct < 70 ? "bg-[#2563eb]" : lu.pct < 90 ? "bg-yellow-500" : "bg-red-500"
+                      )}
+                      style={{ width: `${Math.min(lu.pct, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

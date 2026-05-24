@@ -4,6 +4,8 @@ const hardwareSchema = z.object({
   cpu: z.string().optional(),
   ram: z.string().optional(),
   storage: z.string().optional(),
+  gpu: z.string().optional(),
+  mac_address: z.string().optional(),
 });
 
 export const computerSchema = z.object({

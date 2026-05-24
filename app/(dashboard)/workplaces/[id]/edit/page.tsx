@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import WorkplaceForm from "@/components/workplaces/WorkplaceForm";
 import PageHeader from "@/components/layout/PageHeader";
@@ -6,7 +9,7 @@ import { updateWorkplace } from "@/lib/actions/workplaces";
 
 export default async function EditWorkplacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const [{ data: workplace }, { data: computers }, { data: employees }] = await Promise.all([
     supabase.from("workplaces").select("*").eq("id", id).single(),

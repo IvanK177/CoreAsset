@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { workplaceSchema } from "@/lib/schemas/workplace.schema";
 
 export async function createWorkplace(formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   const raw = {
     room: formData.get("room"),
     computer_id: formData.get("computer_id") || undefined,
@@ -30,7 +30,7 @@ export async function createWorkplace(formData: FormData) {
 }
 
 export async function updateWorkplace(id: string, formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   const raw = {
     room: formData.get("room"),
     computer_id: formData.get("computer_id") || undefined,
@@ -56,7 +56,7 @@ export async function updateWorkplace(id: string, formData: FormData) {
 }
 
 export async function assignEmployee(workplaceId: string, employeeId: string | null) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   await supabase.from("workplaces").update({
     employee_id: employeeId,
     assigned_at: employeeId ? new Date().toISOString() : null,
@@ -68,7 +68,7 @@ export async function assignEmployee(workplaceId: string, employeeId: string | n
 }
 
 export async function deleteWorkplace(id: string) {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   await supabase.from("workplaces").delete().eq("id", id);
   revalidatePath("/workplaces");
   revalidatePath("/dashboard");

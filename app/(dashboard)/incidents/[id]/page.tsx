@@ -1,27 +1,31 @@
-import { createClient } from "@/lib/supabase/server";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { deleteIncident, updateIncidentStatus } from "@/lib/actions/incidents";
-import { formatDate } from "@/lib/utils";
+import { formatDate, extractJoinObject } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default async function IncidentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data: inc } = await supabase
     .from("incidents")
-    .select("*, computers(id, inventory_number)")
+    .select("*, computers(id, inventory_number), employees(id, full_name, position)")
     .eq("id", id)
     .single();
 
   if (!inc) notFound();
 
-  const computer = inc.computers as { id: string; inventory_number: string } | null;
+  const computer = extractJoinObject(inc.computers as unknown) as { id: string; inventory_number: string } | null;
+  const employee = extractJoinObject(inc.employees as unknown) as { id: string; full_name: string; position: string | null } | null;
   const isResolved = inc.status === "resolved";
 
   return (
@@ -55,6 +59,13 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
             </Link>
           ) : "—"
         } />
+        <Row label="Сотрудник" value={
+          employee ? (
+            <Link href={`/employees/${employee.id}`} className="text-primary hover:underline">
+              {employee.full_name}
+            </Link>
+          ) : "Не указан"
+        } />
         <Row label="Создан" value={formatDate(inc.created_at)} />
         {inc.resolved_at && <Row label="Закрыт" value={formatDate(inc.resolved_at)} />}
       </div>
@@ -87,11 +98,11 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
   );
 }
 
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
+function Row({ label, value }: { label: string; value?: string | null | React.ReactNode }) {
   return (
-    <div className="flex justify-between text-sm items-center">
+    <div className="flex justify-between text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value}</span>
+      <span className="font-medium">{value ?? "—"}</span>
     </div>
   );
 }

@@ -75,7 +75,11 @@ export default function NewLicensePoolClient({ software }: { software: Software[
         </div>
         <div className="space-y-2">
           <Label htmlFor="total_seats">Кол-во мест *</Label>
-          <Input id="total_seats" name="total_seats" type="number" min="1" defaultValue="1" required />
+          <Input id="total_seats" name="total_seats" type="number" min="1" placeholder="1" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="price_per_unit">Стоимость за ед. (₽)</Label>
+          <Input id="price_per_unit" name="price_per_unit" type="number" min="0" step="0.01" placeholder="0" />
         </div>
       </div>
 

@@ -16,6 +16,7 @@ export type Database = {
         Row: {
           computer_type: string
           created_at: string
+          employee_id: string | null
           hardware: Json | null
           id: string
           inventory_number: string
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           computer_type?: string
           created_at?: string
+          employee_id?: string | null
           hardware?: Json | null
           id?: string
           inventory_number: string
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           computer_type?: string
           created_at?: string
+          employee_id?: string | null
           hardware?: Json | null
           id?: string
           inventory_number?: string
@@ -46,7 +49,15 @@ export type Database = {
           serial_number?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "computers_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employees: {
         Row: {
@@ -89,33 +100,39 @@ export type Database = {
           computer_id: string | null
           created_at: string
           description: string
+          employee_id: string | null
           id: string
           incident_type: Database["public"]["Enums"]["incident_type"]
           priority: Database["public"]["Enums"]["incident_priority"]
           resolved_at: string | null
           status: Database["public"]["Enums"]["incident_status"]
+          title: string | null
           updated_at: string
         }
         Insert: {
           computer_id?: string | null
           created_at?: string
           description: string
+          employee_id?: string | null
           id?: string
           incident_type?: Database["public"]["Enums"]["incident_type"]
           priority?: Database["public"]["Enums"]["incident_priority"]
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["incident_status"]
+          title?: string | null
           updated_at?: string
         }
         Update: {
           computer_id?: string | null
           created_at?: string
           description?: string
+          employee_id?: string | null
           id?: string
           incident_type?: Database["public"]["Enums"]["incident_type"]
           priority?: Database["public"]["Enums"]["incident_priority"]
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["incident_status"]
+          title?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -124,6 +141,13 @@ export type Database = {
             columns: ["computer_id"]
             isOneToOne: false
             referencedRelation: "computers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -135,6 +159,7 @@ export type Database = {
           id: string
           license_type: Database["public"]["Enums"]["license_type"]
           notes: string | null
+          price_per_unit: number
           software_id: string
           total_seats: number
           updated_at: string
@@ -146,6 +171,7 @@ export type Database = {
           id?: string
           license_type?: Database["public"]["Enums"]["license_type"]
           notes?: string | null
+          price_per_unit?: number
           software_id: string
           total_seats?: number
           updated_at?: string
@@ -157,6 +183,7 @@ export type Database = {
           id?: string
           license_type?: Database["public"]["Enums"]["license_type"]
           notes?: string | null
+          price_per_unit?: number
           software_id?: string
           total_seats?: number
           updated_at?: string
