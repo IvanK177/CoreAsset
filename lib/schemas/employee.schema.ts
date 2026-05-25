@@ -3,12 +3,12 @@ import { z } from "zod";
 export const employeeSchema = z.object({
   full_name: z.string().min(1, "Обязательное поле"),
   position: z.string().min(1, "Обязательное поле"),
-  email: z.string().email("Некорректный email").optional().or(z.literal("")),
+  email: z.string().email("Некорректный email"),
   room: z.string().optional(),
   phone: z.string().optional(),
   telegram: z.string().optional(),
-  role: z.enum(["admin", "employee"]).default("employee"),
-  is_active: z.boolean().default(true),
+  role: z.enum(["admin", "employee"]),
+  is_active: z.boolean(),
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;

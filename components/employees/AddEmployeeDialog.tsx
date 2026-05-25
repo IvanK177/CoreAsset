@@ -36,7 +36,7 @@ const employeeDialogSchema = z.object({
   full_name: z.string().min(1, "Обязательное поле"),
   position: z.string().min(1, "Обязательное поле"),
   room: z.string().optional().or(z.literal("")),
-  email: z.string().optional().or(z.literal("")),
+  email: z.string().email("Некорректный email"),
   phone: z.string().optional().or(z.literal("")),
   telegram: z.string().optional().or(z.literal("")),
   role: z.enum(["admin", "employee"]),
