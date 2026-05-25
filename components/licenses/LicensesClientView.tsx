@@ -1,8 +1,12 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { cn, daysUntilExpiry, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
+import { deleteLicenseDialog } from "@/lib/actions/licenses";
+import { clearCache } from "@/lib/actions/revalidate";
 import { Key, Clock, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
 
 interface LicenseRow {
@@ -36,6 +40,8 @@ interface LicensesClientViewProps {
 
 export function LicensesClientView({ licenses, installations, expiringLicenses }: LicensesClientViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
@@ -163,24 +169,35 @@ export function LicensesClientView({ licenses, installations, expiringLicenses }
                   {isExpanded && (
                     <tr key={`expanded-${lic.id}`} className="bg-gray-50">
                       <td colSpan={6} className="px-4 py-3">
-                        <div className="pl-6">
-                          <p className="text-sm text-gray-600 mb-2">
-                            Установлено на {licInstalls.length} устройствах:
-                          </p>
-                          {licInstalls.length > 0 ? (
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {licInstalls.map((inst) => {
-                                const computer = (Array.isArray(inst.computers) ? inst.computers[0] : inst.computers) as { inventory_number: string } | null;
-                                return (
-                                  <Badge key={inst.id} variant="outline" className="text-xs bg-white border-gray-200 text-gray-700">
-                                    {computer?.inventory_number ?? "—"} с {formatDate(inst.installed_at)}
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-400">Нет установок</p>
-                          )}
+                        <div className="pl-6 flex items-start justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">
+                              Установлено на {licInstalls.length} устройствах:
+                            </p>
+                            {licInstalls.length > 0 ? (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {licInstalls.map((inst) => {
+                                  const computer = (Array.isArray(inst.computers) ? inst.computers[0] : inst.computers) as { inventory_number: string } | null;
+                                  return (
+                                    <Badge key={inst.id} variant="outline" className="text-xs bg-white border-gray-200 text-gray-700">
+                                      {computer?.inventory_number ?? "—"} с {formatDate(inst.installed_at)}
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-400">Нет установок</p>
+                            )}
+                          </div>
+                          <DeleteConfirmDialog
+                            onConfirm={async () => {
+                              await deleteLicenseDialog(lic.id);
+                              await clearCache('/licenses');
+                              await clearCache('/dashboard');
+                              startTransition(() => { router.refresh(); });
+                            }}
+                            description="Лицензия и все её установки будут удалены безвозвратно."
+                          />
                         </div>
                       </td>
                     </tr>

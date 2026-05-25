@@ -8,10 +8,14 @@ export const employeeSchema = z.object({
   phone: z.string().optional(),
   telegram: z.string().optional(),
   role: z.enum(["admin", "employee"]),
-  is_active: z.boolean(),
+  is_active: z.boolean().default(true),
 });
 
+/** Schema for updating an employee — is_active is managed by dismiss/restore actions */
+export const employeeUpdateSchema = employeeSchema.omit({ is_active: true });
+
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;
+export type EmployeeUpdateValues = z.infer<typeof employeeUpdateSchema>;
 
 /** Schema for validating a single employee row fetched from the database */
 export const employeeRowSchema = z.object({

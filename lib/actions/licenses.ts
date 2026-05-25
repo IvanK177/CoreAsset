@@ -40,6 +40,29 @@ export async function deleteLicense(id: string) {
   redirect("/licenses");
 }
 
+/** Non-redirecting variant for dialog use — deletes a license, returns result without redirect */
+export async function deleteLicenseDialog(id: string) {
+  let deleteError: string | null = null;
+
+  try {
+    const supabase = await createServiceClient();
+    const { error } = await supabase.from("licenses").delete().eq("id", id);
+    if (error) {
+      console.error("[deleteLicenseDialog] Supabase error:", error.message);
+      deleteError = error.message;
+    }
+  } catch (err) {
+    console.error("[deleteLicenseDialog] Unexpected error:", err);
+    deleteError = "Неожиданная ошибка при удалении лицензии";
+  }
+
+  if (deleteError) return { error: deleteError };
+
+  revalidatePath("/licenses");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 /** Install a license on a computer — inserts into computer_licenses and increments used_seats */
 export async function installSoftwareDialog(computerId: string, licenseId: string, installedAt?: string) {
   const supabase = await createServiceClient();

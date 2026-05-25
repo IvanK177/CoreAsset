@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { employeeSchema } from "@/lib/schemas/employee.schema";
+import { employeeSchema, employeeUpdateSchema } from "@/lib/schemas/employee.schema";
 
 export async function createEmployee(formData: FormData) {
   const supabase = await createServiceClient();
@@ -15,6 +15,7 @@ export async function createEmployee(formData: FormData) {
     phone: formData.get("phone") || undefined,
     telegram: formData.get("telegram") || undefined,
     role: formData.get("role") || undefined,
+    is_active: true,
   };
 
   const parsed = employeeSchema.safeParse(raw);
@@ -58,7 +59,7 @@ export async function updateEmployee(id: string, formData: FormData) {
     role: formData.get("role") || undefined,
   };
 
-  const parsed = employeeSchema.safeParse(raw);
+  const parsed = employeeUpdateSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const { error } = await supabase
@@ -301,6 +302,7 @@ export async function createEmployeeDialog(formData: FormData) {
     phone: formData.get("phone") || undefined,
     telegram: formData.get("telegram") || undefined,
     role: formData.get("role") || undefined,
+    is_active: true,
   };
 
   const parsed = employeeSchema.safeParse(raw);
