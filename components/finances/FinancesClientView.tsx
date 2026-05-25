@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { DollarSign, TrendingUp, Calendar, Package } from "lucide-react";
+import { DollarSign, TrendingUp, Calendar, Package, Key } from "lucide-react";
 
 interface BreakdownItem {
   name: string;
   vendor: string;
   pricePerUnit: number;
-  installations: number;
+  seats: number;
   total: number;
+  type: "subscription" | "perpetual";
 }
 
 interface FinancesClientViewProps {
@@ -19,6 +20,7 @@ interface FinancesClientViewProps {
   activeSubscriptions: number;
   breakdown: BreakdownItem[];
   grandTotal: number;
+  monthlyCosts: number[];
 }
 
 const months = [
@@ -38,15 +40,16 @@ export function FinancesClientView({
   activeSubscriptions,
   breakdown,
   grandTotal,
+  monthlyCosts,
 }: FinancesClientViewProps) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const currentMonth = new Date().getMonth(); // 0-11
 
-  // Generate monthly data (same amount each month for subscriptions)
+  // Generate monthly data from the server-provided monthlyCosts array
   const monthlyData = months.map((label, index) => ({
     label,
-    value: thisMonth,
+    value: monthlyCosts[index],
     isCurrent: index === currentMonth,
     isPast: index < currentMonth,
     isFuture: index > currentMonth,
@@ -148,8 +151,9 @@ export function FinancesClientView({
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Программа</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Вендор</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Тип</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Цена / ед.</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Установок</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Мест / Установок</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Итого</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Доля</th>
             </tr>
@@ -158,17 +162,33 @@ export function FinancesClientView({
             {breakdown.map((item) => {
               const share = grandTotal > 0 ? (item.total / grandTotal) * 100 : 0;
               return (
-                <tr key={item.name} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
+                <tr key={`${item.type}-${item.name}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">{item.vendor}</td>
+                  <td className="px-4 py-3">
+                    {item.type === "subscription" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                        <Package className="w-3 h-3" /> Подписка
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                        <Key className="w-3 h-3" /> Бессрочная
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{item.pricePerUnit.toLocaleString("ru-RU")} ₽</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{item.installations}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {item.type === "subscription" ? item.seats : item.seats}
+                  </td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.total.toLocaleString("ru-RU")} ₽</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-[#2563eb]"
+                          className={cn(
+                            "h-full rounded-full",
+                            item.type === "subscription" ? "bg-[#2563eb]" : "bg-green-500"
+                          )}
                           style={{ width: `${Math.min(share, 100)}%` }}
                         />
                       </div>

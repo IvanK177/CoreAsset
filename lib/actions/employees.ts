@@ -20,7 +20,27 @@ export async function createEmployee(formData: FormData) {
   const parsed = employeeSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const { error } = await supabase.from("employees").insert(parsed.data);
+  // 1. Create auth user first — employees.id must match auth.users.id
+  const email = parsed.data.email;
+  if (!email) return { error: "Email обязателен для создания сотрудника (используется как логин)" };
+
+  // Generate a random temporary password (user should change it on first login)
+  const tempPassword = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2).toUpperCase();
+
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true, // auto-confirm so user can log in immediately
+  });
+
+  if (authError) return { error: authError.message, code: authError.code };
+  if (!authData.user) return { error: "Не удалось создать пользователя в auth" };
+
+  // 2. Insert into employees table using the auth user id
+  const { error } = await supabase.from("employees").insert({
+    ...parsed.data,
+    id: authData.user.id,
+  });
   if (error) return { error: error.message, code: error.code };
   revalidatePath("/employees");
   redirect("/employees");
@@ -286,7 +306,27 @@ export async function createEmployeeDialog(formData: FormData) {
   const parsed = employeeSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message, code: undefined };
 
-  const { error } = await supabase.from("employees").insert(parsed.data);
+  // 1. Create auth user first — employees.id must match auth.users.id
+  const email = parsed.data.email;
+  if (!email) return { error: "Email обязателен для создания сотрудника (используется как логин)", code: undefined };
+
+  // Generate a random temporary password
+  const tempPassword = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2).toUpperCase();
+
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
+  });
+
+  if (authError) return { error: authError.message, code: authError.code ?? undefined };
+  if (!authData.user) return { error: "Не удалось создать пользователя в auth", code: undefined };
+
+  // 2. Insert into employees table using the auth user id
+  const { error } = await supabase.from("employees").insert({
+    ...parsed.data,
+    id: authData.user.id,
+  });
   if (error) return { error: error.message, code: error.code };
   revalidatePath("/employees");
   revalidatePath("/dashboard");
