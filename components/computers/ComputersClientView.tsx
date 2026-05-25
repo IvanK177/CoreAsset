@@ -13,7 +13,7 @@ import { InstallSoftwareDialog } from "@/components/computers/InstallSoftwareDia
 import { CreateTicketDialog } from "@/components/computers/CreateTicketDialog";
 import { deleteComputer, linkEmployeeToComputer } from "@/lib/actions/computers";
 import { removeSoftware } from "@/lib/actions/licenses";
-import { cn, formatDate, extractJoinObject, safeHardware } from "@/lib/utils";
+import { cn, formatDate, safeHardware } from "@/lib/utils";
 import { ArrowLeft, Edit, Monitor, X, Plus, Key, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Tables } from "@/types/database.types";
@@ -25,8 +25,8 @@ interface EmployeeJoin {
   id: string;
   full_name: string;
   position: string | null;
-  department: string | null;
   email: string | null;
+  room: string | null;
 }
 
 /** Computer row with joined employees relation from Supabase query */
@@ -43,11 +43,9 @@ export interface ActiveEmployee {
 interface InstallRow {
   id: string;
   computer_id: string;
-  software_id: string;
+  license_id: string;
   installed_at: string;
-  license_pool_id: string | null;
-  software: unknown;
-  license_pools: unknown;
+  licenses: unknown;
 }
 
 interface IncidentRow {
@@ -60,7 +58,7 @@ interface IncidentRow {
   created_at: string;
 }
 
-export interface LicensePoolOption {
+export interface LicenseOption {
   id: string;
   software_name: string;
   used_seats: number;
@@ -72,11 +70,11 @@ interface ComputersClientViewProps {
   activeEmployees: ActiveEmployee[];
   installations: InstallRow[];
   incidents: IncidentRow[];
-  licensePools: LicensePoolOption[];
+  licenseOptions: LicenseOption[];
   initialFilter?: string;
 }
 
-export function ComputersClientView({ computers, activeEmployees, installations, incidents, licensePools, initialFilter = "all" }: ComputersClientViewProps) {
+export function ComputersClientView({ computers, activeEmployees, installations, incidents, licenseOptions, initialFilter = "all" }: ComputersClientViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<ComputerStatus | "all">(initialFilter as ComputerStatus | "all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,7 +95,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
   const selectedComputer = selectedId ? computers.find((c) => c.id === selectedId) : null;
 
   const selectedEmployee = selectedComputer
-    ? extractJoinObject(selectedComputer.employees) as EmployeeJoin | null
+    ? (Array.isArray(selectedComputer.employees) ? selectedComputer.employees[0] : selectedComputer.employees) as EmployeeJoin | null
     : null;
 
   const selectedInstalls = selectedId
@@ -109,12 +107,14 @@ export function ComputersClientView({ computers, activeEmployees, installations,
 
   const hw = selectedComputer ? safeHardware(selectedComputer.hardware) : {};
 
-  const normalizedInstalls = selectedInstalls.map((inst) => ({
-    id: inst.id,
-    installed_at: inst.installed_at,
-    software: extractJoinObject(inst.software) as { id: string; name: string; version: string | null } | null,
-    pool: extractJoinObject(inst.license_pools) as { id: string; price_per_unit: number; expires_at: string | null; license_type: string; total_seats: number; used_seats: number } | null,
-  }));
+  const normalizedInstalls = selectedInstalls.map((inst) => {
+    const lic = (Array.isArray(inst.licenses) ? inst.licenses[0] : inst.licenses) as { id: string; software_name: string; version: string | null; license_type: string; total_seats: number; used_seats: number; price_per_unit: number | null; expires_at: string | null } | null;
+    return {
+      id: inst.id,
+      installed_at: inst.installed_at,
+      license: lic,
+    };
+  });
 
   if (selectedComputer) {
     return (
@@ -214,7 +214,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
                   <div>
                     <p className="text-sm font-medium text-gray-900">{selectedEmployee.full_name}</p>
                     <p className="text-xs text-gray-500">
-                      {selectedEmployee.position ?? "—"} · Каб. {selectedComputer.room ?? "—"}
+                      {selectedEmployee.position ?? "—"} · Каб. {selectedEmployee.room ?? selectedComputer.room ?? "—"}
                     </p>
                   </div>
                 </div>
@@ -250,11 +250,12 @@ export function ComputersClientView({ computers, activeEmployees, installations,
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         <Key className="w-3 h-3 text-gray-400 inline mr-1" />
-                        {inst.software?.name ?? "—"}
+                        {inst.license?.software_name ?? "—"}
+                        {inst.license?.version ? ` v${inst.license.version}` : ""}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Пул лицензий · {formatDate(inst.installed_at)}
-                        {inst.pool && ` · ${inst.pool.price_per_unit} ₽/ед.`}
+                        Лицензия · {formatDate(inst.installed_at)}
+                        {inst.license && inst.license.price_per_unit != null && ` · ${inst.license.price_per_unit} ₽/ед.`}
                       </p>
                     </div>
                     <button
@@ -322,7 +323,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
           open={installDialogOpen}
           onOpenChange={setInstallDialogOpen}
           computerId={selectedComputer.id}
-          licensePools={licensePools}
+          licenseOptions={licenseOptions}
         />
         <CreateTicketDialog
           open={ticketDialogOpen}
@@ -336,7 +337,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
           onOpenChange={setRemoveLicenseDialogOpen}
           onConfirm={async () => { await removeSoftware(removeLicenseInstallId!, selectedComputer.id); }}
           title="Удаление лицензии"
-          description="Вы уверены, что хотите удалить эту лицензию с компьютера? Это действие освободит одно место в пуле лицензий."
+          description="Вы уверены, что хотите удалить эту лицензию с компьютера? Это действие освободит одно место в лицензии."
           confirmLabel="Удалить"
         />
         <ConfirmActionDialog

@@ -9,10 +9,12 @@ export async function createEmployee(formData: FormData) {
   const supabase = await createServiceClient();
   const raw = {
     full_name: formData.get("full_name"),
-    department: formData.get("department") || undefined,
     position: formData.get("position") || undefined,
     email: formData.get("email") || undefined,
-    employee_number: formData.get("employee_number") || undefined,
+    room: formData.get("room") || undefined,
+    phone: formData.get("phone") || undefined,
+    telegram: formData.get("telegram") || undefined,
+    role: formData.get("role") || undefined,
   };
 
   const parsed = employeeSchema.safeParse(raw);
@@ -28,10 +30,12 @@ export async function updateEmployee(id: string, formData: FormData) {
   const supabase = await createServiceClient();
   const raw = {
     full_name: formData.get("full_name"),
-    department: formData.get("department") || undefined,
     position: formData.get("position") || undefined,
     email: formData.get("email") || undefined,
-    employee_number: formData.get("employee_number") || undefined,
+    room: formData.get("room") || undefined,
+    phone: formData.get("phone") || undefined,
+    telegram: formData.get("telegram") || undefined,
+    role: formData.get("role") || undefined,
   };
 
   const parsed = employeeSchema.safeParse(raw);
@@ -75,16 +79,11 @@ export async function restoreEmployee(id: string) {
   try {
     const supabase = await createServiceClient();
 
-    const { data: workplace, error: wpError } = await supabase
-      .from("workplaces")
-      .select("id, computer_id")
-      .eq("employee_id", id)
-      .maybeSingle();
-
-    if (wpError) {
-      console.error("[restoreEmployee] Workplace query error:", wpError.message);
-      // Continue — workplace might not exist
-    }
+    // Find computers assigned to this employee via computers.employee_id
+    const { data: computers } = await supabase
+      .from("computers")
+      .select("id, lifecycle_status")
+      .eq("employee_id", id);
 
     const { error: updateError } = await supabase
       .from("employees")
@@ -97,22 +96,17 @@ export async function restoreEmployee(id: string) {
     }
 
     // If employee had a computer moved to "storage" during dismissal, restore it to "active"
-    if (!actionError && workplace?.computer_id) {
-      const { data: computer } = await supabase
-        .from("computers")
-        .select("lifecycle_status")
-        .eq("id", workplace.computer_id)
-        .single();
+    if (!actionError && computers) {
+      for (const comp of computers) {
+        if (comp.lifecycle_status === "storage") {
+          const { error: compError } = await supabase
+            .from("computers")
+            .update({ lifecycle_status: "active" })
+            .eq("id", comp.id);
 
-      if (computer?.lifecycle_status === "storage") {
-        const { error: compError } = await supabase
-          .from("computers")
-          .update({ lifecycle_status: "active" })
-          .eq("id", workplace.computer_id);
-
-        if (compError) {
-          console.error("[restoreEmployee] Computer update error:", compError.message);
-          // Non-critical — employee is already restored
+          if (compError) {
+            console.error("[restoreEmployee] Computer update error:", compError.message);
+          }
         }
       }
     }
@@ -135,16 +129,11 @@ export async function dismissEmployee(id: string) {
   try {
     const supabase = await createServiceClient();
 
-    const { data: workplace, error: wpError } = await supabase
-      .from("workplaces")
-      .select("id, computer_id")
-      .eq("employee_id", id)
-      .maybeSingle();
-
-    if (wpError) {
-      console.error("[dismissEmployee] Workplace query error:", wpError.message);
-      // Continue — workplace might not exist
-    }
+    // Find computers assigned to this employee via computers.employee_id
+    const { data: computers } = await supabase
+      .from("computers")
+      .select("id")
+      .eq("employee_id", id);
 
     const { error: updateError } = await supabase
       .from("employees")
@@ -156,15 +145,18 @@ export async function dismissEmployee(id: string) {
       actionError = updateError.message;
     }
 
-    if (!actionError && workplace?.computer_id) {
-      const { error: compError } = await supabase
-        .from("computers")
-        .update({ lifecycle_status: "storage" })
-        .eq("id", workplace.computer_id);
+    // Move assigned computers to "storage" (ON DELETE SET NULL on employee_id will clear it)
+    // But we explicitly set lifecycle_status to "storage" and clear employee_id
+    if (!actionError && computers) {
+      for (const comp of computers) {
+        const { error: compError } = await supabase
+          .from("computers")
+          .update({ lifecycle_status: "storage", employee_id: null })
+          .eq("id", comp.id);
 
-      if (compError) {
-        console.error("[dismissEmployee] Computer update error:", compError.message);
-        // Non-critical — employee is already dismissed
+        if (compError) {
+          console.error("[dismissEmployee] Computer update error:", compError.message);
+        }
       }
     }
   } catch (err) {
@@ -186,15 +178,10 @@ export async function dismissEmployeeDialog(id: string) {
   try {
     const supabase = await createServiceClient();
 
-    const { data: workplace, error: wpError } = await supabase
-      .from("workplaces")
-      .select("id, computer_id")
-      .eq("employee_id", id)
-      .maybeSingle();
-
-    if (wpError) {
-      console.error("[dismissEmployeeDialog] Workplace query error:", wpError.message);
-    }
+    const { data: computers } = await supabase
+      .from("computers")
+      .select("id")
+      .eq("employee_id", id);
 
     const { error: updateError } = await supabase
       .from("employees")
@@ -206,14 +193,16 @@ export async function dismissEmployeeDialog(id: string) {
       actionError = updateError.message;
     }
 
-    if (!actionError && workplace?.computer_id) {
-      const { error: compError } = await supabase
-        .from("computers")
-        .update({ lifecycle_status: "storage" })
-        .eq("id", workplace.computer_id);
+    if (!actionError && computers) {
+      for (const comp of computers) {
+        const { error: compError } = await supabase
+          .from("computers")
+          .update({ lifecycle_status: "storage", employee_id: null })
+          .eq("id", comp.id);
 
-      if (compError) {
-        console.error("[dismissEmployeeDialog] Computer update error:", compError.message);
+        if (compError) {
+          console.error("[dismissEmployeeDialog] Computer update error:", compError.message);
+        }
       }
     }
   } catch (err) {
@@ -235,16 +224,8 @@ export async function restoreEmployeeDialog(id: string) {
   try {
     const supabase = await createServiceClient();
 
-    const { data: workplace, error: wpError } = await supabase
-      .from("workplaces")
-      .select("id, computer_id")
-      .eq("employee_id", id)
-      .maybeSingle();
-
-    if (wpError) {
-      console.error("[restoreEmployeeDialog] Workplace query error:", wpError.message);
-    }
-
+    // Note: after dismissal, employee_id on computers is set to null,
+    // so we can't find computers by employee_id. We skip computer restoration here.
     const { error: updateError } = await supabase
       .from("employees")
       .update({ is_active: true })
@@ -253,25 +234,6 @@ export async function restoreEmployeeDialog(id: string) {
     if (updateError) {
       console.error("[restoreEmployeeDialog] Employee update error:", updateError.message);
       actionError = updateError.message;
-    }
-
-    if (!actionError && workplace?.computer_id) {
-      const { data: computer } = await supabase
-        .from("computers")
-        .select("lifecycle_status")
-        .eq("id", workplace.computer_id)
-        .single();
-
-      if (computer?.lifecycle_status === "storage") {
-        const { error: compError } = await supabase
-          .from("computers")
-          .update({ lifecycle_status: "active" })
-          .eq("id", workplace.computer_id);
-
-        if (compError) {
-          console.error("[restoreEmployeeDialog] Computer update error:", compError.message);
-        }
-      }
     }
   } catch (err) {
     console.error("[restoreEmployeeDialog] Unexpected error:", err);
@@ -313,10 +275,12 @@ export async function createEmployeeDialog(formData: FormData) {
   const supabase = await createServiceClient();
   const raw = {
     full_name: formData.get("full_name"),
-    department: formData.get("department") || undefined,
     position: formData.get("position") || undefined,
     email: formData.get("email") || undefined,
-    employee_number: formData.get("employee_number") || undefined,
+    room: formData.get("room") || undefined,
+    phone: formData.get("phone") || undefined,
+    telegram: formData.get("telegram") || undefined,
+    role: formData.get("role") || undefined,
   };
 
   const parsed = employeeSchema.safeParse(raw);

@@ -4,17 +4,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
-import { ComputersClientView, ComputerWithEmployee, ActiveEmployee, LicensePoolOption } from "@/components/computers/ComputersClientView";
+import { ComputersClientView, ComputerWithEmployee, ActiveEmployee, LicenseOption } from "@/components/computers/ComputersClientView";
 import { AddComputerDialog } from "@/components/computers/AddComputerDialog";
 
 interface InstallRow {
   id: string;
   computer_id: string;
-  software_id: string;
+  license_id: string;
   installed_at: string;
-  license_pool_id: string | null;
-  software: unknown;
-  license_pools: unknown;
+  licenses: unknown;
 }
 
 interface IncidentRow {
@@ -32,7 +30,7 @@ interface ComputersPageClientProps {
   activeEmployees: ActiveEmployee[];
   installations: InstallRow[];
   incidents: IncidentRow[];
-  licensePools: LicensePoolOption[];
+  licenseOptions: LicenseOption[];
   totalCount: number;
   initialFilter?: string;
 }
@@ -42,7 +40,7 @@ export function ComputersPageClient({
   activeEmployees,
   installations,
   incidents,
-  licensePools,
+  licenseOptions,
   totalCount,
   initialFilter = "all",
 }: ComputersPageClientProps) {
@@ -65,7 +63,7 @@ export function ComputersPageClient({
         activeEmployees={activeEmployees}
         installations={installations}
         incidents={incidents}
-        licensePools={licensePools}
+        licenseOptions={licenseOptions}
         initialFilter={initialFilter}
       />
       <AddComputerDialog open={dialogOpen} onOpenChange={setDialogOpen} />

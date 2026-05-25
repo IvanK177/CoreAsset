@@ -36,7 +36,7 @@ export default async function PortalPage() {
   // Fetch employee data
   const { data: employee } = await dataClient
     .from("employees")
-    .select("id, full_name, position, department, email")
+    .select("id, full_name, position, email, room")
     .eq("id", employeeId)
     .single();
 

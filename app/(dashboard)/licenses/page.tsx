@@ -10,36 +10,36 @@ export default async function LicensesPage() {
   noStore();
   const supabase = createServiceClient();
 
-  const [poolsRes, installationsRes] = await Promise.all([
+  const [licensesRes, installationsRes] = await Promise.all([
     supabase
-      .from("license_pools")
-      .select("id, license_type, total_seats, used_seats, expires_at, price_per_unit, software_id, software(name, vendor)")
+      .from("licenses")
+      .select("id, software_name, version, vendor, license_type, license_key, total_seats, used_seats, expires_at, price_per_unit, notes, created_at")
       .order("created_at", { ascending: false }),
     supabase
-      .from("software_installations")
-      .select("id, computer_id, installed_at, software_id, license_pool_id, computers(inventory_number)")
+      .from("computer_licenses")
+      .select("id, computer_id, license_id, installed_at, computers(inventory_number)")
       .order("installed_at", { ascending: false }),
   ]);
 
-  const pools = poolsRes.data ?? [];
+  const licenses = licensesRes.data ?? [];
   const installations = installationsRes.data ?? [];
 
   // Calculate stats
-  const totalPools = pools.length;
-  const totalInstallations = pools.reduce((sum, p) => sum + p.used_seats, 0);
+  const totalLicenses = licenses.length;
+  const totalInstallations = licenses.reduce((sum, l) => sum + l.used_seats, 0);
 
   // Expiring licenses
-  const expiringLicenses = pools.filter((l) => {
+  const expiringLicenses = licenses.filter((l) => {
     const days = daysUntilExpiry(l.expires_at);
     return days !== null && days <= 30;
   });
 
   return (
     <LicensesPageClient
-      pools={pools}
+      licenses={licenses}
       installations={installations}
       expiringLicenses={expiringLicenses}
-      totalPools={totalPools}
+      totalLicenses={totalLicenses}
       totalInstallations={totalInstallations}
     />
   );

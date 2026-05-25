@@ -3,35 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
-import { softwareSchema, licensePoolSchema } from "@/lib/schemas/license.schema";
+import { licenseSchema } from "@/lib/schemas/license.schema";
 
-export async function createSoftware(formData: FormData) {
+/** Create a license (merged table: software info + license pool in one row) */
+export async function createLicense(formData: FormData) {
   const supabase = await createServiceClient();
-  const parsed = softwareSchema.safeParse({
-    name: formData.get("name"),
+  const parsed = licenseSchema.safeParse({
+    software_name: formData.get("software_name"),
     version: formData.get("version") || undefined,
     vendor: formData.get("vendor") || undefined,
-  });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-
-  const { error } = await supabase.from("software").insert(parsed.data);
-  if (error) return { error: error.message, code: error.code };
-  revalidatePath("/licenses/software");
-  redirect("/licenses/software");
-}
-
-export async function deleteSoftware(id: string) {
-  const supabase = await createServiceClient();
-  await supabase.from("software").delete().eq("id", id);
-  revalidatePath("/licenses/software");
-  redirect("/licenses/software");
-}
-
-export async function createLicensePool(formData: FormData) {
-  const supabase = await createServiceClient();
-  const parsed = licensePoolSchema.safeParse({
-    software_id: formData.get("software_id"),
     license_type: formData.get("license_type"),
+    license_key: formData.get("license_key") || undefined,
     total_seats: formData.get("total_seats"),
     price_per_unit: formData.get("price_per_unit") || 0,
     expires_at: formData.get("expires_at") || undefined,
@@ -39,7 +21,7 @@ export async function createLicensePool(formData: FormData) {
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const { error } = await supabase.from("license_pools").insert({
+  const { error } = await supabase.from("licenses").insert({
     ...parsed.data,
     expires_at: parsed.data.expires_at || null,
   });
@@ -49,65 +31,52 @@ export async function createLicensePool(formData: FormData) {
   redirect("/licenses");
 }
 
-export async function deleteLicensePool(id: string) {
+/** Delete a license */
+export async function deleteLicense(id: string) {
   const supabase = await createServiceClient();
-  await supabase.from("license_pools").delete().eq("id", id);
+  await supabase.from("licenses").delete().eq("id", id);
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
   redirect("/licenses");
 }
 
-export async function assignSoftware(computerId: string, softwareId: string) {
+/** Install a license on a computer — inserts into computer_licenses and increments used_seats */
+export async function installSoftwareDialog(computerId: string, licenseId: string, installedAt?: string) {
   const supabase = await createServiceClient();
 
-  // Pre-check seat availability before inserting.
-  // The trigger trg_software_installations_seats will auto-increment used_seats on INSERT,
-  // so we must NOT manually update it here (would cause double-counting).
-  const { data: pool } = await supabase
-    .from("license_pools")
+  // Fetch the license to check seat availability
+  const { data: license, error: licenseError } = await supabase
+    .from("licenses")
     .select("id, used_seats, total_seats")
-    .eq("software_id", softwareId)
-    .order("used_seats")
-    .limit(1)
-    .maybeSingle();
-
-  if (!pool) return { error: "Пул лицензий не найден" };
-  if (pool.used_seats >= pool.total_seats) return { error: "Лицензии исчерпаны" };
-
-  const { error: insertError } = await supabase.from("software_installations").insert({
-    computer_id: computerId,
-    software_id: softwareId,
-    license_pool_id: pool.id,
-  });
-  if (insertError) return { error: insertError.message };
-
-  revalidatePath(`/computers/${computerId}`);
-  revalidatePath("/licenses");
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard");
-}
-
-/** Non-redirecting variant for dialog use — installs software from a specific license pool */
-export async function installSoftwareDialog(computerId: string, licensePoolId: string, installedAt?: string) {
-  const supabase = await createServiceClient();
-
-  // Fetch the license pool to get software_id and check seat availability
-  const { data: pool, error: poolError } = await supabase
-    .from("license_pools")
-    .select("id, software_id, used_seats, total_seats")
-    .eq("id", licensePoolId)
+    .eq("id", licenseId)
     .single();
 
-  if (poolError || !pool) return { error: "Пул лицензий не найден", code: undefined };
-  if (pool.used_seats >= pool.total_seats) return { error: "Лицензии исчерпаны", code: undefined };
+  if (licenseError || !license) return { error: "Лицензия не найдена", code: undefined };
+  if (license.used_seats >= license.total_seats) return { error: "Лицензии исчерпаны", code: undefined };
 
-  const { error: insertError } = await supabase.from("software_installations").insert({
+  // Insert into computer_licenses
+  const { error: insertError } = await supabase.from("computer_licenses").insert({
     computer_id: computerId,
-    software_id: pool.software_id,
-    license_pool_id: pool.id,
+    license_id: licenseId,
     installed_at: installedAt || new Date().toISOString(),
   });
-  if (insertError) return { error: insertError.message, code: insertError.code };
+  if (insertError) {
+    if (insertError.code === "23505") {
+      return { error: "ПО уже установлено на этот компьютер", code: insertError.code };
+    }
+    return { error: insertError.message, code: insertError.code };
+  }
+
+  // Increment used_seats on the license
+  const { error: updateError } = await supabase
+    .from("licenses")
+    .update({ used_seats: license.used_seats + 1 })
+    .eq("id", licenseId);
+
+  if (updateError) {
+    console.error("[installSoftwareDialog] used_seats update error:", updateError.message);
+    // Non-critical — the installation was successful, just the counter is off
+  }
 
   revalidatePath("/computers");
   revalidatePath(`/computers/${computerId}`);
@@ -116,56 +85,64 @@ export async function installSoftwareDialog(computerId: string, licensePoolId: s
   return { success: true };
 }
 
+/** Remove a license installation from a computer — deletes from computer_licenses and decrements used_seats */
 export async function removeSoftware(installationId: string, computerId: string) {
   const supabase = await createServiceClient();
 
-  // The trigger trg_software_installations_seats will auto-decrement used_seats on DELETE,
-  // so we must NOT manually update it here (would cause double-counting).
-  // Also removed the call to non-existent RPC "decrement_used_seats".
-  await supabase.from("software_installations").delete().eq("id", installationId);
+  // Fetch the installation to get the license_id for decrementing used_seats
+  const { data: installation } = await supabase
+    .from("computer_licenses")
+    .select("license_id")
+    .eq("id", installationId)
+    .single();
+
+  // Delete the installation
+  await supabase.from("computer_licenses").delete().eq("id", installationId);
+
+  // Decrement used_seats on the license
+  if (installation?.license_id) {
+    const { data: license } = await supabase
+      .from("licenses")
+      .select("used_seats")
+      .eq("id", installation.license_id)
+      .single();
+
+    if (license && license.used_seats > 0) {
+      await supabase
+        .from("licenses")
+        .update({ used_seats: license.used_seats - 1 })
+        .eq("id", installation.license_id);
+    }
+  }
 
   revalidatePath(`/computers/${computerId}`);
   revalidatePath("/licenses");
+  revalidatePath("/dashboard");
 }
 
-/** Non-redirecting variant for dialog use — creates software + pool in one step */
-export async function createLicensePoolDialog(formData: FormData) {
+/** Non-redirecting variant for dialog use — creates a license in one step */
+export async function createLicenseDialog(formData: FormData) {
   const supabase = await createServiceClient();
 
-  // 1. Create software entry
-  const softwareName = formData.get("software_name") as string;
-  const vendor = (formData.get("vendor") as string) || null;
+  const parsed = licenseSchema.safeParse({
+    software_name: formData.get("software_name"),
+    version: formData.get("version") || undefined,
+    vendor: formData.get("vendor") || undefined,
+    license_type: formData.get("license_type") || "perpetual",
+    license_key: formData.get("license_key") || undefined,
+    total_seats: formData.get("total_seats") || 1,
+    price_per_unit: formData.get("price_per_unit") || 0,
+    expires_at: formData.get("expires_at") || undefined,
+    notes: formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message, code: undefined };
 
-  if (!softwareName) return { error: "Название программы обязательно", code: undefined };
-
-  const { data: software, error: swError } = await supabase
-    .from("software")
-    .insert({ name: softwareName, vendor })
-    .select("id")
-    .single();
-
-  if (swError) return { error: swError.message, code: swError.code };
-
-  // 2. Create license pool linked to the new software
-  const licenseType = (formData.get("license_type") as "perpetual" | "subscription") || "perpetual";
-  const totalSeats = Number(formData.get("total_seats")) || 1;
-  const pricePerUnit = Number(formData.get("price_per_unit")) || 0;
-  const expiresAt = (formData.get("expires_at") as string) || null;
-  const paymentPeriod = (formData.get("payment_period") as string) || null;
-
-  // Store payment_period in notes since DB has no dedicated column
-  const notes = paymentPeriod ? `Период оплаты: ${paymentPeriod}` : null;
-
-  const { error: poolError } = await supabase.from("license_pools").insert({
-    software_id: software.id,
-    license_type: licenseType,
-    total_seats: totalSeats,
-    price_per_unit: pricePerUnit,
-    expires_at: expiresAt,
-    notes,
+  const { error } = await supabase.from("licenses").insert({
+    ...parsed.data,
+    expires_at: parsed.data.expires_at || null,
   });
 
-  if (poolError) return { error: poolError.message, code: poolError.code };
+  if (error) return { error: error.message, code: error.code };
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
   return { success: true };

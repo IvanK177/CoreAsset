@@ -1,40 +1,40 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { cn, daysUntilExpiry, formatDate, extractJoinObject } from "@/lib/utils";
+import { cn, daysUntilExpiry, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Key, Clock, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
 
-interface PoolRow {
+interface LicenseRow {
   id: string;
+  software_name: string;
+  version: string | null;
+  vendor: string | null;
   license_type: string;
+  license_key: string | null;
   total_seats: number;
   used_seats: number;
   expires_at: string | null;
-  price_per_unit: number;
-  software_id: string;
-  software: unknown;
+  price_per_unit: number | null;
+  notes: string | null;
+  created_at: string;
 }
 
 interface InstallationRow {
   id: string;
   computer_id: string;
+  license_id: string;
   installed_at: string;
-  software_id: string;
-  license_pool_id: string | null;
   computers: unknown;
 }
 
 interface LicensesClientViewProps {
-  pools: PoolRow[];
+  licenses: LicenseRow[];
   installations: InstallationRow[];
-  expiringLicenses: PoolRow[];
+  expiringLicenses: LicenseRow[];
 }
 
-export function LicensesClientView({ pools, installations, expiringLicenses }: LicensesClientViewProps) {
+export function LicensesClientView({ licenses, installations, expiringLicenses }: LicensesClientViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (id: string) => {
@@ -49,20 +49,13 @@ export function LicensesClientView({ pools, installations, expiringLicenses }: L
     });
   };
 
-  // Get installations for a specific pool
-  const getPoolInstallations = (poolId: string) => {
-    return installations.filter((i) => i.license_pool_id === poolId);
+  // Get installations for a specific license
+  const getLicenseInstallations = (licenseId: string) => {
+    return installations.filter((i) => i.license_id === licenseId);
   };
 
   return (
     <div className="space-y-4">
-      {/* Software directory link */}
-      <div className="flex justify-end">
-        <Link href="/licenses/software" className={buttonVariants({ variant: "outline", size: "sm" }) + " gap-2"}>
-          <BookOpen className="w-4 h-4" /> Справочник ПО
-        </Link>
-      </div>
-
       {/* Expiring licenses alert banner */}
       {expiringLicenses.length > 0 && (
         <div className="border border-red-200 bg-red-50 rounded-xl p-3">
@@ -74,11 +67,10 @@ export function LicensesClientView({ pools, installations, expiringLicenses }: L
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {expiringLicenses.map((l) => {
-              const sw = extractJoinObject(l.software as unknown) as { name: string; vendor: string | null } | null;
               const days = daysUntilExpiry(l.expires_at);
               return (
                 <Badge key={l.id} variant="outline" className="text-xs bg-white border-red-200 text-red-700">
-                  {sw?.name ?? "—"} · {days} дн.
+                  {l.software_name ?? "—"} · {days} дн.
                 </Badge>
               );
             })}
@@ -100,32 +92,31 @@ export function LicensesClientView({ pools, installations, expiringLicenses }: L
             </tr>
           </thead>
           <tbody>
-            {pools.map((pool) => {
-              const sw = extractJoinObject(pool.software as unknown) as { name: string; vendor: string | null } | null;
-              const isExpanded = expandedIds.has(pool.id);
-              const days = daysUntilExpiry(pool.expires_at);
+            {licenses.map((lic) => {
+              const isExpanded = expandedIds.has(lic.id);
+              const days = daysUntilExpiry(lic.expires_at);
               const isExpiring = days !== null && days <= 30;
-              const pct = pool.total_seats > 0 ? (pool.used_seats / pool.total_seats) * 100 : 0;
-              const poolInstalls = getPoolInstallations(pool.id);
+              const pct = lic.total_seats > 0 ? (lic.used_seats / lic.total_seats) * 100 : 0;
+              const licInstalls = getLicenseInstallations(lic.id);
 
               return (
-                <Fragment key={pool.id}>
+                <Fragment key={lic.id}>
                   <tr
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => toggleExpanded(pool.id)}
+                    onClick={() => toggleExpanded(lic.id)}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Key className="w-4 h-4 text-[#2563eb] shrink-0" />
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{sw?.name ?? "—"}</p>
-                          <p className="text-xs text-gray-500">{sw?.vendor ?? "—"}</p>
+                          <p className="text-sm font-semibold text-gray-900">{lic.software_name}</p>
+                          <p className="text-xs text-gray-500">{lic.vendor ?? "—"}{lic.version ? ` · v${lic.version}` : ""}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className="text-xs">
-                        {pool.license_type === "subscription" ? "Подписка" : "Бессрочная"}
+                        {lic.license_type === "subscription" ? "Подписка" : "Бессрочная"}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
@@ -139,20 +130,20 @@ export function LicensesClientView({ pools, installations, expiringLicenses }: L
                             style={{ width: `${Math.min(pct, 100)}%` }}
                           />
                         </div>
-                        <span className="text-sm text-gray-700">{pool.used_seats} / {pool.total_seats}</span>
+                        <span className="text-sm text-gray-700">{lic.used_seats} / {lic.total_seats}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm text-gray-700">
-                        {pool.price_per_unit > 0 ? `${pool.price_per_unit.toLocaleString("ru-RU")} ₽/ед.` : "—"}
+                        {(lic.price_per_unit ?? 0) > 0 ? `${(lic.price_per_unit ?? 0).toLocaleString("ru-RU")} ₽/ед.` : "—"}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {pool.expires_at ? (
+                      {lic.expires_at ? (
                         <div className="flex items-center gap-1">
                           {isExpiring && <Clock className="w-3.5 h-3.5 text-red-500" />}
                           <span className={cn("text-sm", isExpiring ? "text-red-600 font-medium" : "text-gray-500")}>
-                            {formatDate(pool.expires_at)}
+                            {formatDate(lic.expires_at)}
                             {isExpiring && ` (${days} дн.)`}
                           </span>
                         </div>
@@ -170,16 +161,16 @@ export function LicensesClientView({ pools, installations, expiringLicenses }: L
 
                   {/* Expanded row */}
                   {isExpanded && (
-                    <tr key={`expanded-${pool.id}`} className="bg-gray-50">
+                    <tr key={`expanded-${lic.id}`} className="bg-gray-50">
                       <td colSpan={6} className="px-4 py-3">
                         <div className="pl-6">
                           <p className="text-sm text-gray-600 mb-2">
-                            Установлено на {poolInstalls.length} устройствах:
+                            Установлено на {licInstalls.length} устройствах:
                           </p>
-                          {poolInstalls.length > 0 ? (
+                          {licInstalls.length > 0 ? (
                             <div className="flex items-center gap-2 flex-wrap">
-                              {poolInstalls.map((inst) => {
-                                const computer = extractJoinObject(inst.computers as unknown) as { inventory_number: string } | null;
+                              {licInstalls.map((inst) => {
+                                const computer = (Array.isArray(inst.computers) ? inst.computers[0] : inst.computers) as { inventory_number: string } | null;
                                 return (
                                   <Badge key={inst.id} variant="outline" className="text-xs bg-white border-gray-200 text-gray-700">
                                     {computer?.inventory_number ?? "—"} с {formatDate(inst.installed_at)}

@@ -18,7 +18,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
   if (employeeId) {
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, department, email")
+      .select("id, full_name, position, email, room")
       .eq("id", employeeId)
       .single();
     employeeData = data;
@@ -26,7 +26,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     // Try to match by email for real auth
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, department, email")
+      .select("id, full_name, position, email, room")
       .eq("email", user.email)
       .single();
     employeeData = data;
@@ -36,7 +36,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     // Fallback: use hardcoded demo employee
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, department, email")
+      .select("id, full_name, position, email, room")
       .eq("id", "e0000001-0000-0000-0000-000000000001")
       .single();
     employeeData = data;

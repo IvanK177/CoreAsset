@@ -9,15 +9,11 @@ export default async function EmployeesPage() {
   noStore();
   const supabase = createServiceClient();
 
-  const [employeesRes, workplacesRes, computersRes, incidentsRes] = await Promise.all([
+  const [employeesRes, computersRes, incidentsRes] = await Promise.all([
     supabase.from("employees").select("*").order("full_name"),
     supabase
-      .from("workplaces")
-      .select("id, employee_id, computer_id, room, assigned_at, computers(id, inventory_number, lifecycle_status, computer_type)")
-      .not("employee_id", "is", null),
-    supabase
       .from("computers")
-      .select("id, inventory_number, computer_type, lifecycle_status, employee_id")
+      .select("id, inventory_number, computer_type, lifecycle_status, employee_id, room")
       .not("employee_id", "is", null),
     supabase
       .from("incidents")
@@ -32,7 +28,6 @@ export default async function EmployeesPage() {
   return (
     <EmployeesPageClient
       employees={employees}
-      workplaces={workplacesRes.data ?? []}
       computers={computersRes.data ?? []}
       incidents={incidentsRes.data ?? []}
       activeCount={activeCount}

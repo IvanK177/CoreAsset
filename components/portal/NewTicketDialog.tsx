@@ -31,7 +31,7 @@ type PriorityLevel = "low" | "medium" | "high" | "critical";
 interface ComputerOption {
   id: string;
   inventory_number: string;
-  computer_type: string;
+  computer_type: string | null;
 }
 
 interface NewTicketDialogProps {
@@ -144,7 +144,7 @@ export function NewTicketDialog({
   const computerItems = Object.fromEntries(
     computers.map((c) => [
       c.id,
-      `${c.inventory_number} (${computerTypeLabels[c.computer_type] ?? c.computer_type})`,
+      `${c.inventory_number} (${computerTypeLabels[c.computer_type ?? ""] ?? c.computer_type ?? "—"})`,
     ])
   );
 
@@ -207,7 +207,7 @@ export function NewTicketDialog({
                 ) : (
                   computers.map((comp) => (
                     <SelectItem key={comp.id} value={comp.id}>
-                      {comp.inventory_number} ({computerTypeLabels[comp.computer_type] ?? comp.computer_type})
+                      {comp.inventory_number} ({computerTypeLabels[comp.computer_type ?? ""] ?? comp.computer_type ?? "—"})
                     </SelectItem>
                   ))
                 )}

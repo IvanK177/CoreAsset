@@ -28,13 +28,13 @@ import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
 
 const installSoftwareSchema = z.object({
-  license_pool_id: z.string().min(1, "Выберите программу"),
+  license_id: z.string().min(1, "Выберите программу"),
   installed_at: z.string().min(1, "Укажите дату"),
 });
 
 type InstallSoftwareValues = z.infer<typeof installSoftwareSchema>;
 
-interface LicensePoolOption {
+interface LicenseOption {
   id: string;
   software_name: string;
   used_seats: number;
@@ -45,14 +45,14 @@ interface InstallSoftwareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   computerId: string;
-  licensePools: LicensePoolOption[];
+  licenseOptions: LicenseOption[];
 }
 
 export function InstallSoftwareDialog({
   open,
   onOpenChange,
   computerId,
-  licensePools,
+  licenseOptions,
 }: InstallSoftwareDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export function InstallSoftwareDialog({
   const form = useForm<InstallSoftwareValues>({
     resolver: zodResolver(installSoftwareSchema),
     defaultValues: {
-      license_pool_id: "",
+      license_id: "",
       installed_at: today,
     },
   });
@@ -73,7 +73,7 @@ export function InstallSoftwareDialog({
     setPending(true);
     setError(null);
 
-    const result = await installSoftwareDialog(computerId, data.license_pool_id, data.installed_at);
+    const result = await installSoftwareDialog(computerId, data.license_id, data.installed_at);
     if (result.error) {
       if (result.code === "23505") {
         toast.error("ПО уже установлено на этот компьютер");
@@ -89,7 +89,7 @@ export function InstallSoftwareDialog({
     await clearCache('/licenses');
     await clearCache('/dashboard');
     toast.success("ПО успешно установлено");
-    form.reset({ license_pool_id: "", installed_at: today });
+    form.reset({ license_id: "", installed_at: today });
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
     setPending(false);
@@ -101,7 +101,7 @@ export function InstallSoftwareDialog({
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Установить ПО</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Выберите программу из пула лицензий для установки на этот компьютер
+            Выберите лицензию для установки на этот компьютер
           </DialogDescription>
         </DialogHeader>
 
@@ -109,28 +109,28 @@ export function InstallSoftwareDialog({
           <div className="space-y-2">
             <Label>Программа *</Label>
             <Select
-              value={form.watch("license_pool_id")}
-              onValueChange={(v) => form.setValue("license_pool_id", v ?? "")}
-              items={Object.fromEntries(licensePools.map((pool) => [pool.id, `${pool.software_name} (${pool.used_seats}/${pool.total_seats} использовано)`]))}
+              value={form.watch("license_id")}
+              onValueChange={(v) => form.setValue("license_id", v ?? "")}
+              items={Object.fromEntries(licenseOptions.map((l) => [l.id, `${l.software_name} (${l.used_seats}/${l.total_seats} использовано)`]))}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Выберите из пула..." />
+                <SelectValue placeholder="Выберите лицензию..." />
               </SelectTrigger>
               <SelectContent>
-                {licensePools.map((pool) => (
-                  <SelectItem key={pool.id} value={pool.id}>
-                    {pool.software_name} ({pool.used_seats}/{pool.total_seats} использовано)
+                {licenseOptions.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.software_name} ({l.used_seats}/{l.total_seats} использовано)
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {form.formState.errors.license_pool_id && (
-              <p className="text-xs text-destructive">{form.formState.errors.license_pool_id.message}</p>
+            {form.formState.errors.license_id && (
+              <p className="text-xs text-destructive">{form.formState.errors.license_id.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="installed_at">Дата начала подписки</Label>
+            <Label htmlFor="installed_at">Дата установки</Label>
             <Input
               id="installed_at"
               type="date"
@@ -149,7 +149,7 @@ export function InstallSoftwareDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => { onOpenChange(false); form.reset({ license_pool_id: "", installed_at: today }); }}
+              onClick={() => { onOpenChange(false); form.reset({ license_id: "", installed_at: today }); }}
               disabled={pending}
             >
               Отмена

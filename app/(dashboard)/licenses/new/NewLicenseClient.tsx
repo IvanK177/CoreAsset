@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,58 +9,40 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createLicensePool } from "@/lib/actions/licenses";
-import type { Tables } from "@/types/database.types";
-import Link from "next/link";
+import { createLicense } from "@/lib/actions/licenses";
 
-type Software = Pick<Tables<"software">, "id" | "name" | "version">;
 const LICENSE_TYPE_ITEMS: Record<string, React.ReactNode> = {
   perpetual: "Бессрочная",
   subscription: "Подписка",
 };
+
 const initialState = { error: "" };
 
-export default function NewLicensePoolClient({ software }: { software: Software[] }) {
-  const [selectedSoftwareId, setSelectedSoftwareId] = useState("");
+export default function NewLicenseClient() {
   const [state, formAction, pending] = useActionState(
     async (_: typeof initialState, formData: FormData) => {
-      const result = await createLicensePool(formData);
+      const result = await createLicense(formData);
       return (result as typeof initialState) ?? initialState;
     },
     initialState
   );
 
-  const canSubmit = selectedSoftwareId !== "" && !pending;
-
   return (
     <form action={formAction} className="space-y-5 max-w-md">
-      {/* Explicit hidden input guarantees software_id is always in formData,
-          bypassing @base-ui/react Select's internal form-field sync issues */}
-      <input type="hidden" name="software_id" value={selectedSoftwareId} />
-
       <div className="space-y-2">
-        <Label>Программа *</Label>
-        {software.length === 0 ? (
-          <div className="text-sm text-muted-foreground border border-input rounded-lg px-3 py-2 bg-muted/30">
-            Справочник ПО пуст.{" "}
-            <Link href="/licenses/software/new" className="text-primary underline hover:no-underline">
-              Добавить ПО →
-            </Link>
-          </div>
-        ) : (
-          <Select value={selectedSoftwareId} onValueChange={(v) => setSelectedSoftwareId(v ?? "")} items={Object.fromEntries(software.map((s) => [s.id, s.name + (s.version ? ` v${s.version}` : "")]))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите ПО" />
-            </SelectTrigger>
-            <SelectContent>
-              {software.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name}{s.version ? ` v${s.version}` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <Label htmlFor="software_name">Название программы *</Label>
+        <Input id="software_name" name="software_name" required placeholder="Microsoft Office 365" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="version">Версия</Label>
+          <Input id="version" name="version" placeholder="1.0.0" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="vendor">Вендор</Label>
+          <Input id="vendor" name="vendor" placeholder="Microsoft" />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -73,6 +56,13 @@ export default function NewLicensePoolClient({ software }: { software: Software[
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="license_key">Ключ лицензии</Label>
+          <Input id="license_key" name="license_key" placeholder="XXXXX-XXXXX-XXXXX" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="total_seats">Кол-во мест *</Label>
           <Input id="total_seats" name="total_seats" type="number" min="1" placeholder="1" required />
@@ -96,7 +86,10 @@ export default function NewLicensePoolClient({ software }: { software: Software[
       {state.error && (
         <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{state.error}</p>
       )}
-      <Button type="submit" disabled={!canSubmit}>{pending ? "Сохранение…" : "Добавить пул"}</Button>
+      <Button type="submit" disabled={pending} className="gap-2">
+        {pending && <Loader2 className="w-4 h-4 animate-spin" />}
+        {pending ? "Сохранение…" : "Добавить лицензию"}
+      </Button>
     </form>
   );
 }

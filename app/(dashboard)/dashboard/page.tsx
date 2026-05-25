@@ -23,8 +23,8 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false })
       .limit(10),
     supabase
-      .from("license_pools")
-      .select("id, expires_at, used_seats, total_seats, price_per_unit, software_id, software(name, vendor)")
+      .from("licenses")
+      .select("id, expires_at, used_seats, total_seats, price_per_unit, software_name, vendor")
       .eq("license_type", "subscription"),
     supabase.from("employees").select("id, is_active"),
     supabase.from("incidents").select("id, status"),
@@ -68,10 +68,9 @@ export default async function DashboardPage() {
 
   // License usage data
   const licenseUsage = allLicenses.map((l) => {
-    const sw = extractJoinObject(l.software as unknown) as { name: string; vendor: string | null } | null;
     const pct = l.total_seats > 0 ? (l.used_seats / l.total_seats) * 100 : 0;
     return {
-      name: sw?.name ?? "—",
+      name: l.software_name ?? "—",
       used: l.used_seats,
       total: l.total_seats,
       pct,
@@ -190,13 +189,12 @@ export default async function DashboardPage() {
               </div>
               <div className="space-y-2">
                 {expiringLicenses.map((l) => {
-                  const sw = extractJoinObject(l.software as unknown) as { name: string; vendor: string | null } | null;
                   const days = daysUntilExpiry(l.expires_at);
                   return (
                     <div key={l.id} className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{sw?.name ?? "—"}</p>
-                        <p className="text-xs text-gray-500">{sw?.vendor ?? "—"}</p>
+                        <p className="text-sm font-medium text-gray-900">{l.software_name ?? "—"}</p>
+                        <p className="text-xs text-gray-500">{l.vendor ?? "—"}</p>
                       </div>
                       <span className="text-xs font-medium text-red-600">через {days} дн.</span>
                     </div>
@@ -253,4 +251,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-

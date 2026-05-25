@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   MonitorIcon,
   LogOut,
-  Clock,
   Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -116,9 +115,6 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
             <p className="text-xs text-gray-400">Администратор</p>
           </div>
           <div className="flex items-center gap-1">
-            <Link href="/dashboard" className="p-1.5 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
-              <Clock className="w-4 h-4" />
-            </Link>
             <form action={signOut} className="inline">
               <button type="submit" className="p-1.5 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
                 <LogOut className="w-4 h-4" />
@@ -128,10 +124,6 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
         </div>
       </div>
 
-      {/* Version */}
-      <div className="px-3 py-2 border-t border-white/10">
-        <p className="text-xs text-gray-500 text-center">CoreAsset v1.0</p>
-      </div>
     </aside>
   );
 }

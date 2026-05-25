@@ -15,6 +15,8 @@ export const computerSchema = z.object({
   room: z.string().optional(),
   lifecycle_status: z.enum(["active", "repair", "decommissioned", "storage"]),
   hardware: hardwareSchema.optional(),
+  // template_id is in the DB but UI for template selection is not yet implemented
+  // See not_add.md for planned implementation
 });
 
 export type ComputerFormValues = z.infer<typeof computerSchema>;
@@ -27,10 +29,12 @@ export const computerRowSchema = z.object({
   id: z.string(),
   inventory_number: z.string(),
   serial_number: z.string().nullable(),
-  computer_type: z.string(),
+  computer_type: z.string().nullable(),
   room: z.string().nullable(),
   lifecycle_status: z.enum(["active", "repair", "decommissioned", "storage"]),
   hardware: z.unknown().nullable(), // Json field — validated separately via hardwareRowSchema
+  template_id: z.string().nullable(), // FK → computer_templates.id (not yet in UI)
+  employee_id: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -52,18 +56,18 @@ export type IncidentRow = z.infer<typeof incidentRowSchema>;
 /** Schema for validating incident row array */
 export const incidentRowArraySchema = z.array(incidentRowSchema);
 
-/** Schema for validating software installation rows with nested software relation */
-export const softwareInstallationRowSchema = z.object({
+/** Schema for validating computer_licenses rows with nested license relation */
+export const computerLicenseRowSchema = z.object({
   id: z.string(),
   installed_at: z.string(),
-  software: z.object({
+  licenses: z.object({
     id: z.string(),
-    name: z.string(),
+    software_name: z.string(),
     version: z.string().nullable(),
   }).nullable(),
 });
 
-export type SoftwareInstallationRow = z.infer<typeof softwareInstallationRowSchema>;
+export type ComputerLicenseRow = z.infer<typeof computerLicenseRowSchema>;
 
-/** Schema for validating software installation row array */
-export const softwareInstallationArraySchema = z.array(softwareInstallationRowSchema);
+/** Schema for validating computer license row array */
+export const computerLicenseArraySchema = z.array(computerLicenseRowSchema);

@@ -19,9 +19,9 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
         <TableHeader>
           <TableRow className="bg-muted/40">
             <TableHead>ФИО</TableHead>
-            <TableHead>Отдел</TableHead>
             <TableHead>Должность</TableHead>
             <TableHead>Email</TableHead>
+            <TableHead>Кабинет</TableHead>
             <TableHead>Статус</TableHead>
             <TableHead className="w-12" />
           </TableRow>
@@ -30,9 +30,9 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
           {employees.map((e) => (
             <TableRow key={e.id} className="hover:bg-muted/30 transition-colors">
               <TableCell className="font-medium">{e.full_name}</TableCell>
-              <TableCell className="text-muted-foreground">{e.department ?? "—"}</TableCell>
               <TableCell className="text-muted-foreground">{e.position ?? "—"}</TableCell>
               <TableCell className="text-muted-foreground">{e.email ?? "—"}</TableCell>
+              <TableCell className="text-muted-foreground">{e.room ?? "—"}</TableCell>
               <TableCell>
                 <Badge
                   variant="outline"

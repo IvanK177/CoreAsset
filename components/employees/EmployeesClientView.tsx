@@ -6,7 +6,7 @@ import { EmployeeStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
-import { cn, formatDate, extractJoinObject } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { restoreEmployeeDialog, dismissEmployeeDialog, deleteEmployeeDialog } from "@/lib/actions/employees";
 import { clearCache } from "@/lib/actions/revalidate";
 import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Trash2, Loader2 } from "lucide-react";
@@ -30,21 +30,13 @@ const statusFilterLabels: Record<EmployeeStatusFilter, string> = {
   dismissed: "Уволенные",
 };
 
-interface WorkplaceRow {
-  id: string;
-  employee_id: string | null;
-  computer_id: string | null;
-  room: string;
-  assigned_at: string | null;
-  computers: unknown;
-}
-
 interface ComputerRow {
   id: string;
   inventory_number: string;
-  computer_type: string;
+  computer_type: string | null;
   lifecycle_status: string;
   employee_id: string | null;
+  room: string | null;
 }
 
 interface IncidentRow {
@@ -60,12 +52,11 @@ interface IncidentRow {
 
 interface EmployeesClientViewProps {
   employees: Employee[];
-  workplaces: WorkplaceRow[];
   computers: ComputerRow[];
   incidents: IncidentRow[];
 }
 
-export function EmployeesClientView({ employees, workplaces, computers, incidents }: EmployeesClientViewProps) {
+export function EmployeesClientView({ employees, computers, incidents }: EmployeesClientViewProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -84,37 +75,21 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
 
   const selectedEmployee = selectedId ? employees.find((e) => e.id === selectedId) : null;
 
-  // Get related data for selected employee
-  const selectedWorkplaces = selectedId
-    ? workplaces.filter((w) => w.employee_id === selectedId)
-    : [];
-
   // Computers directly assigned to this employee (via computers.employee_id)
   const selectedComputers = selectedId
     ? computers.filter((c) => c.employee_id === selectedId)
     : [];
 
   // Incidents linked to this employee directly (via incidents.employee_id)
-  // or indirectly through their workplace computer (via incidents.computer_id)
-  const workplaceComputerIds = selectedWorkplaces
-    .map((w) => w.computer_id)
-    .filter(Boolean) as string[];
-  const directComputerIds = selectedComputers.map((c) => c.id);
-  const allComputerIds = [...new Set([...workplaceComputerIds, ...directComputerIds])];
+  // or indirectly through their assigned computer (via incidents.computer_id)
+  const assignedComputerIds = selectedComputers.map((c) => c.id);
 
   const selectedIncidents = selectedId
     ? incidents.filter((i) =>
         i.employee_id === selectedId ||
-        (i.computer_id && allComputerIds.includes(i.computer_id))
+        (i.computer_id && assignedComputerIds.includes(i.computer_id))
       )
     : [];
-
-  // Normalize workplaces
-  const normalizedWorkplaces = selectedWorkplaces.map((w) => ({
-    id: w.id,
-    room: w.room,
-    computer: extractJoinObject(w.computers) as { id: string; inventory_number: string; lifecycle_status: string; computer_type: string } | null,
-  }));
 
   if (selectedEmployee) {
     // Master-Detail mode
@@ -198,7 +173,7 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{selectedEmployee.full_name}</h2>
                 <p className="text-sm text-gray-500">
-                  {selectedEmployee.position ?? "—"} · {selectedEmployee.department ?? "—"}
+                  {selectedEmployee.position ?? "—"} · Каб. {selectedEmployee.room ?? "—"}
                 </p>
               </div>
             </div>
@@ -263,44 +238,19 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Контактная информация</h3>
             <div className="grid grid-cols-2 gap-3">
               <ContactRow icon={Mail} label="Email" value={selectedEmployee.email} />
-              <ContactRow icon={MessageSquare} label="Telegram" value="—" />
-              <ContactRow icon={Phone} label="Телефон" value="—" />
-              <ContactRow icon={MapPin} label="Кабинет" value={normalizedWorkplaces[0]?.room ?? "—"} />
+              <ContactRow icon={MessageSquare} label="Telegram" value={selectedEmployee.telegram} />
+              <ContactRow icon={Phone} label="Телефон" value={selectedEmployee.phone} />
+              <ContactRow icon={MapPin} label="Кабинет" value={selectedEmployee.room} />
             </div>
           </div>
 
-          {/* Block 2: Workplaces & Assigned Computers */}
+          {/* Block 2: Assigned Computers */}
           <div className="rounded-xl border border-gray-200 p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Рабочие места</h3>
-            {normalizedWorkplaces.length === 0 && selectedComputers.length === 0 ? (
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплённые ПК</h3>
+            {selectedComputers.length === 0 ? (
               <p className="text-sm text-gray-500 py-2">Нет привязанных ПК</p>
             ) : (
               <div className="space-y-2">
-                {/* Workplace-assigned computers */}
-                {normalizedWorkplaces.map((wp) => (
-                  <Link
-                    key={wp.id}
-                    href={`/computers/${wp.computer?.id ?? ""}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Monitor className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">
-                        {wp.computer?.inventory_number ?? "—"}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {wp.computer?.computer_type ?? "—"}
-                      </span>
-                      {wp.room && (
-                        <span className="text-xs text-gray-400">· Каб. {wp.room}</span>
-                      )}
-                    </div>
-                    {wp.computer && (
-                      <EmployeeStatusBadge status={wp.computer.lifecycle_status === "active" ? "active" : "dismissed"} />
-                    )}
-                  </Link>
-                ))}
-                {/* Directly assigned computers (via computers.employee_id) */}
                 {selectedComputers.map((comp) => (
                   <Link
                     key={comp.id}
@@ -313,8 +263,11 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
                         {comp.inventory_number}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {comp.computer_type}
+                        {comp.computer_type ?? "—"}
                       </span>
+                      {comp.room && (
+                        <span className="text-xs text-gray-400">· Каб. {comp.room}</span>
+                      )}
                     </div>
                     <EmployeeStatusBadge status={comp.lifecycle_status === "active" ? "active" : "dismissed"} />
                   </Link>
@@ -406,9 +359,9 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Сотрудник</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Отдел</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Должность</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Кабинет</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Статус</th>
                 <th className="px-4 py-3 w-8" />
               </tr>
@@ -431,9 +384,9 @@ export function EmployeesClientView({ employees, workplaces, computers, incident
                       <span className="text-sm font-medium text-gray-900">{e.full_name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{e.department ?? "—"}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">{e.position ?? "—"}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">{e.email ?? "—"}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{e.room ?? "—"}</td>
                   <td className="px-4 py-3">
                     <EmployeeStatusBadge status={e.is_active ? "active" : "dismissed"} />
                   </td>

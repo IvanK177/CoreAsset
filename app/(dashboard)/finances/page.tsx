@@ -5,35 +5,33 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { createServiceClient } from "@/lib/supabase/server";
 import { FinancesClientView } from "@/components/finances/FinancesClientView";
 import PageHeader from "@/components/layout/PageHeader";
-import { extractJoinObject } from "@/lib/utils";
 
 export default async function FinancesPage() {
   noStore();
   const supabase = createServiceClient();
 
-  const { data: pools } = await supabase
-    .from("license_pools")
-    .select("id, license_type, total_seats, used_seats, price_per_unit, expires_at, software_id, software(name, vendor)")
+  const { data: licenses } = await supabase
+    .from("licenses")
+    .select("id, software_name, vendor, license_type, total_seats, used_seats, price_per_unit, expires_at")
     .eq("license_type", "subscription");
 
-  const allPools = pools ?? [];
+  const allLicenses = licenses ?? [];
 
   // Calculate metrics
-  const thisMonth = allPools.reduce((sum, p) => sum + p.price_per_unit * p.used_seats, 0);
+  const thisMonth = allLicenses.reduce((sum, l) => sum + (l.price_per_unit ?? 0) * l.used_seats, 0);
   const nextMonth = thisMonth; // Same for subscriptions
   const currentMonthIndex = new Date().getMonth() + 1; // 1-12
   const yearTotal = thisMonth * currentMonthIndex;
-  const activeSubscriptions = allPools.length;
+  const activeSubscriptions = allLicenses.length;
 
   // Build breakdown data
-  const breakdown = allPools.map((p) => {
-    const sw = extractJoinObject(p.software as unknown) as { name: string; vendor: string | null } | null;
-    const total = p.price_per_unit * p.used_seats;
+  const breakdown = allLicenses.map((l) => {
+    const total = (l.price_per_unit ?? 0) * l.used_seats;
     return {
-      name: sw?.name ?? "—",
-      vendor: sw?.vendor ?? "—",
-      pricePerUnit: p.price_per_unit,
-      installations: p.used_seats,
+      name: l.software_name ?? "—",
+      vendor: l.vendor ?? "—",
+      pricePerUnit: l.price_per_unit ?? 0,
+      installations: l.used_seats,
       total,
     };
   });

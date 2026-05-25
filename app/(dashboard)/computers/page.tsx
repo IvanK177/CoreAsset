@@ -15,7 +15,7 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
   noStore();
   const supabase = createServiceClient();
 
-  const [computersRes, allEmployeesRes, activeEmployeesRes, installsRes, incidentsRes, workplacesRes, licensePoolsRes] = await Promise.all([
+  const [computersRes, allEmployeesRes, activeEmployeesRes, installsRes, incidentsRes, licensesRes] = await Promise.all([
     supabase
       .from("computers")
       .select("*")
@@ -30,26 +30,21 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
       .eq("is_active", true)
       .order("full_name"),
     supabase
-      .from("software_installations")
-      .select("id, computer_id, software_id, installed_at, license_pool_id, software(id, name, version), license_pools(id, price_per_unit, expires_at, license_type, total_seats, used_seats)")
+      .from("computer_licenses")
+      .select("id, computer_id, license_id, installed_at, licenses(id, software_name, version, license_type, total_seats, used_seats, price_per_unit, expires_at)")
       .order("installed_at", { ascending: false }),
     supabase
       .from("incidents")
       .select("id, computer_id, description, priority, status, incident_type, created_at")
       .order("created_at", { ascending: false }),
     supabase
-      .from("workplaces")
-      .select("id, computer_id, employee_id, room, assigned_at")
-      .not("employee_id", "is", null),
-    supabase
-      .from("license_pools")
-      .select("id, used_seats, total_seats, software(id, name)")
+      .from("licenses")
+      .select("id, software_name, used_seats, total_seats")
       .order("created_at", { ascending: false }),
   ]);
 
   const computers = computersRes.data ?? [];
   const allEmployees = allEmployeesRes.data ?? [];
-  const workplaces = workplacesRes.data ?? [];
 
   // Log any Supabase errors for debugging
   if (computersRes.error) {
@@ -58,9 +53,6 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
   if (allEmployeesRes.error) {
     console.error("[ComputersPage] All employees query error:", allEmployeesRes.error.message);
   }
-  if (workplacesRes.error) {
-    console.error("[ComputersPage] Workplaces query error:", workplacesRes.error.message);
-  }
 
   // Build a map of computer_id -> employee for matching
   const employeeMap = new Map<string, Employee>();
@@ -68,20 +60,11 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
     employeeMap.set(e.id, e);
   }
 
-  // Enrich computers with employee data
+  // Enrich computers with employee data (using computers.employee_id directly)
   const computersWithEmployee: ComputerWithEmployee[] = computers.map((c) => {
-    // Try direct employee_id on computer (works after migration is applied)
     let employee: Employee | null = null;
-    if ("employee_id" in c && c.employee_id) {
+    if (c.employee_id) {
       employee = employeeMap.get(c.employee_id) ?? null;
-    }
-
-    // Fallback: find employee via workplaces (works before migration)
-    if (!employee) {
-      const wp = workplaces.find((w) => w.computer_id === c.id);
-      if (wp?.employee_id) {
-        employee = employeeMap.get(wp.employee_id) ?? null;
-      }
     }
 
     return {
@@ -90,8 +73,8 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
         id: employee.id,
         full_name: employee.full_name,
         position: employee.position,
-        department: employee.department,
         email: employee.email,
+        room: employee.room ?? null,
       } : null,
     };
   });
@@ -102,25 +85,32 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
   const validFilters = ["active", "repair", "storage", "decommissioned", "all"];
   const initialFilter = filter && validFilters.includes(filter) ? filter : "all";
 
-  // Build license pool options for the Install Software dialog
-  const rawLicensePools = licensePoolsRes.data ?? [];
-  const licensePools = rawLicensePools.map((pool) => {
-    const software = extractJoinObject(pool.software as unknown) as { id: string; name: string } | null;
-    return {
-      id: pool.id,
-      software_name: software?.name ?? "—",
-      used_seats: pool.used_seats,
-      total_seats: pool.total_seats,
-    };
-  });
+  // Build license options for the Install Software dialog
+  const rawLicenses = licensesRes.data ?? [];
+  const licenseOptions = rawLicenses.map((l) => ({
+    id: l.id,
+    software_name: l.software_name ?? "—",
+    used_seats: l.used_seats,
+    total_seats: l.total_seats,
+  }));
+
+  // Normalize installations — extract joined license data
+  const rawInstalls = installsRes.data ?? [];
+  const installations = rawInstalls.map((inst) => ({
+    id: inst.id,
+    computer_id: inst.computer_id,
+    license_id: inst.license_id,
+    installed_at: inst.installed_at,
+    licenses: extractJoinObject(inst.licenses as unknown) as { id: string; software_name: string; version: string | null; license_type: string; total_seats: number; used_seats: number; price_per_unit: number | null; expires_at: string | null } | null,
+  }));
 
   return (
     <ComputersPageClient
       computers={computersWithEmployee}
       activeEmployees={activeEmployees}
-      installations={installsRes.data ?? []}
+      installations={installations}
       incidents={incidentsRes.data ?? []}
-      licensePools={licensePools}
+      licenseOptions={licenseOptions}
       totalCount={computers.length}
       initialFilter={initialFilter}
     />

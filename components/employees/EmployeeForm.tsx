@@ -5,6 +5,9 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import type { Tables } from "@/types/database.types";
 
 type Employee = Tables<"employees">;
@@ -13,6 +16,11 @@ interface EmployeeFormProps {
   employee?: Employee;
   action: (formData: FormData) => Promise<{ error?: string } | void>;
 }
+
+const ROLE_ITEMS: Record<string, React.ReactNode> = {
+  employee: "Сотрудник",
+  admin: "Администратор",
+};
 
 const initialState = { error: "" };
 
@@ -34,12 +42,12 @@ export default function EmployeeForm({ employee, action }: EmployeeFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="department">Отдел</Label>
-          <Input id="department" name="department" defaultValue={employee?.department ?? ""} />
+          <Label htmlFor="position">Должность *</Label>
+          <Input id="position" name="position" defaultValue={employee?.position ?? ""} required />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="position">Должность</Label>
-          <Input id="position" name="position" defaultValue={employee?.position ?? ""} />
+          <Label htmlFor="room">Кабинет</Label>
+          <Input id="room" name="room" defaultValue={employee?.room ?? ""} />
         </div>
       </div>
 
@@ -49,8 +57,27 @@ export default function EmployeeForm({ employee, action }: EmployeeFormProps) {
           <Input id="email" name="email" type="email" defaultValue={employee?.email ?? ""} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="employee_number">Табельный номер</Label>
-          <Input id="employee_number" name="employee_number" defaultValue={employee?.employee_number ?? ""} />
+          <Label>Роль</Label>
+          <Select name="role" defaultValue={employee?.role ?? "employee"} items={ROLE_ITEMS}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="employee">Сотрудник</SelectItem>
+              <SelectItem value="admin">Администратор</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="phone">Телефон</Label>
+          <Input id="phone" name="phone" defaultValue={employee?.phone ?? ""} placeholder="+7-900-000-0000" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="telegram">Telegram</Label>
+          <Input id="telegram" name="telegram" defaultValue={employee?.telegram ?? ""} placeholder="@username" />
         </div>
       </div>
 

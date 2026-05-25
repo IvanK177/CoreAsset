@@ -11,8 +11,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const [incidentsRes, licensesRes, userRes] = await Promise.all([
     dataClient.from("incidents").select("id, priority, status").neq("status", "resolved"),
     dataClient
-      .from("license_pools")
-      .select("id, expires_at, software_id, software(name)")
+      .from("licenses")
+      .select("id, expires_at")
       .eq("license_type", "subscription"),
     authClient.auth.getUser(),
   ]);

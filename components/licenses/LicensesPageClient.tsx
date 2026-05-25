@@ -5,41 +5,44 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { LicensesClientView } from "@/components/licenses/LicensesClientView";
-import { AddLicensePoolDialog } from "@/components/licenses/AddLicensePoolDialog";
+import { AddLicenseDialog } from "@/components/licenses/AddLicenseDialog";
 
-interface PoolRow {
+interface LicenseRow {
   id: string;
+  software_name: string;
+  version: string | null;
+  vendor: string | null;
   license_type: string;
+  license_key: string | null;
   total_seats: number;
   used_seats: number;
   expires_at: string | null;
-  price_per_unit: number;
-  software_id: string;
-  software: unknown;
+  price_per_unit: number | null;
+  notes: string | null;
+  created_at: string;
 }
 
 interface InstallationRow {
   id: string;
   computer_id: string;
+  license_id: string;
   installed_at: string;
-  software_id: string;
-  license_pool_id: string | null;
   computers: unknown;
 }
 
 interface LicensesPageClientProps {
-  pools: PoolRow[];
+  licenses: LicenseRow[];
   installations: InstallationRow[];
-  expiringLicenses: PoolRow[];
-  totalPools: number;
+  expiringLicenses: LicenseRow[];
+  totalLicenses: number;
   totalInstallations: number;
 }
 
 export function LicensesPageClient({
-  pools,
+  licenses,
   installations,
   expiringLicenses,
-  totalPools,
+  totalLicenses,
   totalInstallations,
 }: LicensesPageClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -48,20 +51,20 @@ export function LicensesPageClient({
     <div>
       <PageHeader
         title="Лицензии ПО"
-        description={`${totalPools} пулов · ${totalInstallations} активных установок`}
+        description={`${totalLicenses} лицензий · ${totalInstallations} активных установок`}
         actionNode={
           <Button size="sm" className="gap-2" onClick={() => setDialogOpen(true)}>
             <Plus className="w-4 h-4" />
-            Добавить пул
+            Добавить лицензию
           </Button>
         }
       />
       <LicensesClientView
-        pools={pools}
+        licenses={licenses}
         installations={installations}
         expiringLicenses={expiringLicenses}
       />
-      <AddLicensePoolDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <AddLicenseDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }

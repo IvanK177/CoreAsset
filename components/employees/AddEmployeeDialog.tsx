@@ -15,19 +15,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createEmployeeDialog } from "@/lib/actions/employees";
 import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
 import { Key } from "lucide-react";
 
+const ROLE_ITEMS: Record<string, React.ReactNode> = {
+  employee: "Сотрудник",
+  admin: "Администратор",
+};
+
 const employeeDialogSchema = z.object({
   full_name: z.string().min(1, "Обязательное поле"),
   position: z.string().min(1, "Обязательное поле"),
-  department: z.string().min(1, "Обязательное поле"),
-  room: z.string().optional(),
-  email: z.string().min(1, "Обязательное поле").email("Некорректный email"),
-  phone: z.string().optional(),
-  telegram: z.string().optional(),
+  room: z.string().optional().or(z.literal("")),
+  email: z.string().optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  telegram: z.string().optional().or(z.literal("")),
+  role: z.enum(["admin", "employee"]),
 });
 
 type EmployeeDialogValues = z.infer<typeof employeeDialogSchema>;
@@ -48,11 +60,11 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
     defaultValues: {
       full_name: "",
       position: "",
-      department: "",
       room: "",
       email: "",
       phone: "",
       telegram: "",
+      role: "employee",
     },
   });
 
@@ -63,11 +75,11 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
     const formData = new FormData();
     formData.set("full_name", data.full_name);
     formData.set("position", data.position);
-    formData.set("department", data.department);
     if (data.room) formData.set("room", data.room);
-    formData.set("email", data.email);
+    if (data.email) formData.set("email", data.email);
     if (data.phone) formData.set("phone", data.phone);
     if (data.telegram) formData.set("telegram", data.telegram);
+    formData.set("role", data.role);
 
     const result = await createEmployeeDialog(formData);
     if (result.error) {
@@ -129,17 +141,6 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="department">Отдел *</Label>
-              <Input
-                id="department"
-                placeholder="ИТ"
-                {...form.register("department")}
-              />
-              {form.formState.errors.department && (
-                <p className="text-xs text-destructive">{form.formState.errors.department.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="room">Кабинет</Label>
               <Input
                 id="room"
@@ -148,7 +149,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email / Логин *</Label>
+              <Label htmlFor="email">Email / Логин</Label>
               <Input
                 id="email"
                 placeholder="ivanov@corp.ru"
@@ -157,6 +158,22 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
               {form.formState.errors.email && (
                 <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
               )}
+            </div>
+            <div className="space-y-2">
+              <Label>Роль</Label>
+              <Select
+                value={form.watch("role")}
+                onValueChange={(v) => form.setValue("role", v as "admin" | "employee")}
+                items={ROLE_ITEMS}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="employee">Сотрудник</SelectItem>
+                  <SelectItem value="admin">Администратор</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Телефон</Label>

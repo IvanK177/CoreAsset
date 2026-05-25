@@ -3,16 +3,13 @@ export const revalidate = 0;
 
 import { createServiceClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/layout/PageHeader";
-import NewLicensePoolClient from "./NewLicensePoolClient";
+import NewLicenseClient from "./NewLicenseClient";
 
-export default async function NewLicensePoolPage() {
-  const supabase = createServiceClient();
-  const { data: software } = await supabase.from("software").select("id, name, version").order("name");
-
+export default async function NewLicensePage() {
   return (
     <div>
-      <PageHeader title="Добавить пул лицензий" />
-      <NewLicensePoolClient software={software ?? []} />
+      <PageHeader title="Добавить лицензию" />
+      <NewLicenseClient />
     </div>
   );
 }

@@ -12,9 +12,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      computer_licenses: {
+        Row: {
+          id: string
+          computer_id: string
+          license_id: string
+          installed_at: string
+        }
+        Insert: {
+          id?: string
+          computer_id: string
+          license_id: string
+          installed_at?: string
+        }
+        Update: {
+          id?: string
+          computer_id?: string
+          license_id?: string
+          installed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "computer_licenses_computer_id_fkey"
+            columns: ["computer_id"]
+            isOneToOne: false
+            referencedRelation: "computers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "computer_licenses_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      computer_templates: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          computer_type: string | null
+          hardware: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          computer_type?: string | null
+          hardware?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          computer_type?: string | null
+          hardware?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       computers: {
         Row: {
-          computer_type: string
+          computer_type: string | null
           created_at: string
           employee_id: string | null
           hardware: Json | null
@@ -23,10 +86,11 @@ export type Database = {
           lifecycle_status: Database["public"]["Enums"]["computer_status"]
           room: string | null
           serial_number: string | null
+          template_id: string | null
           updated_at: string
         }
         Insert: {
-          computer_type?: string
+          computer_type?: string | null
           created_at?: string
           employee_id?: string | null
           hardware?: Json | null
@@ -35,10 +99,11 @@ export type Database = {
           lifecycle_status?: Database["public"]["Enums"]["computer_status"]
           room?: string | null
           serial_number?: string | null
+          template_id?: string | null
           updated_at?: string
         }
         Update: {
-          computer_type?: string
+          computer_type?: string | null
           created_at?: string
           employee_id?: string | null
           hardware?: Json | null
@@ -47,6 +112,7 @@ export type Database = {
           lifecycle_status?: Database["public"]["Enums"]["computer_status"]
           room?: string | null
           serial_number?: string | null
+          template_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -57,40 +123,53 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "computers_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "computer_templates"
+            referencedColumns: ["id"]
+          },
         ]
       }
       employees: {
         Row: {
           created_at: string
-          department: string | null
           email: string | null
-          employee_number: string | null
           full_name: string
           id: string
           is_active: boolean
+          phone: string | null
           position: string | null
+          room: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          telegram: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
-          department?: string | null
           email?: string | null
-          employee_number?: string | null
           full_name: string
           id?: string
           is_active?: boolean
+          phone?: string | null
           position?: string | null
+          room?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          telegram?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
-          department?: string | null
           email?: string | null
-          employee_number?: string | null
           full_name?: string
           id?: string
           is_active?: boolean
+          phone?: string | null
           position?: string | null
+          room?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          telegram?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -152,167 +231,50 @@ export type Database = {
           },
         ]
       }
-      license_pools: {
+      licenses: {
         Row: {
           created_at: string
           expires_at: string | null
           id: string
+          license_key: string | null
           license_type: Database["public"]["Enums"]["license_type"]
           notes: string | null
-          price_per_unit: number
-          software_id: string
+          price_per_unit: number | null
+          software_name: string
           total_seats: number
-          updated_at: string
           used_seats: number
-        }
-        Insert: {
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          license_type?: Database["public"]["Enums"]["license_type"]
-          notes?: string | null
-          price_per_unit?: number
-          software_id: string
-          total_seats?: number
-          updated_at?: string
-          used_seats?: number
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          license_type?: Database["public"]["Enums"]["license_type"]
-          notes?: string | null
-          price_per_unit?: number
-          software_id?: string
-          total_seats?: number
-          updated_at?: string
-          used_seats?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "license_pools_software_id_fkey"
-            columns: ["software_id"]
-            isOneToOne: false
-            referencedRelation: "software"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      software: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
           vendor: string | null
           version: string | null
         }
         Insert: {
           created_at?: string
+          expires_at?: string | null
           id?: string
-          name: string
+          license_key?: string | null
+          license_type?: Database["public"]["Enums"]["license_type"]
+          notes?: string | null
+          price_per_unit?: number | null
+          software_name: string
+          total_seats?: number
+          used_seats?: number
           vendor?: string | null
           version?: string | null
         }
         Update: {
           created_at?: string
+          expires_at?: string | null
           id?: string
-          name?: string
+          license_key?: string | null
+          license_type?: Database["public"]["Enums"]["license_type"]
+          notes?: string | null
+          price_per_unit?: number | null
+          software_name?: string
+          total_seats?: number
+          used_seats?: number
           vendor?: string | null
           version?: string | null
         }
         Relationships: []
-      }
-      software_installations: {
-        Row: {
-          computer_id: string
-          id: string
-          installed_at: string
-          license_pool_id: string | null
-          software_id: string
-        }
-        Insert: {
-          computer_id: string
-          id?: string
-          installed_at?: string
-          license_pool_id?: string | null
-          software_id: string
-        }
-        Update: {
-          computer_id?: string
-          id?: string
-          installed_at?: string
-          license_pool_id?: string | null
-          software_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "software_installations_computer_id_fkey"
-            columns: ["computer_id"]
-            isOneToOne: false
-            referencedRelation: "computers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "software_installations_license_pool_id_fkey"
-            columns: ["license_pool_id"]
-            isOneToOne: false
-            referencedRelation: "license_pools"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "software_installations_software_id_fkey"
-            columns: ["software_id"]
-            isOneToOne: false
-            referencedRelation: "software"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workplaces: {
-        Row: {
-          assigned_at: string | null
-          computer_id: string | null
-          created_at: string
-          employee_id: string | null
-          id: string
-          room: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_at?: string | null
-          computer_id?: string | null
-          created_at?: string
-          employee_id?: string | null
-          id?: string
-          room: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_at?: string | null
-          computer_id?: string | null
-          created_at?: string
-          employee_id?: string | null
-          id?: string
-          room?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workplaces_computer_id_fkey"
-            columns: ["computer_id"]
-            isOneToOne: false
-            referencedRelation: "computers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workplaces_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
@@ -327,6 +289,7 @@ export type Database = {
       incident_status: "open" | "in_progress" | "resolved"
       incident_type: "hardware" | "software" | "network" | "other"
       license_type: "perpetual" | "subscription"
+      user_role: "admin" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -441,6 +404,7 @@ export const Constants = {
       incident_status: ["open", "in_progress", "resolved"],
       incident_type: ["hardware", "software", "network", "other"],
       license_type: ["perpetual", "subscription"],
+      user_role: ["admin", "employee"],
     },
   },
 } as const

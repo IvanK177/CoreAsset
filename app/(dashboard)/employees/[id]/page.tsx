@@ -14,22 +14,17 @@ import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { deleteEmployee, dismissEmployee, restoreEmployee } from "@/lib/actions/employees";
 import { formatDate, extractJoinObject } from "@/lib/utils";
-import { Edit, Monitor, User, UserCheck, UserX } from "lucide-react";
+import { Edit, Monitor, User, UserCheck, UserX, Phone, MessageCircle } from "lucide-react";
 
 export default async function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createServiceClient();
 
-  const [empRes, workplaceRes, computersRes, incidentsRes] = await Promise.all([
+  const [empRes, computersRes, incidentsRes] = await Promise.all([
     supabase.from("employees").select("*").eq("id", id).single(),
     supabase
-      .from("workplaces")
-      .select("id, room, computer_id, computers(inventory_number)")
-      .eq("employee_id", id)
-      .maybeSingle(),
-    supabase
       .from("computers")
-      .select("id, inventory_number, computer_type, lifecycle_status")
+      .select("id, inventory_number, computer_type, lifecycle_status, room")
       .eq("employee_id", id),
     supabase
       .from("incidents")
@@ -49,16 +44,6 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
 
   if (!empRes.data) notFound();
   const emp = empRes.data;
-
-  // Workplace is optional — log errors but don't crash
-  if (workplaceRes.error) {
-    console.error("[EmployeeDetail] Workplace query error:", workplaceRes.error.code, workplaceRes.error.message);
-  }
-  const workplace = workplaceRes.data;
-  // Supabase may return computers join as array or object — normalize with extractJoinObject
-  const workplaceComputer = extractJoinObject(
-    workplace?.computers as unknown
-  ) as { inventory_number: string } | null;
 
   // Computers directly assigned to this employee
   if (computersRes.error) {
@@ -84,7 +69,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
           </div>
           <div>
             <h1 className="text-2xl font-bold">{emp.full_name}</h1>
-            <p className="text-sm text-muted-foreground">{emp.position ?? "—"} · {emp.department ?? "—"}</p>
+            <p className="text-sm text-muted-foreground">{emp.position ?? "—"} · Каб. {emp.room ?? "—"}</p>
           </div>
           <Badge
             variant="outline"
@@ -125,23 +110,11 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Данные</p>
         <Row label="Email" value={emp.email} />
-        <Row label="Табельный №" value={emp.employee_number} />
+        <Row label="Телефон" value={emp.phone} />
+        <Row label="Telegram" value={emp.telegram} />
+        <Row label="Кабинет" value={emp.room} />
+        <Row label="Роль" value={emp.role} />
         <Row label="Добавлен" value={formatDate(emp.created_at)} />
-      </div>
-
-      <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Рабочее место</p>
-        {workplace ? (
-          <>
-            <Row label="Кабинет" value={workplace.room} />
-            <Row
-              label="ПК (рабочее место)"
-              value={workplaceComputer?.inventory_number ?? null}
-            />
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">Не назначено</p>
-        )}
       </div>
 
       {/* Assigned computers section */}

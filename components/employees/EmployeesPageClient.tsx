@@ -10,21 +10,13 @@ import type { Tables } from "@/types/database.types";
 
 type Employee = Tables<"employees">;
 
-interface WorkplaceRow {
-  id: string;
-  employee_id: string | null;
-  computer_id: string | null;
-  room: string;
-  assigned_at: string | null;
-  computers: unknown;
-}
-
 interface ComputerRow {
   id: string;
   inventory_number: string;
-  computer_type: string;
+  computer_type: string | null;
   lifecycle_status: string;
   employee_id: string | null;
+  room: string | null;
 }
 
 interface IncidentRow {
@@ -40,7 +32,6 @@ interface IncidentRow {
 
 interface EmployeesPageClientProps {
   employees: Employee[];
-  workplaces: WorkplaceRow[];
   computers: ComputerRow[];
   incidents: IncidentRow[];
   activeCount: number;
@@ -49,7 +40,6 @@ interface EmployeesPageClientProps {
 
 export function EmployeesPageClient({
   employees,
-  workplaces,
   computers,
   incidents,
   activeCount,
@@ -71,7 +61,6 @@ export function EmployeesPageClient({
       />
       <EmployeesClientView
         employees={employees}
-        workplaces={workplaces}
         computers={computers}
         incidents={incidents}
       />

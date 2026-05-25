@@ -6,7 +6,6 @@ const ADMIN_ROUTES = [
   "/dashboard",
   "/computers",
   "/employees",
-  "/workplaces",
   "/licenses",
   "/incidents",
   "/finances",

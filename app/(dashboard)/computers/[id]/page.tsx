@@ -19,15 +19,15 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
   const supabase = createServiceClient();
 
   const [computerRes, incidentsRes, installsRes] = await Promise.all([
-    supabase.from("computers").select("*, employees(id, full_name, position, department, email)").eq("id", id).single(),
+    supabase.from("computers").select("*, employees(id, full_name, position, email, room)").eq("id", id).single(),
     supabase
       .from("incidents")
       .select("id, incident_type, description, priority, status, created_at")
       .eq("computer_id", id)
       .order("created_at", { ascending: false }),
     supabase
-      .from("software_installations")
-      .select("id, installed_at, software(id, name, version)")
+      .from("computer_licenses")
+      .select("id, installed_at, licenses(id, software_name, version)")
       .eq("computer_id", id),
   ]);
 
@@ -42,9 +42,9 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
   const computer = computerRes.data;
 
   // Extract joined employee — Supabase may return as array or object
-  const employee = extractJoinObject(computer.employees as unknown) as { id: string; full_name: string; position: string | null; department: string | null; email: string | null } | null;
+  const employee = extractJoinObject(computer.employees as unknown) as { id: string; full_name: string; position: string | null; email: string | null; room: string | null } | null;
 
-  // Safely parse hardware JSON — validates types and ignores unknown fields (e.g. gpu)
+  // Safely parse hardware JSON
   const hw = safeHardware(computer.hardware);
 
   // Incidents are supplementary — log errors but don't crash
@@ -53,16 +53,16 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
   }
   const incidents = incidentsRes.data ?? [];
 
-  // Software installations are supplementary — log errors but don't crash
+  // Software installations are supplementary
   if (installsRes.error) {
     console.error("[ComputerDetail] Installations query error:", installsRes.error.code, installsRes.error.message);
   }
   const rawInstalls = installsRes.data ?? [];
-  // Normalize software join — Supabase may return as array or object depending on relationship
+  // Normalize license join
   const installs = rawInstalls.map((inst) => ({
     id: inst.id,
     installed_at: inst.installed_at,
-    software: extractJoinObject(inst.software as unknown) as { id: string; name: string; version: string | null } | null,
+    licenses: extractJoinObject(inst.licenses as unknown) as { id: string; software_name: string; version: string | null } | null,
   }));
 
   return (
@@ -116,7 +116,7 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
                 {employee.full_name}
               </Link>
               <p className="text-xs text-muted-foreground">
-                {employee.position ?? "—"} · {employee.department ?? "—"}
+                {employee.position ?? "—"} · Каб. {employee.room ?? "—"}
               </p>
             </div>
           </div>
@@ -136,10 +136,10 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
         ) : (
           <div className="space-y-2">
             {installs.map((inst) => {
-              const sw = inst.software;
+              const lic = inst.licenses;
               return (
                 <div key={inst.id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
-                  <span className="text-sm">{sw?.name ?? "—"} {sw?.version ? `v${sw.version}` : ""}</span>
+                  <span className="text-sm">{lic?.software_name ?? "—"} {lic?.version ? `v${lic.version}` : ""}</span>
                   <span className="text-xs text-muted-foreground">{formatDate(inst.installed_at)}</span>
                 </div>
               );

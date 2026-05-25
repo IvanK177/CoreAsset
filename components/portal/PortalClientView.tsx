@@ -11,7 +11,7 @@ import { NewTicketDialog } from "@/components/portal/NewTicketDialog";
 interface ComputerData {
   id: string;
   inventory_number: string;
-  computer_type: string;
+  computer_type: string | null;
   lifecycle_status: string;
   room: string | null;
   hardware: unknown;
@@ -21,7 +21,7 @@ interface ComputerData {
 interface ComputerOption {
   id: string;
   inventory_number: string;
-  computer_type: string;
+  computer_type: string | null;
 }
 
 interface IncidentData {
@@ -151,7 +151,7 @@ export default function PortalClientView({
                       </span>
                       <ComputerStatusBadge status={comp.lifecycle_status as "active" | "repair" | "decommissioned" | "storage"} />
                       <span className="text-xs text-gray-500">
-                        {computerTypeLabels[comp.computer_type] ?? comp.computer_type}
+                        {computerTypeLabels[comp.computer_type ?? ""] ?? comp.computer_type ?? "—"}
                         {comp.room && ` · каб. ${comp.room}`}
                       </span>
                     </div>
