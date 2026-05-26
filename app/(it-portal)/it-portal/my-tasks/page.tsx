@@ -65,7 +65,7 @@ export default async function MyTasksPage() {
   // Fetch only incidents assigned to this specialist
   let myIncidents: IncidentRow[] = [];
   if (specialistId) {
-    const { data } = await dataClient
+    const { data, error: myError } = await dataClient
       .from("incidents")
       .select(`
         id,
@@ -82,6 +82,9 @@ export default async function MyTasksPage() {
       `)
       .eq("assigned_to", specialistId)
       .order("created_at", { ascending: false });
+    if (myError) {
+      console.error("[MyTasksPage] Supabase query error:", myError.code, myError.message);
+    }
     myIncidents = (data as IncidentRow[]) ?? [];
   }
 

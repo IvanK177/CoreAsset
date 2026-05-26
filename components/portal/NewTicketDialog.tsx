@@ -119,6 +119,8 @@ export function NewTicketDialog({
     await clearCache('/portal');
     await clearCache('/incidents');
     await clearCache('/dashboard');
+    await clearCache('/it-portal');
+    await clearCache('/it-portal/my-tasks');
     toast.success("Заявка успешно отправлена");
     setTitle("");
     setDescription("");

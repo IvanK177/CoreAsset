@@ -11,23 +11,25 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
   const demoRole = cookieStore.get("demo_role")?.value;
   const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
 
-  // Get employee data
+  // Get employee data — prefer user.id match (trigger-synced), then demo cookie, then fallback
   let employeeData = null;
-  const employeeId = demoEmployeeId || null;
 
-  if (employeeId) {
+  if (user?.id) {
+    // Primary: match by user.id (auth.users.id → employees.id via trigger)
     const { data } = await dataClient
       .from("employees")
       .select("id, full_name, position, email, room")
-      .eq("id", employeeId)
+      .eq("id", user.id)
       .single();
     employeeData = data;
-  } else if (user?.email) {
-    // Try to match by email for real auth
+  }
+
+  if (!employeeData && demoEmployeeId) {
+    // Demo mode: use demo cookie employee ID
     const { data } = await dataClient
       .from("employees")
       .select("id, full_name, position, email, room")
-      .eq("email", user.email)
+      .eq("id", demoEmployeeId)
       .single();
     employeeData = data;
   }

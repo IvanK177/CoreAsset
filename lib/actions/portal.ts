@@ -37,10 +37,12 @@ export async function createPortalIncident(formData: FormData) {
   revalidatePath("/portal");
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
+  revalidatePath("/it-portal");
+  revalidatePath("/it-portal/my-tasks");
   return { success: true, id: data.id };
 }
 
-/** Sign out from portal — clears demo cookies and Supabase session */
+/** Sign out from portal — clears all auth cookies, demo cookies, and Supabase session */
 export async function portalSignOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
@@ -49,6 +51,14 @@ export async function portalSignOut() {
   const cookieStore = await cookies();
   cookieStore.delete("demo_role");
   cookieStore.delete("demo_employee_id");
+
+  // Delete all Supabase auth cookies (sb-* prefix)
+  const allCookies = cookieStore.getAll();
+  allCookies.forEach((cookie) => {
+    if (cookie.name.startsWith("sb-")) {
+      cookieStore.delete(cookie.name);
+    }
+  });
 
   const { redirect } = await import("next/navigation");
   redirect("/login");

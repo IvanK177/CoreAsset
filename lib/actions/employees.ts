@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { employeeSchema, employeeUpdateSchema } from "@/lib/schemas/employee.schema";
 
 export async function createEmployee(formData: FormData) {
@@ -37,12 +37,21 @@ export async function createEmployee(formData: FormData) {
   if (authError) return { error: authError.message, code: authError.code };
   if (!authData.user) return { error: "Не удалось создать пользователя в auth" };
 
+  const userId = authData.user.id;
+
   // 2. Insert into employees table using the auth user id
-  const { error } = await supabase.from("employees").insert({
+  const { error: dbError } = await supabase.from("employees").insert({
     ...parsed.data,
-    id: authData.user.id,
+    id: userId,
   });
-  if (error) return { error: error.message, code: error.code };
+
+  // 3. ROLLBACK: If DB insert failed — delete the "ghost" from Auth
+  if (dbError) {
+    console.error("[createEmployee] DB Error:", dbError.message);
+    await supabase.auth.admin.deleteUser(userId);
+    return { error: "Ошибка при сохранении в БД: " + dbError.message, code: dbError.code };
+  }
+
   revalidatePath("/employees");
   redirect("/employees");
 }
@@ -78,10 +87,22 @@ export async function deleteEmployee(id: string) {
 
   try {
     const supabase = await createServiceClient();
+
+    // 1. Delete from employees table
     const { error } = await supabase.from("employees").delete().eq("id", id);
     if (error) {
       console.error("[deleteEmployee] Supabase error:", error.message);
       deleteError = error.message;
+    }
+
+    // 2. Delete auth user account to free up the email
+    if (!deleteError) {
+      const { error: authDeleteError } = await supabase.auth.admin.deleteUser(id);
+      if (authDeleteError) {
+        console.error("[deleteEmployee] Auth delete error:", authDeleteError.message);
+        // Non-critical: employee row is already gone, but auth account remains
+        // We don't fail the whole operation because the employee record is deleted
+      }
     }
   } catch (err) {
     console.error("[deleteEmployee] Unexpected error:", err);
@@ -268,16 +289,27 @@ export async function restoreEmployeeDialog(id: string) {
   return { success: true };
 }
 
-/** Non-redirecting variant — deletes an employee, returns result without redirect */
+/** Non-redirecting variant — deletes an employee AND their auth account, returns result without redirect */
 export async function deleteEmployeeDialog(id: string) {
   let deleteError: string | null = null;
 
   try {
     const supabase = await createServiceClient();
+
+    // 1. Delete from employees table
     const { error } = await supabase.from("employees").delete().eq("id", id);
     if (error) {
       console.error("[deleteEmployeeDialog] Supabase error:", error.message);
       deleteError = error.message;
+    }
+
+    // 2. Delete auth user account to free up the email
+    if (!deleteError) {
+      const { error: authDeleteError } = await supabase.auth.admin.deleteUser(id);
+      if (authDeleteError) {
+        console.error("[deleteEmployeeDialog] Auth delete error:", authDeleteError.message);
+        // Non-critical: employee row is already gone, but auth account remains
+      }
     }
   } catch (err) {
     console.error("[deleteEmployeeDialog] Unexpected error:", err);
@@ -324,12 +356,21 @@ export async function createEmployeeDialog(formData: FormData) {
   if (authError) return { error: authError.message, code: authError.code ?? undefined };
   if (!authData.user) return { error: "Не удалось создать пользователя в auth", code: undefined };
 
+  const userId = authData.user.id;
+
   // 2. Insert into employees table using the auth user id
-  const { error } = await supabase.from("employees").insert({
+  const { error: dbError } = await supabase.from("employees").insert({
     ...parsed.data,
-    id: authData.user.id,
+    id: userId,
   });
-  if (error) return { error: error.message, code: error.code };
+
+  // 3. ROLLBACK: If DB insert failed — delete the "ghost" from Auth
+  if (dbError) {
+    console.error("[createEmployeeDialog] DB Error:", dbError.message);
+    await supabase.auth.admin.deleteUser(userId);
+    return { error: "Ошибка при сохранении в БД: " + dbError.message, code: dbError.code };
+  }
+
   revalidatePath("/employees");
   revalidatePath("/dashboard");
   return { success: true };

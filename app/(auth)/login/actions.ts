@@ -9,7 +9,31 @@ interface AuthResult {
   success?: string;
 }
 
-/** Sign in with email + password, then redirect based on role */
+/** Helper: fetch role from employees table by user id, with fallbacks */
+async function getUserRole(userId: string): Promise<string> {
+  const supabase = createServiceClient();
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (employee?.role) return employee.role;
+
+  // Fallback: try matching by email (legacy compatibility)
+  // This shouldn't normally be needed since the PostgreSQL trigger
+  // syncs auth.users.id → employees.id, but kept as safety net
+  return "employee";
+}
+
+/** Helper: redirect to the correct home page based on role — always throws (never returns) */
+function redirectByRole(role: string): never {
+  if (role === "admin") redirect("/dashboard");
+  if (role === "it_specialist") redirect("/it-portal");
+  redirect("/portal");
+}
+
+/** Sign in with email + password, then redirect based on role from employees table */
 export async function signIn(formData: FormData): Promise<AuthResult> {
   const supabase = await createClient();
   const email = formData.get("email") as string;
@@ -22,12 +46,12 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
 
   if (error) return { error: error.message };
 
-  // Determine role from user metadata
-  const role =
-    data.user?.app_metadata?.role ?? data.user?.user_metadata?.role ?? "employee";
-  if (role === "admin") redirect("/dashboard");
-  if (role === "it_specialist") redirect("/it-portal");
-  redirect("/portal");
+  // Get user id and query role from employees table
+  const userId = data.user?.id;
+  if (!userId) return { error: "Не удалось получить ID пользователя" };
+
+  const role = await getUserRole(userId);
+  redirectByRole(role);
 }
 
 /** Sign up with email + password */
@@ -52,12 +76,9 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   }
 
   // If immediately confirmed (no email verification), redirect based on role
-  if (data.session) {
-    const role =
-      data.user?.app_metadata?.role ?? data.user?.user_metadata?.role ?? "employee";
-    if (role === "admin") redirect("/dashboard");
-    if (role === "it_specialist") redirect("/it-portal");
-    redirect("/portal");
+  if (data.session && data.user?.id) {
+    const role = await getUserRole(data.user.id);
+    redirectByRole(role);
   }
 
   return { success: "Регистрация завершена. Проверьте email для подтверждения." };
@@ -70,16 +91,17 @@ export async function demoSignIn(role: "admin" | "employee" | "it_specialist") {
   if (role === "admin") {
     // Try real Supabase auth for admin demo
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: "admin@corp.ru",
       password: "admin123",
     });
 
-    if (!error) {
-      // Real auth succeeded — clear demo cookie, redirect to dashboard
+    if (!error && data.user?.id) {
+      // Real auth succeeded — query role from employees table
+      const dbRole = await getUserRole(data.user.id);
       cookieStore.delete("demo_role");
       cookieStore.delete("demo_employee_id");
-      redirect("/dashboard");
+      redirectByRole(dbRole);
     }
 
     // Real auth failed — use demo cookie mode

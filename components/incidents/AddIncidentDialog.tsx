@@ -101,6 +101,8 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
 
     await clearCache('/incidents');
     await clearCache('/dashboard');
+    await clearCache('/it-portal');
+    await clearCache('/it-portal/my-tasks');
     toast.success("Тикет успешно создан");
     form.reset({
       title: "",

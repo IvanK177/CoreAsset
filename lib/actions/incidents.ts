@@ -43,6 +43,8 @@ export async function createIncident(formData: FormData) {
   }
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
+  revalidatePath("/it-portal");
+  revalidatePath("/it-portal/my-tasks");
   redirect(`/incidents/${data.id}`);
 }
 
@@ -56,6 +58,8 @@ export async function updateIncidentStatus(id: string, status: "open" | "in_prog
   revalidatePath(`/incidents/${id}`);
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
+  revalidatePath("/it-portal");
+  revalidatePath("/it-portal/my-tasks");
 }
 
 /** Non-redirecting variant for dialog use — returns { success, id } or { error } */
@@ -84,6 +88,8 @@ export async function createIncidentDialog(formData: FormData) {
 
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
+  revalidatePath("/it-portal");
+  revalidatePath("/it-portal/my-tasks");
   return { success: true, id: data.id };
 }
 
@@ -122,6 +128,8 @@ export async function createIncidentFromComputer(
   revalidatePath(`/computers/${computerId}`);
   revalidatePath("/computers");
   revalidatePath("/dashboard");
+  revalidatePath("/it-portal");
+  revalidatePath("/it-portal/my-tasks");
   return { success: true, id: data.id };
 }
 
@@ -130,5 +138,7 @@ export async function deleteIncident(id: string) {
   await supabase.from("incidents").delete().eq("id", id);
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
+  revalidatePath("/it-portal");
+  revalidatePath("/it-portal/my-tasks");
   redirect("/incidents");
 }

@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * Auth callback handler for Google OAuth and email confirmation.
  * Exchanges the code from the URL query params for a Supabase session,
- * then redirects the user based on their role.
+ * then redirects the user based on their role from the employees table.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -69,10 +69,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Determine role from user metadata
-  const role =
-    user.app_metadata?.role ?? user.user_metadata?.role ?? "employee";
-  const redirectPath = role === "admin" ? "/dashboard" : role === "it_specialist" ? "/it-portal" : "/portal";
+  // Determine role from employees table (primary) with JWT metadata fallback
+  let role = "employee";
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (employee?.role) {
+    role = employee.role;
+  } else {
+    // Fallback to JWT metadata if DB query fails
+    role = user.app_metadata?.role ?? user.user_metadata?.role ?? "employee";
+  }
+
+  const redirectPath =
+    role === "admin" ? "/dashboard" : role === "it_specialist" ? "/it-portal" : "/portal";
 
   // Build final redirect response, preserving all auth cookies
   // that were set by exchangeCodeForSession via setAll

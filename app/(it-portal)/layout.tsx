@@ -11,22 +11,25 @@ export default async function ITPortalLayout({ children }: { children: React.Rea
   const demoRole = cookieStore.get("demo_role")?.value;
   const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
 
-  // Get IT specialist employee data
+  // Get IT specialist employee data — prefer user.id match (trigger-synced), then demo cookie, then fallback
   let employeeData = null;
-  const employeeId = demoEmployeeId || null;
 
-  if (employeeId) {
+  if (user?.id) {
+    // Primary: match by user.id (auth.users.id → employees.id via trigger)
     const { data } = await dataClient
       .from("employees")
       .select("id, full_name, position, email, role")
-      .eq("id", employeeId)
+      .eq("id", user.id)
       .single();
     employeeData = data;
-  } else if (user?.email) {
+  }
+
+  if (!employeeData && demoEmployeeId) {
+    // Demo mode: use demo cookie employee ID
     const { data } = await dataClient
       .from("employees")
       .select("id, full_name, position, email, role")
-      .eq("email", user.email)
+      .eq("id", demoEmployeeId)
       .single();
     employeeData = data;
   }

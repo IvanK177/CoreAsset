@@ -63,7 +63,7 @@ export default async function ITPortalPage() {
   }
 
   // Fetch ALL incidents with related data (author name + computer info)
-  const { data: incidents } = await dataClient
+  const { data: incidents, error: incidentsError } = await dataClient
     .from("incidents")
     .select(`
       id,
@@ -79,6 +79,10 @@ export default async function ITPortalPage() {
       computer:computers!incidents_computer_id_fkey(inventory_number, computer_type)
     `)
     .order("created_at", { ascending: false });
+
+  if (incidentsError) {
+    console.error("[ITPortalPage] Supabase query error:", incidentsError.code, incidentsError.message);
+  }
 
   // Count stats
   const allIncidents: IncidentRow[] = (incidents as IncidentRow[]) ?? [];
