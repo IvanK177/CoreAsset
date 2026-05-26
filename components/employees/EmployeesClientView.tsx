@@ -255,21 +255,18 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
                   <Link
                     key={comp.id}
                     href={`/computers/${comp.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                   >
-                    <div className="flex items-center gap-2">
-                      <Monitor className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">
-                        {comp.inventory_number}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {comp.computer_type ?? "—"}
-                      </span>
-                      {comp.room && (
-                        <span className="text-xs text-gray-400">· Каб. {comp.room}</span>
-                      )}
-                    </div>
-                    <EmployeeStatusBadge status={comp.lifecycle_status === "active" ? "active" : "dismissed"} />
+                    <Monitor className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-900">
+                      {comp.inventory_number}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {comp.computer_type ?? "—"}
+                    </span>
+                    {comp.room && (
+                      <span className="text-xs text-gray-400">· Каб. {comp.room}</span>
+                    )}
                   </Link>
                 ))}
               </div>

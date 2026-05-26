@@ -10,7 +10,7 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import { LinkEmployeeDialog } from "@/components/computers/LinkEmployeeDialog";
 import { EditComputerDialog } from "@/components/computers/EditComputerDialog";
 import { InstallSoftwareDialog } from "@/components/computers/InstallSoftwareDialog";
-import { CreateTicketDialog } from "@/components/computers/CreateTicketDialog";
+import { AddIncidentDialog } from "@/components/incidents/AddIncidentDialog";
 import { deleteComputer, linkEmployeeToComputer } from "@/lib/actions/computers";
 import { removeSoftware } from "@/lib/actions/licenses";
 import { cn, formatDate, safeHardware } from "@/lib/utils";
@@ -325,12 +325,13 @@ export function ComputersClientView({ computers, activeEmployees, installations,
           computerId={selectedComputer.id}
           licenseOptions={licenseOptions}
         />
-        <CreateTicketDialog
+        <AddIncidentDialog
           open={ticketDialogOpen}
           onOpenChange={setTicketDialogOpen}
-          computerId={selectedComputer.id}
-          employeeId={selectedComputer.employee_id ?? null}
-          activeEmployees={activeEmployees}
+          computers={computers.map((c) => ({ id: c.id, inventory_number: c.inventory_number }))}
+          employees={activeEmployees.map((e) => ({ id: e.id, full_name: e.full_name }))}
+          defaultComputerId={selectedComputer.id}
+          defaultEmployeeId={selectedComputer.employee_id ?? undefined}
         />
         <ConfirmActionDialog
           open={removeLicenseDialogOpen}

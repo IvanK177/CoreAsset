@@ -30,6 +30,7 @@ import { Key } from "lucide-react";
 const ROLE_ITEMS: Record<string, React.ReactNode> = {
   employee: "Сотрудник",
   admin: "Администратор",
+  it_specialist: "IT-специалист",
 };
 
 const employeeDialogSchema = z.object({
@@ -39,7 +40,7 @@ const employeeDialogSchema = z.object({
   email: z.string().email("Некорректный email"),
   phone: z.string().optional().or(z.literal("")),
   telegram: z.string().optional().or(z.literal("")),
-  role: z.enum(["admin", "employee"]),
+  role: z.enum(["admin", "employee", "it_specialist"]),
 });
 
 type EmployeeDialogValues = z.infer<typeof employeeDialogSchema>;
@@ -163,7 +164,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
               <Label>Роль</Label>
               <Select
                 value={form.watch("role")}
-                onValueChange={(v) => form.setValue("role", v as "admin" | "employee")}
+                onValueChange={(v) => form.setValue("role", v as "admin" | "employee" | "it_specialist")}
                 items={ROLE_ITEMS}
               >
                 <SelectTrigger className="w-full">
@@ -172,6 +173,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
                 <SelectContent>
                   <SelectItem value="employee">Сотрудник</SelectItem>
                   <SelectItem value="admin">Администратор</SelectItem>
+                  <SelectItem value="it_specialist">IT-специалист</SelectItem>
                 </SelectContent>
               </Select>
             </div>

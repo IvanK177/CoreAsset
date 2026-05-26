@@ -78,7 +78,7 @@ export async function proxy(request: NextRequest) {
   // 7. Authenticated user on /login → redirect based on role
   if (isAuthenticated && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = role === "admin" ? "/dashboard" : "/portal";
+    url.pathname = role === "admin" ? "/dashboard" : role === "it_specialist" ? "/it-portal" : "/portal";
     const redirectResponse = NextResponse.redirect(url);
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie.name, cookie.value);
@@ -86,19 +86,46 @@ export async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
-  // 8. Role-based route protection: employees cannot access admin routes
-  if (isAuthenticated && role !== "admin") {
+  // 8. Role-based route protection
+  if (isAuthenticated) {
     const isAdminRoute =
       ADMIN_ROUTES.some((r) => pathname.startsWith(r)) || pathname === "/";
+    const isEmployeePortal = pathname.startsWith("/portal");
+    const isITPortal = pathname.startsWith("/it-portal");
 
-    if (isAdminRoute) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/portal";
-      const redirectResponse = NextResponse.redirect(url);
-      supabaseResponse.cookies.getAll().forEach((cookie) => {
-        redirectResponse.cookies.set(cookie.name, cookie.value);
-      });
-      return redirectResponse;
+    if (role === "admin") {
+      // Admin: can access dashboard; block employee & IT portals
+      if (isEmployeePortal || isITPortal) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard";
+        const redirectResponse = NextResponse.redirect(url);
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+          redirectResponse.cookies.set(cookie.name, cookie.value);
+        });
+        return redirectResponse;
+      }
+    } else if (role === "it_specialist") {
+      // IT specialist: can only access /it-portal; block dashboard & employee portal
+      if (isAdminRoute || isEmployeePortal) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/it-portal";
+        const redirectResponse = NextResponse.redirect(url);
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+          redirectResponse.cookies.set(cookie.name, cookie.value);
+        });
+        return redirectResponse;
+      }
+    } else {
+      // Employee (or unknown role): can only access /portal; block dashboard & IT portal
+      if (isAdminRoute || isITPortal) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/portal";
+        const redirectResponse = NextResponse.redirect(url);
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+          redirectResponse.cookies.set(cookie.name, cookie.value);
+        });
+        return redirectResponse;
+      }
     }
   }
 

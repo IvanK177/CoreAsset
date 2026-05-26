@@ -40,7 +40,7 @@ export default function LoginPage() {
     initialState
   );
 
-  const handleDemoLogin = (role: "admin" | "employee") => {
+  const handleDemoLogin = (role: "admin" | "employee" | "it_specialist") => {
     startDemoTransition(async () => {
       await demoSignIn(role);
     });
@@ -180,10 +180,10 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="mt-4 flex gap-3">
+          <div className="mt-4 grid grid-cols-3 gap-3">
             <Button
               variant="default"
-              className="flex-1 h-10 rounded-lg bg-gray-800 hover:bg-gray-900 text-white gap-2"
+              className="w-full h-10 rounded-lg bg-gray-800 hover:bg-gray-900 text-white text-xs gap-1"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("admin")}
             >
@@ -192,12 +192,21 @@ export default function LoginPage() {
             </Button>
             <Button
               variant="outline"
-              className="flex-1 h-10 rounded-lg border-gray-200 text-gray-700 hover:bg-gray-50 gap-2"
+              className="w-full h-10 rounded-lg border-gray-200 text-gray-700 hover:bg-gray-50 text-xs gap-1"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("employee")}
             >
               {isDemoPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>👤</span>}
               {isDemoPending ? "Вход…" : "Сотрудник"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full h-10 rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs gap-1"
+              disabled={pending || isDemoPending}
+              onClick={() => handleDemoLogin("it_specialist")}
+            >
+              {isDemoPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🔧</span>}
+              {isDemoPending ? "Вход…" : "IT-специалист"}
             </Button>
           </div>
         </div>

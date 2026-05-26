@@ -180,6 +180,7 @@ export type Database = {
           created_at: string
           description: string
           employee_id: string | null
+          assigned_to: string | null
           id: string
           incident_type: Database["public"]["Enums"]["incident_type"]
           priority: Database["public"]["Enums"]["incident_priority"]
@@ -193,6 +194,7 @@ export type Database = {
           created_at?: string
           description: string
           employee_id?: string | null
+          assigned_to?: string | null
           id?: string
           incident_type?: Database["public"]["Enums"]["incident_type"]
           priority?: Database["public"]["Enums"]["incident_priority"]
@@ -206,6 +208,7 @@ export type Database = {
           created_at?: string
           description?: string
           employee_id?: string | null
+          assigned_to?: string | null
           id?: string
           incident_type?: Database["public"]["Enums"]["incident_type"]
           priority?: Database["public"]["Enums"]["incident_priority"]
@@ -225,6 +228,13 @@ export type Database = {
           {
             foreignKeyName: "incidents_employee_id_fkey"
             columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_assigned_to_fkey"
+            columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
@@ -289,7 +299,7 @@ export type Database = {
       incident_status: "open" | "in_progress" | "resolved"
       incident_type: "hardware" | "software" | "network" | "other"
       license_type: "perpetual" | "subscription"
-      user_role: "admin" | "employee"
+      user_role: "admin" | "employee" | "it_specialist"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -404,7 +414,7 @@ export const Constants = {
       incident_status: ["open", "in_progress", "resolved"],
       incident_type: ["hardware", "software", "network", "other"],
       license_type: ["perpetual", "subscription"],
-      user_role: ["admin", "employee"],
+      user_role: ["admin", "employee", "it_specialist"],
     },
   },
 } as const

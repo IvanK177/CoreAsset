@@ -54,9 +54,11 @@ interface AddIncidentDialogProps {
   onOpenChange: (open: boolean) => void;
   computers: Computer[];
   employees: Employee[];
+  defaultComputerId?: string;
+  defaultEmployeeId?: string;
 }
 
-export function AddIncidentDialog({ open, onOpenChange, computers, employees }: AddIncidentDialogProps) {
+export function AddIncidentDialog({ open, onOpenChange, computers, employees, defaultComputerId, defaultEmployeeId }: AddIncidentDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -68,8 +70,8 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees }: 
       title: "",
       description: "",
       priority: "medium",
-      computer_id: "",
-      employee_id: "",
+      computer_id: defaultComputerId ?? "",
+      employee_id: defaultEmployeeId ?? "",
     },
   });
 
@@ -100,14 +102,29 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees }: 
     await clearCache('/incidents');
     await clearCache('/dashboard');
     toast.success("Тикет успешно создан");
-    form.reset();
+    form.reset({
+      title: "",
+      description: "",
+      priority: "medium",
+      computer_id: defaultComputerId ?? "",
+      employee_id: defaultEmployeeId ?? "",
+    });
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
     setPending(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => {
+      onOpenChange(v);
+      if (!v) form.reset({
+        title: "",
+        description: "",
+        priority: "medium",
+        computer_id: defaultComputerId ?? "",
+        employee_id: defaultEmployeeId ?? "",
+      });
+    }}>
       <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Новый тикет</DialogTitle>
@@ -214,7 +231,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees }: 
             <Button
               type="button"
               variant="outline"
-              onClick={() => { onOpenChange(false); form.reset(); }}
+              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", computer_id: defaultComputerId ?? "", employee_id: defaultEmployeeId ?? "" }); }}
               disabled={pending}
             >
               Отмена

@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { TicketDialogButton } from "@/components/shared/TicketDialogButton";
 import { SubmitButton } from "@/components/shared/SubmitButton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -20,7 +21,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
   const { id } = await params;
   const supabase = createServiceClient();
 
-  const [empRes, computersRes, incidentsRes] = await Promise.all([
+  const [empRes, computersRes, incidentsRes, allComputersRes, allEmployeesRes] = await Promise.all([
     supabase.from("employees").select("*").eq("id", id).single(),
     supabase
       .from("computers")
@@ -31,6 +32,8 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
       .select("id, title, description, priority, status, incident_type, created_at, computer_id, computers(id, inventory_number)")
       .eq("employee_id", id)
       .order("created_at", { ascending: false }),
+    supabase.from("computers").select("id, inventory_number").order("inventory_number"),
+    supabase.from("employees").select("id, full_name").eq("is_active", true).order("full_name"),
   ]);
 
   // Check for Supabase errors on the main entity
@@ -151,9 +154,11 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Инциденты ({employeeIncidents.length})
           </p>
-          <Link href={`/incidents/new`} className={buttonVariants({ variant: "outline", size: "sm" })}>
-            + Создать тикет
-          </Link>
+          <TicketDialogButton
+            computers={allComputersRes.data ?? []}
+            employees={allEmployeesRes.data ?? []}
+            defaultEmployeeId={id}
+          />
         </div>
         <Separator />
         {employeeIncidents.length === 0 ? (

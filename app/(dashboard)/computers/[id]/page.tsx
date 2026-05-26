@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { TicketDialogButton } from "@/components/shared/TicketDialogButton";
 import { ComputerStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteComputer } from "@/lib/actions/computers";
@@ -18,7 +19,7 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
   const { id } = await params;
   const supabase = createServiceClient();
 
-  const [computerRes, incidentsRes, installsRes] = await Promise.all([
+  const [computerRes, incidentsRes, installsRes, allComputersRes, allEmployeesRes] = await Promise.all([
     supabase.from("computers").select("*, employees(id, full_name, position, email, room)").eq("id", id).single(),
     supabase
       .from("incidents")
@@ -29,6 +30,8 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
       .from("computer_licenses")
       .select("id, installed_at, licenses(id, software_name, version)")
       .eq("computer_id", id),
+    supabase.from("computers").select("id, inventory_number").order("inventory_number"),
+    supabase.from("employees").select("id, full_name").eq("is_active", true).order("full_name"),
   ]);
 
   // Check for Supabase errors on the main entity
@@ -153,9 +156,12 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             История инцидентов ({incidents.length})
           </p>
-          <Link href={`/incidents/new?computer_id=${id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
-            + Создать тикет
-          </Link>
+          <TicketDialogButton
+            computers={allComputersRes.data ?? []}
+            employees={allEmployeesRes.data ?? []}
+            defaultComputerId={id}
+            defaultEmployeeId={computer.employee_id ?? undefined}
+          />
         </div>
         <Separator />
         {incidents.length === 0 ? (

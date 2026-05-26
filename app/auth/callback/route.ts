@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
   // Determine role from user metadata
   const role =
     user.app_metadata?.role ?? user.user_metadata?.role ?? "employee";
-  const redirectPath = role === "admin" ? "/dashboard" : "/portal";
+  const redirectPath = role === "admin" ? "/dashboard" : role === "it_specialist" ? "/it-portal" : "/portal";
 
   // Build final redirect response, preserving all auth cookies
   // that were set by exchangeCodeForSession via setAll

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 
 interface AuthResult {
@@ -25,7 +25,9 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
   // Determine role from user metadata
   const role =
     data.user?.app_metadata?.role ?? data.user?.user_metadata?.role ?? "employee";
-  redirect(role === "admin" ? "/dashboard" : "/portal");
+  if (role === "admin") redirect("/dashboard");
+  if (role === "it_specialist") redirect("/it-portal");
+  redirect("/portal");
 }
 
 /** Sign up with email + password */
@@ -53,14 +55,16 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   if (data.session) {
     const role =
       data.user?.app_metadata?.role ?? data.user?.user_metadata?.role ?? "employee";
-    redirect(role === "admin" ? "/dashboard" : "/portal");
+    if (role === "admin") redirect("/dashboard");
+    if (role === "it_specialist") redirect("/it-portal");
+    redirect("/portal");
   }
 
   return { success: "Регистрация завершена. Проверьте email для подтверждения." };
 }
 
 /** Demo sign-in: sets cookies for demo mode and redirects based on role */
-export async function demoSignIn(role: "admin" | "employee") {
+export async function demoSignIn(role: "admin" | "employee" | "it_specialist") {
   const cookieStore = await cookies();
 
   if (role === "admin") {
@@ -87,6 +91,35 @@ export async function demoSignIn(role: "admin" | "employee") {
     });
     cookieStore.delete("demo_employee_id");
     redirect("/dashboard");
+  }
+
+  // IT specialist demo — cookie-based demo mode
+  if (role === "it_specialist") {
+    cookieStore.set("demo_role", "it_specialist", {
+      path: "/",
+      maxAge: 60 * 60 * 24,
+      httpOnly: true,
+      sameSite: "lax",
+    });
+    // Try to find an IT specialist employee in the database
+    const supabase = createServiceClient();
+    const { data: specialist } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("role", "it_specialist")
+      .eq("is_active", true)
+      .limit(1)
+      .single();
+
+    if (specialist) {
+      cookieStore.set("demo_employee_id", specialist.id, {
+        path: "/",
+        maxAge: 60 * 60 * 24,
+        httpOnly: true,
+        sameSite: "lax",
+      });
+    }
+    redirect("/it-portal");
   }
 
   // Employee demo — always use cookie-based demo mode
