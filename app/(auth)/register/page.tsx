@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState } from "react";
-import { signIn, demoSignIn } from "./actions";
+import { signUpAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,35 +13,25 @@ import {
   Mail,
   Loader2,
 } from "lucide-react";
-import { useTransition } from "react";
+import Link from "next/link";
 
 interface FormState {
   error: string;
-  success: string;
 }
 
-const initialState: FormState = { error: "", success: "" };
+const initialState: FormState = { error: "" };
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isDemoPending, startDemoTransition] = useTransition();
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [state, formAction, pending] = useActionState(
     async (prevState: FormState, formData: FormData): Promise<FormState> => {
-      const result = await signIn(formData);
+      const result = await signUpAction(formData);
       if (!result) return initialState;
-      return {
-        error: result.error ?? "",
-        success: result.success ?? "",
-      };
+      return { error: result.error ?? "" };
     },
     initialState
   );
-
-  const handleDemoLogin = (role: "admin" | "employee" | "it_specialist") => {
-    startDemoTransition(async () => {
-      await demoSignIn(role);
-    });
-  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] px-4">
@@ -58,14 +48,13 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Login Card */}
+      {/* Register Card */}
       <div className="w-[420px] rounded-2xl bg-white p-8 shadow-xl">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
-          Войти в систему
+          Регистрация
         </h2>
 
-        {/* Email/Password Form */}
-        <form id="login-form" action={formAction} className="space-y-5">
+        <form action={formAction} className="space-y-5">
           {/* Email */}
           <div className="space-y-2">
             <Label
@@ -80,7 +69,7 @@ export default function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="admin@corp.ru"
+                placeholder="your@email.com"
                 required
                 autoComplete="email"
                 className="pl-10 h-11 rounded-lg border-gray-200"
@@ -104,7 +93,8 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 required
-                autoComplete="current-password"
+                autoComplete="new-password"
+                minLength={6}
                 className="pl-10 pr-10 h-11 rounded-lg border-gray-200"
               />
               <button
@@ -121,6 +111,40 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Confirm Password */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="confirm_password"
+              className="text-sm font-medium text-gray-700"
+            >
+              Подтвердите пароль
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                id="confirm_password"
+                name="confirm_password"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="••••••••"
+                required
+                autoComplete="new-password"
+                minLength={6}
+                className="pl-10 pr-10 h-11 rounded-lg border-gray-200"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
           {/* Error Message */}
           {state.error && (
             <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
@@ -128,78 +152,28 @@ export default function LoginPage() {
             </p>
           )}
 
-          {/* Success Message */}
-          {state.success && (
-            <p className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">
-              {state.success}
-            </p>
-          )}
-
           {/* Submit */}
           <Button
             type="submit"
-            disabled={pending || isDemoPending}
+            disabled={pending}
             className="w-full h-11 rounded-lg font-medium bg-[#2563eb] hover:bg-[#1d4ed8] gap-2"
           >
             {pending && <Loader2 className="w-4 h-4 animate-spin" />}
-            {pending ? "Вход…" : "Войти"}
+            {pending ? "Регистрация…" : "Зарегистрироваться"}
           </Button>
         </form>
 
-        {/* Link to Register */}
+        {/* Link to Login */}
         <p className="mt-4 text-center text-sm text-gray-500">
-          Нет аккаунта?{" "}
-          <a
-            href="/register"
+          Уже есть аккаунт?{" "}
+          <Link
+            href="/login"
             className="text-[#2563eb] hover:text-[#1d4ed8] font-medium"
           >
-            Зарегистрироваться
-          </a>
+            Войти
+          </Link>
         </p>
-
-        {/* Demo Section */}
-        <div className="mt-6">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative bg-white px-4 text-xs text-gray-500">
-              Быстрый вход (демо)
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            <Button
-              variant="default"
-              className="w-full h-10 rounded-lg bg-gray-800 hover:bg-gray-900 text-white text-xs gap-1"
-              disabled={pending || isDemoPending}
-              onClick={() => handleDemoLogin("admin")}
-            >
-              {isDemoPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🖥</span>}
-              {isDemoPending ? "Вход…" : "Администратор"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg border-gray-200 text-gray-700 hover:bg-gray-50 text-xs gap-1"
-              disabled={pending || isDemoPending}
-              onClick={() => handleDemoLogin("employee")}
-            >
-              {isDemoPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>👤</span>}
-              {isDemoPending ? "Вход…" : "Сотрудник"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs gap-1"
-              disabled={pending || isDemoPending}
-              onClick={() => handleDemoLogin("it_specialist")}
-            >
-              {isDemoPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🔧</span>}
-              {isDemoPending ? "Вход…" : "IT-специалист"}
-            </Button>
-          </div>
-        </div>
       </div>
-
     </div>
   );
 }

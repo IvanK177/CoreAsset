@@ -9,31 +9,32 @@ interface AuthResult {
   success?: string;
 }
 
-/** Helper: fetch role from employees table by user id, with fallbacks */
-async function getUserRole(userId: string): Promise<string> {
+/** Helper: fetch employee record from employees table by user id */
+async function getEmployee(userId: string) {
   const supabase = createServiceClient();
-  const { data: employee } = await supabase
+  return supabase
     .from("employees")
-    .select("role")
+    .select("id, full_name, role")
     .eq("id", userId)
     .single();
-
-  if (employee?.role) return employee.role;
-
-  // Fallback: try matching by email (legacy compatibility)
-  // This shouldn't normally be needed since the PostgreSQL trigger
-  // syncs auth.users.id → employees.id, but kept as safety net
-  return "employee";
 }
 
-/** Helper: redirect to the correct home page based on role — always throws (never returns) */
-function redirectByRole(role: string): never {
-  if (role === "admin") redirect("/dashboard");
-  if (role === "it_specialist") redirect("/it-portal");
+/** Helper: redirect based on whether user has a profile and their role */
+async function redirectAfterAuth(userId: string): Promise<never> {
+  const { data: employee } = await getEmployee(userId);
+
+  // If user has no employee profile (or no full_name), send to onboarding
+  if (!employee || !employee.full_name) {
+    redirect("/onboarding");
+  }
+
+  // Has a complete profile — redirect by role
+  if (employee.role === "admin") redirect("/dashboard");
+  if (employee.role === "it_specialist") redirect("/it-portal");
   redirect("/portal");
 }
 
-/** Sign in with email + password, then redirect based on role from employees table */
+/** Sign in with email + password, then redirect based on profile/role */
 export async function signIn(formData: FormData): Promise<AuthResult> {
   const supabase = await createClient();
   const email = formData.get("email") as string;
@@ -46,15 +47,13 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
 
   if (error) return { error: error.message };
 
-  // Get user id and query role from employees table
   const userId = data.user?.id;
   if (!userId) return { error: "Не удалось получить ID пользователя" };
 
-  const role = await getUserRole(userId);
-  redirectByRole(role);
+  return await redirectAfterAuth(userId);
 }
 
-/** Sign up with email + password */
+/** Sign up with email + password — redirects to onboarding for profile setup */
 export async function signUp(formData: FormData): Promise<AuthResult> {
   const supabase = await createClient();
   const email = formData.get("email") as string;
@@ -72,13 +71,12 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
 
   // If email confirmation is required, session will be null
   if (data.user && !data.session) {
-    return { success: "Письмо с подтверждением отправлено на ваш email." };
+    return { success: "Письмо с подтверждением отправлено на ваш email. После подтверждения вы сможете заполнить профиль." };
   }
 
-  // If immediately confirmed (no email verification), redirect based on role
+  // If immediately confirmed (no email verification), redirect to onboarding
   if (data.session && data.user?.id) {
-    const role = await getUserRole(data.user.id);
-    redirectByRole(role);
+    redirect("/onboarding");
   }
 
   return { success: "Регистрация завершена. Проверьте email для подтверждения." };
@@ -97,11 +95,10 @@ export async function demoSignIn(role: "admin" | "employee" | "it_specialist") {
     });
 
     if (!error && data.user?.id) {
-      // Real auth succeeded — query role from employees table
-      const dbRole = await getUserRole(data.user.id);
+      // Real auth succeeded — redirect based on profile/role
       cookieStore.delete("demo_role");
       cookieStore.delete("demo_employee_id");
-      redirectByRole(dbRole);
+      redirectAfterAuth(data.user.id);
     }
 
     // Real auth failed — use demo cookie mode

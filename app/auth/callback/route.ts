@@ -4,7 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * Auth callback handler for Google OAuth and email confirmation.
  * Exchanges the code from the URL query params for a Supabase session,
- * then redirects the user based on their role from the employees table.
+ * then redirects the user based on their profile status:
+ * - No employee profile → /onboarding
+ * - Has profile with role → role-based portal
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -69,26 +71,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Determine role from employees table (primary) with JWT metadata fallback
-  let role = "employee";
+  // Check if user has an employee profile
   const { data: employee } = await supabase
     .from("employees")
-    .select("role")
+    .select("id, full_name, role")
     .eq("id", user.id)
     .single();
 
-  if (employee?.role) {
-    role = employee.role;
-  } else {
-    // Fallback to JWT metadata if DB query fails
-    role = user.app_metadata?.role ?? user.user_metadata?.role ?? "employee";
+  // If no employee profile or no full_name → redirect to onboarding
+  if (!employee || !employee.full_name) {
+    const finalResponse = NextResponse.redirect(new URL("/onboarding", origin));
+    response.cookies.getAll().forEach((cookie) => {
+      finalResponse.cookies.set(cookie.name, cookie.value);
+    });
+    return finalResponse;
   }
 
+  // Has a complete profile — redirect based on role
   const redirectPath =
-    role === "admin" ? "/dashboard" : role === "it_specialist" ? "/it-portal" : "/portal";
+    employee.role === "admin" ? "/dashboard" : employee.role === "it_specialist" ? "/it-portal" : "/portal";
 
   // Build final redirect response, preserving all auth cookies
-  // that were set by exchangeCodeForSession via setAll
   const finalResponse = NextResponse.redirect(new URL(redirectPath, origin));
   response.cookies.getAll().forEach((cookie) => {
     finalResponse.cookies.set(cookie.name, cookie.value);
