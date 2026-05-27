@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { ComputersClientView, ComputerWithEmployee, ActiveEmployee, LicenseOption } from "@/components/computers/ComputersClientView";
-import { AddComputerDialog } from "@/components/computers/AddComputerDialog";
+import dynamic from "next/dynamic";
+
+const AddComputerDialog = dynamic(
+  () => import("@/components/computers/AddComputerDialog").then((mod) => mod.AddComputerDialog),
+  { ssr: false }
+);
+
+import type { Tables } from "@/types/database.types";
 
 interface InstallRow {
   id: string;
@@ -33,6 +40,7 @@ interface ComputersPageClientProps {
   licenseOptions: LicenseOption[];
   totalCount: number;
   initialFilter?: string;
+  templates: Tables<"computer_templates">[];
 }
 
 export function ComputersPageClient({
@@ -43,6 +51,7 @@ export function ComputersPageClient({
   licenseOptions,
   totalCount,
   initialFilter = "all",
+  templates,
 }: ComputersPageClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -65,8 +74,9 @@ export function ComputersPageClient({
         incidents={incidents}
         licenseOptions={licenseOptions}
         initialFilter={initialFilter}
+        templates={templates}
       />
-      <AddComputerDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <AddComputerDialog open={dialogOpen} onOpenChange={setDialogOpen} templates={templates} />
     </div>
   );
 }

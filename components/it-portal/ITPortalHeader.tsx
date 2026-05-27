@@ -26,12 +26,12 @@ export default function ITPortalHeader({ specialistName, specialistPosition }: I
       {/* Left: Logo + Nav */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600">
             <MonitorIcon className="w-5 h-5 text-white" />
           </div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm tracking-tight text-gray-900">CoreAsset</span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
               IT-портал
             </span>
           </div>
@@ -50,7 +50,7 @@ export default function ITPortalHeader({ specialistName, specialistPosition }: I
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
                   active
-                    ? "bg-indigo-50 text-indigo-700"
+                    ? "bg-blue-50 text-blue-700"
                     : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                 )}
               >

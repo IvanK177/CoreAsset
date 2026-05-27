@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { employeeSchema, employeeUpdateSchema } from "@/lib/schemas/employee.schema";
@@ -52,6 +52,7 @@ export async function createEmployee(formData: FormData) {
     return { error: "Ошибка при сохранении в БД: " + dbError.message, code: dbError.code };
   }
 
+  revalidateTag("employees", { expire: 0 });
   revalidatePath("/employees");
   redirect("/employees");
 }
@@ -77,6 +78,7 @@ export async function updateEmployee(id: string, formData: FormData) {
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidateTag("employees", { expire: 0 });
   revalidatePath("/employees");
   revalidatePath(`/employees/${id}`);
   redirect(`/employees/${id}`);
@@ -111,6 +113,7 @@ export async function deleteEmployee(id: string) {
 
   if (deleteError) return { error: deleteError };
 
+  revalidateTag("employees", { expire: 0 });
   revalidatePath("/employees");
   redirect("/employees");
 }
@@ -159,6 +162,8 @@ export async function restoreEmployee(id: string) {
 
   if (actionError) return { error: actionError };
 
+  revalidateTag("employees", { expire: 0 });
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/employees");
   revalidatePath(`/employees/${id}`);
   revalidatePath("/computers");
@@ -208,6 +213,8 @@ export async function dismissEmployee(id: string) {
 
   if (actionError) return { error: actionError };
 
+  revalidateTag("employees", { expire: 0 });
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/employees");
   revalidatePath("/computers");
   redirect("/employees");
@@ -254,6 +261,8 @@ export async function dismissEmployeeDialog(id: string) {
 
   if (actionError) return { error: actionError };
 
+  revalidateTag("employees", { expire: 0 });
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/employees");
   revalidatePath("/computers");
   return { success: true };
@@ -284,6 +293,7 @@ export async function restoreEmployeeDialog(id: string) {
 
   if (actionError) return { error: actionError };
 
+  revalidateTag("employees", { expire: 0 });
   revalidatePath("/employees");
   revalidatePath("/computers");
   return { success: true };
@@ -318,6 +328,7 @@ export async function deleteEmployeeDialog(id: string) {
 
   if (deleteError) return { error: deleteError };
 
+  revalidateTag("employees", { expire: 0 });
   revalidatePath("/employees");
   revalidatePath("/dashboard");
   return { success: true };
@@ -371,6 +382,7 @@ export async function createEmployeeDialog(formData: FormData) {
     return { error: "Ошибка при сохранении в БД: " + dbError.message, code: dbError.code };
   }
 
+  revalidateTag("employees", { expire: 0 });
   revalidatePath("/employees");
   revalidatePath("/dashboard");
   return { success: true };

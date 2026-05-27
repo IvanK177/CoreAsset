@@ -1,0 +1,10 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+import TemplatesPageClient from "@/components/templates/TemplatesPageClient";
+import { getCachedTemplates } from "@/lib/supabase/cached";
+
+export default async function TemplatesPage() {
+  const templates = await getCachedTemplates();
+  return <TemplatesPageClient templates={templates} />;
+}

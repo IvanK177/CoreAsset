@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { LicensesClientView } from "@/components/licenses/LicensesClientView";
-import { AddLicenseDialog } from "@/components/licenses/AddLicenseDialog";
+import dynamic from "next/dynamic";
+
+const AddLicenseDialog = dynamic(
+  () => import("@/components/licenses/AddLicenseDialog").then((mod) => mod.AddLicenseDialog),
+  { ssr: false }
+);
 
 interface LicenseRow {
   id: string;

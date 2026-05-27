@@ -116,9 +116,9 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies("/login");
   }
 
-  // 6. Authenticated user but does NOT have a complete profile → redirect to /onboarding
+  // 6. Authenticated user but does NOT have a complete profile → redirect to /onboarding (unless accessing login/register)
   if (!hasProfile) {
-    if (isOnboardingRoute) {
+    if (isOnboardingRoute || pathname.startsWith("/login") || pathname.startsWith("/register")) {
       return supabaseResponse;
     }
     return redirectWithCookies("/onboarding");

@@ -128,13 +128,13 @@ export default function ITPortalClientView({
   return (
     <div className="space-y-6">
       {/* ===== Header Banner ===== */}
-      <div className="rounded-2xl bg-indigo-600 p-6 text-white">
+      <div className="rounded-2xl bg-blue-600 p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-2">
               {isMyTasks ? "Мои задачи" : "Биржа заявок"}
             </h1>
-            <p className="text-indigo-100 text-sm">
+            <p className="text-blue-100 text-sm">
               {isMyTasks
                 ? "Заявки, которые вы взяли в работу."
                 : "Все входящие заявки от сотрудников. Берите в работу и решайте."}
@@ -144,16 +144,16 @@ export default function ITPortalClientView({
             {!isMyTasks && (
               <div className="flex flex-col items-center">
                 <span className="text-3xl font-bold">{openCount}</span>
-                <span className="text-indigo-200 text-xs">Открытых</span>
+                <span className="text-blue-200 text-xs">Открытых</span>
               </div>
             )}
             <div className="flex flex-col items-center">
               <span className="text-3xl font-bold">{inProgressCount}</span>
-              <span className="text-indigo-200 text-xs">В работе</span>
+              <span className="text-blue-200 text-xs">В работе</span>
             </div>
             <div className="flex flex-col items-center">
               <span className="text-3xl font-bold">{resolvedCount}</span>
-              <span className="text-indigo-200 text-xs">Решено</span>
+              <span className="text-blue-200 text-xs">Решено</span>
             </div>
           </div>
         </div>
@@ -244,7 +244,7 @@ export default function ITPortalClientView({
                     <PriorityBadge priority={incident.priority as "low" | "medium" | "high" | "critical"} />
                     <IncidentStatusBadge status={incident.status as "open" | "in_progress" | "resolved"} />
                     {isInProgress && incident.assigned_to && (
-                      <Badge variant="outline" className="text-xs font-medium bg-indigo-50 text-indigo-700 border-indigo-200">
+                      <Badge variant="outline" className="text-xs font-medium bg-blue-50 text-blue-700 border-blue-200">
                         {isAssignedToMe ? "Моя задача" : "В работе у другого"}
                       </Badge>
                     )}

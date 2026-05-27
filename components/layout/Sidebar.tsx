@@ -12,6 +12,7 @@ import {
   MonitorIcon,
   LogOut,
   Bell,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/actions/auth";
@@ -26,6 +27,7 @@ interface SidebarProps {
 const nav = [
   { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
   { href: "/computers", label: "Компьютеры", icon: Monitor },
+  { href: "/templates", label: "Шаблоны ПК", icon: ClipboardList },
   { href: "/employees", label: "Сотрудники", icon: Users },
   { href: "/licenses", label: "Лицензии", icon: Key },
   { href: "/finances", label: "Финансы", icon: BarChart2 },

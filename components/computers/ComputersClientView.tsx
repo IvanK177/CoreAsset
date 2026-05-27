@@ -7,10 +7,24 @@ import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
-import { LinkEmployeeDialog } from "@/components/computers/LinkEmployeeDialog";
-import { EditComputerDialog } from "@/components/computers/EditComputerDialog";
-import { InstallSoftwareDialog } from "@/components/computers/InstallSoftwareDialog";
-import { AddIncidentDialog } from "@/components/incidents/AddIncidentDialog";
+import dynamic from "next/dynamic";
+
+const LinkEmployeeDialog = dynamic(
+  () => import("@/components/computers/LinkEmployeeDialog").then((mod) => mod.LinkEmployeeDialog),
+  { ssr: false }
+);
+const EditComputerDialog = dynamic(
+  () => import("@/components/computers/EditComputerDialog").then((mod) => mod.EditComputerDialog),
+  { ssr: false }
+);
+const InstallSoftwareDialog = dynamic(
+  () => import("@/components/computers/InstallSoftwareDialog").then((mod) => mod.InstallSoftwareDialog),
+  { ssr: false }
+);
+const AddIncidentDialog = dynamic(
+  () => import("@/components/incidents/AddIncidentDialog").then((mod) => mod.AddIncidentDialog),
+  { ssr: false }
+);
 import { deleteComputer, linkEmployeeToComputer } from "@/lib/actions/computers";
 import { removeSoftware } from "@/lib/actions/licenses";
 import { cn, formatDate, safeHardware } from "@/lib/utils";
@@ -72,9 +86,10 @@ interface ComputersClientViewProps {
   incidents: IncidentRow[];
   licenseOptions: LicenseOption[];
   initialFilter?: string;
+  templates: Tables<"computer_templates">[];
 }
 
-export function ComputersClientView({ computers, activeEmployees, installations, incidents, licenseOptions, initialFilter = "all" }: ComputersClientViewProps) {
+export function ComputersClientView({ computers, activeEmployees, installations, incidents, licenseOptions, initialFilter = "all", templates }: ComputersClientViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<ComputerStatus | "all">(initialFilter as ComputerStatus | "all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -318,6 +333,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           computer={selectedComputer}
+          templates={templates}
         />
         <InstallSoftwareDialog
           open={installDialogOpen}

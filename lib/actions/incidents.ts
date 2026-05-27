@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { incidentSchema } from "@/lib/schemas/incident.schema";
@@ -41,6 +41,7 @@ export async function createIncident(formData: FormData) {
     console.error("[createIncident] Supabase insert error:", error.code, error.message);
     return { error: error.message, code: error.code };
   }
+  revalidateTag("incidents", { expire: 0 });
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
   revalidatePath("/it-portal");
@@ -55,6 +56,7 @@ export async function updateIncidentStatus(id: string, status: "open" | "in_prog
     resolved_at: status === "resolved" ? new Date().toISOString() : null,
     updated_at: new Date().toISOString(),
   }).eq("id", id);
+  revalidateTag("incidents", { expire: 0 });
   revalidatePath(`/incidents/${id}`);
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
@@ -86,6 +88,7 @@ export async function createIncidentDialog(formData: FormData) {
   const { data, error } = await supabase.from("incidents").insert(insertData).select("id").single();
   if (error) return { error: error.message, code: error.code };
 
+  revalidateTag("incidents", { expire: 0 });
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
   revalidatePath("/it-portal");
@@ -124,6 +127,7 @@ export async function createIncidentFromComputer(
   const { data, error } = await supabase.from("incidents").insert(insertData).select("id").single();
   if (error) return { error: error.message, code: error.code };
 
+  revalidateTag("incidents", { expire: 0 });
   revalidatePath("/incidents");
   revalidatePath(`/computers/${computerId}`);
   revalidatePath("/computers");
@@ -136,6 +140,7 @@ export async function createIncidentFromComputer(
 export async function deleteIncident(id: string) {
   const supabase = await createServiceClient();
   await supabase.from("incidents").delete().eq("id", id);
+  revalidateTag("incidents", { expire: 0 });
   revalidatePath("/incidents");
   revalidatePath("/dashboard");
   revalidatePath("/it-portal");

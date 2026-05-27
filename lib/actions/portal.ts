@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 /** Create an incident from the employee portal (non-redirecting) */
@@ -34,6 +34,7 @@ export async function createPortalIncident(formData: FormData) {
     return { error: error.message, code: error.code };
   }
 
+  revalidateTag("incidents", { expire: 0 });
   revalidatePath("/portal");
   revalidatePath("/incidents");
   revalidatePath("/dashboard");

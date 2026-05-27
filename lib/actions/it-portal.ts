@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 
 /**
@@ -24,6 +24,7 @@ export async function takeIncidentToWork(incidentId: string, specialistId: strin
     return { error: error.message };
   }
 
+  revalidateTag("incidents", { expire: 0 });
   revalidatePath("/it-portal");
   revalidatePath("/it-portal/my-tasks");
   revalidatePath("/incidents");
@@ -51,6 +52,7 @@ export async function resolveIncident(incidentId: string) {
     return { error: error.message };
   }
 
+  revalidateTag("incidents", { expire: 0 });
   revalidatePath("/it-portal");
   revalidatePath("/it-portal/my-tasks");
   revalidatePath("/incidents");

@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteLicenseDialog } from "@/lib/actions/licenses";
 import { clearCache } from "@/lib/actions/revalidate";
-import { Key, Clock, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
+import { Key, Clock, ChevronDown, ChevronUp, CheckCircle, Eye, EyeOff, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 interface LicenseRow {
   id: string;
@@ -40,8 +41,21 @@ interface LicensesClientViewProps {
 
 export function LicensesClientView({ licenses, installations, expiringLicenses }: LicensesClientViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [showKeys, setShowKeys] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+
+  const toggleShowKey = (id: string) => {
+    setShowKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
@@ -170,24 +184,60 @@ export function LicensesClientView({ licenses, installations, expiringLicenses }
                     <tr key={`expanded-${lic.id}`} className="bg-gray-50">
                       <td colSpan={6} className="px-4 py-3">
                         <div className="pl-6 flex items-start justify-between">
-                          <div>
-                            <p className="text-sm text-gray-600 mb-2">
-                              Установлено на {licInstalls.length} устройствах:
-                            </p>
-                            {licInstalls.length > 0 ? (
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {licInstalls.map((inst) => {
-                                  const computer = (Array.isArray(inst.computers) ? inst.computers[0] : inst.computers) as { inventory_number: string } | null;
-                                  return (
-                                    <Badge key={inst.id} variant="outline" className="text-xs bg-white border-gray-200 text-gray-700">
-                                      {computer?.inventory_number ?? "—"} с {formatDate(inst.installed_at)}
-                                    </Badge>
-                                  );
-                                })}
+                          <div className="space-y-4">
+                            {lic.license_key && (
+                              <div>
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                  Лицензионный ключ
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <code className="text-sm bg-white px-2.5 py-1 rounded border border-gray-200 font-mono text-gray-800 font-semibold">
+                                    {showKeys.has(lic.id) ? lic.license_key : "••••-••••-••••-••••"}
+                                  </code>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleShowKey(lic.id);
+                                    }}
+                                    className="p-1.5 rounded hover:bg-gray-200/50 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title={showKeys.has(lic.id) ? "Скрыть" : "Показать"}
+                                  >
+                                    {showKeys.has(lic.id) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigator.clipboard.writeText(lic.license_key || "");
+                                      toast.success("Ключ скопирован в буфер обмена");
+                                    }}
+                                    className="p-1.5 rounded hover:bg-gray-200/50 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Копировать"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
-                            ) : (
-                              <p className="text-sm text-gray-400">Нет установок</p>
                             )}
+
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                                Установлено на {licInstalls.length} устройствах:
+                              </p>
+                              {licInstalls.length > 0 ? (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {licInstalls.map((inst) => {
+                                    const computer = (Array.isArray(inst.computers) ? inst.computers[0] : inst.computers) as { inventory_number: string } | null;
+                                    return (
+                                      <Badge key={inst.id} variant="outline" className="text-xs bg-white border-gray-200 text-gray-700">
+                                        {computer?.inventory_number ?? "—"} с {formatDate(inst.installed_at)}
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-400">Нет установок</p>
+                              )}
+                            </div>
                           </div>
                           <DeleteConfirmDialog
                             onConfirm={async () => {

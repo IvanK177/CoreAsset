@@ -25,6 +25,7 @@ import {
 import { createComputerDialog } from "@/lib/actions/computers";
 import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
+import type { Tables } from "@/types/database.types";
 
 const computerDialogSchema = z.object({
   inventory_number: z.string().min(1, "Обязательное поле"),
@@ -37,6 +38,7 @@ const computerDialogSchema = z.object({
   ram: z.string().optional(),
   storage: z.string().optional(),
   gpu: z.string().optional(),
+  template_id: z.string().optional().nullable().or(z.literal("")),
 });
 
 type ComputerDialogValues = z.infer<typeof computerDialogSchema>;
@@ -57,9 +59,10 @@ const STATUS_ITEMS: Record<string, React.ReactNode> = {
 interface AddComputerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  templates: Tables<"computer_templates">[];
 }
 
-export function AddComputerDialog({ open, onOpenChange }: AddComputerDialogProps) {
+export function AddComputerDialog({ open, onOpenChange, templates }: AddComputerDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -78,9 +81,14 @@ export function AddComputerDialog({ open, onOpenChange }: AddComputerDialogProps
       ram: "",
       storage: "",
       gpu: "",
+      template_id: "",
     },
   });
 
+  const templateItems: Record<string, React.ReactNode> = {
+    "": "Без шаблона",
+    ...Object.fromEntries(templates.map((t) => [t.id, t.name])),
+  };
 
   const onSubmit = async (data: ComputerDialogValues) => {
     setPending(true);
@@ -97,6 +105,7 @@ export function AddComputerDialog({ open, onOpenChange }: AddComputerDialogProps
     if (data.ram) formData.set("ram", data.ram);
     if (data.storage) formData.set("storage", data.storage);
     if (data.gpu) formData.set("gpu", data.gpu);
+    if (data.template_id) formData.set("template_id", data.template_id);
 
     const result = await createComputerDialog(formData);
     if (result.error) {
@@ -131,6 +140,46 @@ export function AddComputerDialog({ open, onOpenChange }: AddComputerDialogProps
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Template Selection Dropdown */}
+          <div className="space-y-2">
+            <Label>Шаблон конфигурации (по желанию)</Label>
+            <Select
+              value={form.watch("template_id") || ""}
+              onValueChange={(val) => {
+                form.setValue("template_id", val);
+                if (val) {
+                  const selectedTemplate = templates.find((t) => t.id === val);
+                  if (selectedTemplate) {
+                    form.setValue("computer_type", selectedTemplate.computer_type || "desktop");
+                    const hw = selectedTemplate.hardware as { cpu?: string; ram?: string; storage?: string; gpu?: string } | null;
+                    if (hw) {
+                      form.setValue("cpu", hw.cpu || "");
+                      form.setValue("ram", hw.ram || "");
+                      form.setValue("storage", hw.storage || "");
+                      form.setValue("gpu", hw.gpu || "");
+                    }
+                    toast.success(`Характеристики заполнены из шаблона "${selectedTemplate.name}"`);
+                  }
+                } else {
+                  form.setValue("template_id", "");
+                }
+              }}
+              items={templateItems}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Выберите шаблон..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Без шаблона</SelectItem>
+                {templates.map((tpl) => (
+                  <SelectItem key={tpl.id} value={tpl.id}>
+                    {tpl.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Main fields — 2 columns */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

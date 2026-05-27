@@ -12,6 +12,7 @@ import {
   EyeOff,
   Mail,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -50,9 +51,18 @@ export default function RegisterPage() {
 
       {/* Register Card */}
       <div className="w-[420px] rounded-2xl bg-white p-8 shadow-xl">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
-          Регистрация
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Регистрация
+          </h2>
+          <Link
+            href="/login"
+            className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Назад
+          </Link>
+        </div>
 
         <form action={formAction} className="space-y-5">
           {/* Email */}

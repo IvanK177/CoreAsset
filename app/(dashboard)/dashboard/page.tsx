@@ -2,7 +2,12 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import { unstable_noStore as noStore } from 'next/cache';
-import { createServiceClient } from "@/lib/supabase/server";
+import {
+  getCachedComputers,
+  getCachedIncidentsWithRelations,
+  getCachedLicenses,
+  getCachedEmployees,
+} from "@/lib/supabase/cached";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
@@ -12,29 +17,24 @@ import Link from "next/link";
 
 export default async function DashboardPage() {
   noStore();
-  const supabase = createServiceClient();
 
-  const [computersRes, incidentsRes, licensesRes, employeesRes, allIncidentsRes] = await Promise.all([
-    supabase.from("computers").select("id, lifecycle_status, inventory_number"),
-    supabase
-      .from("incidents")
-      .select("id, description, priority, status, created_at, computer_id, computers(inventory_number)")
-      .neq("status", "resolved")
-      .order("created_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("licenses")
-      .select("id, expires_at, used_seats, total_seats, price_per_unit, software_name, vendor")
-      .eq("license_type", "subscription"),
-    supabase.from("employees").select("id, is_active"),
-    supabase.from("incidents").select("id, status"),
+  const [computers, rawIncidents, rawLicenses, employees] = await Promise.all([
+    getCachedComputers(),
+    getCachedIncidentsWithRelations(),
+    getCachedLicenses(),
+    getCachedEmployees(),
   ]);
 
-  const computers = computersRes.data ?? [];
-  const openIncidents = incidentsRes.data ?? [];
-  const allLicenses = licensesRes.data ?? [];
-  const employees = employeesRes.data ?? [];
-  const allIncidents = allIncidentsRes.data ?? [];
+  const openIncidents = (rawIncidents as any[])
+    .filter((inc) => inc.status !== "resolved")
+    .slice(0, 10)
+    .map((inc) => ({
+      ...inc,
+      computers: inc.computers || inc["computers!incidents_computer_id_fkey"],
+    }));
+
+  const allLicenses = rawLicenses.filter((l) => l.license_type === "subscription");
+  const allIncidents = rawIncidents;
 
   // Metrics
   const total = computers.filter((c) => c.lifecycle_status !== "decommissioned").length;
@@ -92,8 +92,8 @@ export default async function DashboardPage() {
           value={occupied}
           subtitle={`из ${total} всего`}
           icon={Monitor}
-          iconBgColor="bg-[#dbeafe]"
-          iconTextColor="text-[#2563eb]"
+          iconBgColor="bg-emerald-100"
+          iconTextColor="text-emerald-600"
           href="/computers?filter=active"
         />
         <StatCard
@@ -101,8 +101,8 @@ export default async function DashboardPage() {
           value={warehouse}
           subtitle="свободно для выдачи"
           icon={Package}
-          iconBgColor="bg-[#dcfce7]"
-          iconTextColor="text-green-600"
+          iconBgColor="bg-blue-100"
+          iconTextColor="text-blue-600"
           href="/computers?filter=storage"
         />
         <StatCard
@@ -110,8 +110,8 @@ export default async function DashboardPage() {
           value={repair}
           subtitle="на обслуживании"
           icon={Wrench}
-          iconBgColor="bg-[#fef9c3]"
-          iconTextColor="text-yellow-600"
+          iconBgColor="bg-orange-100"
+          iconTextColor="text-orange-600"
           href="/computers?filter=repair"
         />
         <StatCard

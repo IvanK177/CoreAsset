@@ -2,6 +2,7 @@
 
 import { useState, useActionState } from "react";
 import { completeOnboarding } from "@/lib/actions/onboarding";
+import { signOut } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import {
   Phone,
   Send,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 
 interface FormState {
@@ -48,9 +50,20 @@ export default function OnboardingPage() {
 
       {/* Onboarding Card */}
       <div className="w-[480px] rounded-2xl bg-white p-8 shadow-xl">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Добро пожаловать!
-        </h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Добро пожаловать!
+          </h2>
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Назад
+            </button>
+          </form>
+        </div>
         <p className="text-sm text-gray-500 mb-6">
           Заполните информацию о себе, чтобы получить доступ к порталу сотрудника.
         </p>

@@ -19,7 +19,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
 
   const { data: inc } = await supabase
     .from("incidents")
-    .select("*, computers(id, inventory_number), employees(id, full_name, position)")
+    .select("*, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position)")
     .eq("id", id)
     .single();
 

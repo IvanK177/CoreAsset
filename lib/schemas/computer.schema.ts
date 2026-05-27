@@ -15,8 +15,7 @@ export const computerSchema = z.object({
   room: z.string().optional(),
   lifecycle_status: z.enum(["active", "repair", "decommissioned", "storage"]),
   hardware: hardwareSchema.optional(),
-  // template_id is in the DB but UI for template selection is not yet implemented
-  // See not_add.md for planned implementation
+  template_id: z.string().optional().nullable().or(z.literal("")),
 });
 
 export type ComputerFormValues = z.infer<typeof computerSchema>;

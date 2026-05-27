@@ -165,7 +165,7 @@ export function IncidentsClientView({
             <div className="flex items-center gap-3">
               {selectedIncident.status === "open" && (
                 <button
-                  onClick={() => { startTransition(() => { updateIncidentStatus(selectedIncident.id, "in_progress"); setSelectedId(null); }); }}
+                  onClick={() => { startTransition(async () => { await updateIncidentStatus(selectedIncident.id, "in_progress"); }); }}
                   disabled={isPending}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] text-white text-sm font-medium hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -175,7 +175,7 @@ export function IncidentsClientView({
               )}
               {selectedIncident.status === "in_progress" && (
                 <button
-                  onClick={() => { startTransition(() => { updateIncidentStatus(selectedIncident.id, "resolved"); setSelectedId(null); }); }}
+                  onClick={() => { startTransition(async () => { await updateIncidentStatus(selectedIncident.id, "resolved"); }); }}
                   disabled={isPending}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >

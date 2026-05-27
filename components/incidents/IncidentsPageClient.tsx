@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { IncidentsClientView } from "@/components/incidents/IncidentsClientView";
-import { AddIncidentDialog } from "@/components/incidents/AddIncidentDialog";
+import dynamic from "next/dynamic";
+
+const AddIncidentDialog = dynamic(
+  () => import("@/components/incidents/AddIncidentDialog").then((mod) => mod.AddIncidentDialog),
+  { ssr: false }
+);
 import type { Tables } from "@/types/database.types";
 
 type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { computerSchema } from "@/lib/schemas/computer.schema";
@@ -17,7 +17,10 @@ export async function createComputer(formData: FormData) {
       cpu: formData.get("cpu") || undefined,
       ram: formData.get("ram") || undefined,
       storage: formData.get("storage") || undefined,
+      gpu: formData.get("gpu") || undefined,
+      mac_address: formData.get("mac_address") || undefined,
     },
+    template_id: formData.get("template_id") || undefined,
   };
 
   const parsed = computerSchema.safeParse(raw);
@@ -26,10 +29,12 @@ export async function createComputer(formData: FormData) {
   const { hardware, ...rest } = parsed.data;
   const { error } = await supabase.from("computers").insert({
     ...rest,
+    template_id: rest.template_id || null,
     hardware: hardware ?? null,
   });
 
   if (error) return { error: error.message, code: error.code };
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/computers");
   revalidatePath("/dashboard");
   redirect("/computers");
@@ -47,7 +52,10 @@ export async function updateComputer(id: string, formData: FormData) {
       cpu: formData.get("cpu") || undefined,
       ram: formData.get("ram") || undefined,
       storage: formData.get("storage") || undefined,
+      gpu: formData.get("gpu") || undefined,
+      mac_address: formData.get("mac_address") || undefined,
     },
+    template_id: formData.get("template_id") || undefined,
   };
 
   const parsed = computerSchema.safeParse(raw);
@@ -56,10 +64,11 @@ export async function updateComputer(id: string, formData: FormData) {
   const { hardware, ...rest } = parsed.data;
   const { error } = await supabase
     .from("computers")
-    .update({ ...rest, hardware: hardware ?? null, updated_at: new Date().toISOString() })
+    .update({ ...rest, template_id: rest.template_id || null, hardware: hardware ?? null, updated_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) return { error: error.message, code: error.code };
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/computers");
   revalidatePath(`/computers/${id}`);
   revalidatePath("/dashboard");
@@ -83,6 +92,7 @@ export async function deleteComputer(id: string) {
 
   if (deleteError) return { error: deleteError };
 
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/computers");
   revalidatePath("/dashboard");
   redirect("/computers");
@@ -99,6 +109,7 @@ export async function linkEmployeeToComputer(computerId: string, employeeId: str
 
   if (error) return { error: error.message, code: error.code };
 
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/computers");
   revalidatePath("/dashboard");
   return { success: true };
@@ -120,6 +131,7 @@ export async function updateComputerDialog(id: string, formData: FormData) {
       gpu: formData.get("gpu") || undefined,
       mac_address: formData.get("mac_address") || undefined,
     },
+    template_id: formData.get("template_id") || undefined,
   };
 
   const parsed = computerSchema.safeParse(raw);
@@ -128,11 +140,12 @@ export async function updateComputerDialog(id: string, formData: FormData) {
   const { hardware, ...rest } = parsed.data;
   const { error } = await supabase
     .from("computers")
-    .update({ ...rest, hardware: hardware ?? null, updated_at: new Date().toISOString() })
+    .update({ ...rest, template_id: rest.template_id || null, hardware: hardware ?? null, updated_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) return { error: error.message, code: error.code };
 
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/computers");
   revalidatePath(`/computers/${id}`);
   revalidatePath("/dashboard");
@@ -155,6 +168,7 @@ export async function createComputerDialog(formData: FormData) {
       gpu: formData.get("gpu") || undefined,
       mac_address: formData.get("mac_address") || undefined,
     },
+    template_id: formData.get("template_id") || undefined,
   };
 
   const parsed = computerSchema.safeParse(raw);
@@ -163,10 +177,12 @@ export async function createComputerDialog(formData: FormData) {
   const { hardware, ...rest } = parsed.data;
   const { error } = await supabase.from("computers").insert({
     ...rest,
+    template_id: rest.template_id || null,
     hardware: hardware ?? null,
   });
 
   if (error) return { error: error.message, code: error.code };
+  revalidateTag("computers", { expire: 0 });
   revalidatePath("/computers");
   revalidatePath("/dashboard");
   return { success: true };

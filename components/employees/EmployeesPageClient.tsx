@@ -1,11 +1,5 @@
-"use client";
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { EmployeesClientView } from "@/components/employees/EmployeesClientView";
-import { AddEmployeeDialog } from "@/components/employees/AddEmployeeDialog";
 import type { Tables } from "@/types/database.types";
 
 type Employee = Tables<"employees">;
@@ -45,26 +39,17 @@ export function EmployeesPageClient({
   activeCount,
   dismissedCount,
 }: EmployeesPageClientProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-
   return (
     <div>
       <PageHeader
         title="Сотрудники"
         description={`${activeCount} активных, ${dismissedCount} уволенных`}
-        actionNode={
-          <Button size="sm" className="gap-2" onClick={() => setDialogOpen(true)}>
-            <Plus className="w-4 h-4" />
-            Добавить сотрудника
-          </Button>
-        }
       />
       <EmployeesClientView
         employees={employees}
         computers={computers}
         incidents={incidents}
       />
-      <AddEmployeeDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }

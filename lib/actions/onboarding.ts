@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { onboardingSchema } from "@/lib/schemas/onboarding.schema";
 
@@ -59,6 +60,7 @@ export async function completeOnboarding(formData: FormData): Promise<Onboarding
     return { error: "Ошибка при создании профиля: " + error.message };
   }
 
+  revalidateTag("employees", { expire: 0 });
   // 4. Redirect to the employee portal
   redirect("/portal");
 }

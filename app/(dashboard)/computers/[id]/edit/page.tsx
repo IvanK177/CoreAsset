@@ -10,15 +10,20 @@ import { updateComputer } from "@/lib/actions/computers";
 export default async function EditComputerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createServiceClient();
-  const { data: computer } = await supabase.from("computers").select("*").eq("id", id).single();
-  if (!computer) notFound();
+  
+  const [computerRes, templatesRes] = await Promise.all([
+    supabase.from("computers").select("*").eq("id", id).single(),
+    supabase.from("computer_templates").select("*").order("name"),
+  ]);
+
+  if (!computerRes.data) notFound();
 
   const action = updateComputer.bind(null, id);
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader title="Редактировать компьютер" />
-      <ComputerForm computer={computer} action={action} />
+      <ComputerForm computer={computerRes.data} action={action} templates={templatesRes.data ?? []} />
     </div>
   );
 }

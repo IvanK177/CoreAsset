@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { licenseSchema } from "@/lib/schemas/license.schema";
@@ -26,6 +26,7 @@ export async function createLicense(formData: FormData) {
     expires_at: parsed.data.expires_at || null,
   });
   if (error) return { error: error.message, code: error.code };
+  revalidateTag("licenses", { expire: 0 });
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
   redirect("/licenses");
@@ -35,6 +36,7 @@ export async function createLicense(formData: FormData) {
 export async function deleteLicense(id: string) {
   const supabase = await createServiceClient();
   await supabase.from("licenses").delete().eq("id", id);
+  revalidateTag("licenses", { expire: 0 });
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
   redirect("/licenses");
@@ -58,12 +60,13 @@ export async function deleteLicenseDialog(id: string) {
 
   if (deleteError) return { error: deleteError };
 
+  revalidateTag("licenses", { expire: 0 });
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
   return { success: true };
 }
 
-/** Install a license on a computer — inserts into computer_licenses and increments used_seats */
+/** Install a license on a computer — inserts into computer_licenses (used_seats incremented by DB trigger) */
 export async function installSoftwareDialog(computerId: string, licenseId: string, installedAt?: string) {
   const supabase = await createServiceClient();
 
@@ -90,17 +93,7 @@ export async function installSoftwareDialog(computerId: string, licenseId: strin
     return { error: insertError.message, code: insertError.code };
   }
 
-  // Increment used_seats on the license
-  const { error: updateError } = await supabase
-    .from("licenses")
-    .update({ used_seats: license.used_seats + 1 })
-    .eq("id", licenseId);
-
-  if (updateError) {
-    console.error("[installSoftwareDialog] used_seats update error:", updateError.message);
-    // Non-critical — the installation was successful, just the counter is off
-  }
-
+  revalidateTag("licenses", { expire: 0 });
   revalidatePath("/computers");
   revalidatePath(`/computers/${computerId}`);
   revalidatePath("/licenses");
@@ -108,36 +101,14 @@ export async function installSoftwareDialog(computerId: string, licenseId: strin
   return { success: true };
 }
 
-/** Remove a license installation from a computer — deletes from computer_licenses and decrements used_seats */
+/** Remove a license installation from a computer — deletes from computer_licenses (used_seats decremented by DB trigger) */
 export async function removeSoftware(installationId: string, computerId: string) {
   const supabase = await createServiceClient();
-
-  // Fetch the installation to get the license_id for decrementing used_seats
-  const { data: installation } = await supabase
-    .from("computer_licenses")
-    .select("license_id")
-    .eq("id", installationId)
-    .single();
 
   // Delete the installation
   await supabase.from("computer_licenses").delete().eq("id", installationId);
 
-  // Decrement used_seats on the license
-  if (installation?.license_id) {
-    const { data: license } = await supabase
-      .from("licenses")
-      .select("used_seats")
-      .eq("id", installation.license_id)
-      .single();
-
-    if (license && license.used_seats > 0) {
-      await supabase
-        .from("licenses")
-        .update({ used_seats: license.used_seats - 1 })
-        .eq("id", installation.license_id);
-    }
-  }
-
+  revalidateTag("licenses", { expire: 0 });
   revalidatePath(`/computers/${computerId}`);
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
@@ -166,6 +137,7 @@ export async function createLicenseDialog(formData: FormData) {
   });
 
   if (error) return { error: error.message, code: error.code };
+  revalidateTag("licenses", { expire: 0 });
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
   return { success: true };

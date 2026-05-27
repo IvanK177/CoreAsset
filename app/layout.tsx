@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import { Onest } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const nunito = Nunito({
-  variable: "--font-nunito",
+const onest = Onest({
+  variable: "--font-onest",
   subsets: ["latin", "cyrillic"],
 });
 
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
-      <body className={`${nunito.variable} antialiased`}>
+    <html lang="ru" className={onest.variable}>
+      <body className="antialiased">
         {children}
         <Toaster position="top-right" richColors />
       </body>
