@@ -30,7 +30,7 @@ import { useRouter } from "next/navigation";
 import type { Tables } from "@/types/database.types";
 
 type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
-type Employee = Pick<Tables<"employees">, "id" | "full_name">;
+type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
 const incidentDialogSchema = z.object({
   title: z.string().min(1, "Обязательное поле"),
@@ -74,6 +74,10 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
       employee_id: defaultEmployeeId ?? "",
     },
   });
+
+  const selectedEmployeeId = form.watch("employee_id");
+  const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
+  const selectedEmployeeRoom = selectedEmployee?.room;
 
   const onSubmit = async (data: IncidentDialogValues) => {
     setPending(true);
@@ -221,6 +225,16 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Кабинет сотрудника</Label>
+              <Input
+                readOnly
+                disabled
+                placeholder="Кабинет не указан"
+                value={selectedEmployeeRoom || ""}
+                className="bg-gray-50 border-gray-200 cursor-not-allowed w-full"
+              />
             </div>
           </div>
 

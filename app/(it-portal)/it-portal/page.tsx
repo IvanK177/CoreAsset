@@ -7,6 +7,7 @@ import ITPortalClientView from "@/components/it-portal/ITPortalClientView";
 
 interface RelatedEmployee {
   full_name: string | null;
+  room: string | null;
 }
 
 interface RelatedComputer {
@@ -75,7 +76,7 @@ export default async function ITPortalPage() {
       created_at,
       resolved_at,
       assigned_to,
-      employee:employees!incidents_employee_id_fkey(full_name),
+      employee:employees!incidents_employee_id_fkey(full_name, room),
       computer:computers!incidents_computer_id_fkey(inventory_number, computer_type)
     `)
     .order("created_at", { ascending: false });

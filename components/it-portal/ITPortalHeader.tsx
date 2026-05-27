@@ -13,7 +13,7 @@ interface ITPortalHeaderProps {
 }
 
 const navItems = [
-  { href: "/it-portal", label: "Биржа заявок", icon: ClipboardList },
+  { href: "/it-portal", label: "Заявки", icon: ClipboardList },
   { href: "/it-portal/my-tasks", label: "Мои задачи", icon: TicketCheck },
 ];
 

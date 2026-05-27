@@ -52,6 +52,7 @@ export interface ActiveEmployee {
   id: string;
   full_name: string;
   position: string | null;
+  room?: string | null;
 }
 
 interface InstallRow {
@@ -345,7 +346,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
           open={ticketDialogOpen}
           onOpenChange={setTicketDialogOpen}
           computers={computers.map((c) => ({ id: c.id, inventory_number: c.inventory_number }))}
-          employees={activeEmployees.map((e) => ({ id: e.id, full_name: e.full_name }))}
+          employees={activeEmployees.map((e) => ({ id: e.id, full_name: e.full_name, room: e.room ?? null }))}
           defaultComputerId={selectedComputer.id}
           defaultEmployeeId={selectedComputer.employee_id ?? undefined}
         />

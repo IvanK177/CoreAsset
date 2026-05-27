@@ -21,7 +21,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   const normalized = allIncidents.map((inc: any) => ({
     ...inc,
     computer: extractJoinObject(inc.computers as unknown) as { id: string; inventory_number: string } | null,
-    employee: extractJoinObject(inc.employees as unknown) as { id: string; full_name: string; position: string | null } | null,
+    employee: extractJoinObject(inc.employees as unknown) as { id: string; full_name: string; position: string | null; room: string | null } | null,
   }));
 
   const { selectedId } = await searchParams;

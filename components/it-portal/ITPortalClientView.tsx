@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { takeIncidentToWork, resolveIncident } from "@/lib/actions/it-portal";
+import { ITPortalIncidentDetailsDialog } from "./ITPortalIncidentDetailsDialog";
 
 /* ── Types ── */
 
 interface RelatedEmployee {
   full_name: string | null;
+  room: string | null;
 }
 
 interface RelatedComputer {
@@ -83,7 +85,8 @@ function getEmployeeName(incident: IncidentRow): string {
   if (!incident.employee) return "—";
   // Supabase JOIN can return a single object or array
   const emp = Array.isArray(incident.employee) ? incident.employee[0] : incident.employee;
-  return emp?.full_name ?? "—";
+  if (!emp?.full_name) return "—";
+  return `${emp.full_name}${emp.room ? ` (Каб. ${emp.room})` : ""}`;
 }
 
 function getComputerInfo(incident: IncidentRow): string {
@@ -106,6 +109,7 @@ export default function ITPortalClientView({
 }: ITPortalClientViewProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [selectedIncident, setSelectedIncident] = useState<IncidentRow | null>(null);
 
   const isMyTasks = currentPath === "/it-portal/my-tasks";
 
@@ -132,7 +136,7 @@ export default function ITPortalClientView({
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-2">
-              {isMyTasks ? "Мои задачи" : "Биржа заявок"}
+              {isMyTasks ? "Мои задачи" : "Заявки"}
             </h1>
             <p className="text-blue-100 text-sm">
               {isMyTasks
@@ -186,8 +190,9 @@ export default function ITPortalClientView({
             return (
               <div
                 key={incident.id}
+                onClick={() => setSelectedIncident(incident)}
                 className={cn(
-                  "rounded-2xl bg-white p-5 shadow-sm border transition-all duration-150",
+                  "rounded-2xl bg-white p-5 shadow-sm border transition-all duration-150 cursor-pointer hover:shadow-md hover:border-slate-300",
                   isOpen ? "border-yellow-200" : isInProgress ? "border-blue-200" : "border-emerald-200"
                 )}
               >
@@ -266,7 +271,10 @@ export default function ITPortalClientView({
                       size="sm"
                       className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                       disabled={isActionPending}
-                      onClick={() => handleTakeToWork(incident.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTakeToWork(incident.id);
+                      }}
                     >
                       {isActionPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
                       Взять в работу
@@ -277,7 +285,10 @@ export default function ITPortalClientView({
                       size="sm"
                       className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                       disabled={isActionPending}
-                      onClick={() => handleResolve(incident.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleResolve(incident.id);
+                      }}
                     >
                       {isActionPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                       Решено
@@ -295,6 +306,12 @@ export default function ITPortalClientView({
           })}
         </div>
       )}
+
+      <ITPortalIncidentDetailsDialog
+        open={!!selectedIncident}
+        onOpenChange={(open) => !open && setSelectedIncident(null)}
+        incident={selectedIncident}
+      />
     </div>
   );
 }

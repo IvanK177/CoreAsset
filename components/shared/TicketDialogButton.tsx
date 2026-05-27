@@ -6,7 +6,7 @@ import { AddIncidentDialog } from "@/components/incidents/AddIncidentDialog";
 import type { Tables } from "@/types/database.types";
 
 type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
-type Employee = Pick<Tables<"employees">, "id" | "full_name">;
+type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
 interface TicketDialogButtonProps {
   computers: Computer[];

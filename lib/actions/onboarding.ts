@@ -48,7 +48,7 @@ export async function completeOnboarding(formData: FormData): Promise<Onboarding
     room: parsed.data.room || null,
     phone: parsed.data.phone || null,
     telegram: parsed.data.telegram || null,
-    role: "employee",
+    role: (user.app_metadata?.role ?? user.user_metadata?.role ?? "employee") as "admin" | "employee" | "it_specialist",
     is_active: true,
   });
 

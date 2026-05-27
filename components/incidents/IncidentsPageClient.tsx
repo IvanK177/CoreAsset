@@ -14,7 +14,7 @@ const AddIncidentDialog = dynamic(
 import type { Tables } from "@/types/database.types";
 
 type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
-type Employee = Pick<Tables<"employees">, "id" | "full_name">;
+type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
 type IncidentStatus = "open" | "in_progress" | "resolved";
 type IncidentPriority = "low" | "medium" | "high" | "critical";
@@ -28,7 +28,7 @@ interface IncidentRow {
   incident_type: string;
   computer_id: string | null;
   computer: { id: string; inventory_number: string } | null;
-  employee: { id: string; full_name: string; position: string | null } | null;
+  employee: { id: string; full_name: string; position: string | null; room: string | null } | null;
 }
 
 interface IncidentsPageClientProps {

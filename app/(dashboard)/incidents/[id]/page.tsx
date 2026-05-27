@@ -19,14 +19,14 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
 
   const { data: inc } = await supabase
     .from("incidents")
-    .select("*, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position)")
+    .select("*, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position, room)")
     .eq("id", id)
     .single();
 
   if (!inc) notFound();
 
   const computer = extractJoinObject(inc.computers as unknown) as { id: string; inventory_number: string } | null;
-  const employee = extractJoinObject(inc.employees as unknown) as { id: string; full_name: string; position: string | null } | null;
+  const employee = extractJoinObject(inc.employees as unknown) as { id: string; full_name: string; position: string | null; room: string | null } | null;
   const isResolved = inc.status === "resolved";
 
   return (
@@ -63,7 +63,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
         <Row label="Сотрудник" value={
           employee ? (
             <Link href={`/employees/${employee.id}`} className="text-primary hover:underline">
-              {employee.full_name}
+              {employee.full_name}{employee.room ? ` (Каб. ${employee.room})` : ""}
             </Link>
           ) : "Не указан"
         } />

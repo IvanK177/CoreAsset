@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ComputerStatusBadge, IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { NewTicketDialog } from "@/components/portal/NewTicketDialog";
+import { IncidentDetailsDialog } from "@/components/portal/IncidentDetailsDialog";
 
 interface ComputerData {
   id: string;
@@ -33,6 +34,13 @@ interface IncidentData {
   incident_type: string;
   created_at: string;
   computer_id: string | null;
+  computer?: {
+    inventory_number: string | null;
+    computer_type: string | null;
+  } | {
+    inventory_number: string | null;
+    computer_type: string | null;
+  }[] | null;
 }
 
 interface PortalClientViewProps {
@@ -86,6 +94,7 @@ export default function PortalClientView({
   resolvedIncidents,
 }: PortalClientViewProps) {
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<IncidentData | null>(null);
 
   const firstName = employeeName.split(" ")[0] ?? employeeName;
 
@@ -203,7 +212,8 @@ export default function PortalClientView({
               return (
                 <div
                   key={incident.id}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100"
+                  onClick={() => setSelectedIncident(incident)}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-blue-300 hover:bg-blue-50/10 cursor-pointer transition-all duration-150"
                 >
                   {/* Status icon */}
                   <div className={cn(
@@ -251,6 +261,13 @@ export default function PortalClientView({
         onOpenChange={setTicketDialogOpen}
         employeeId={employeeId}
         computers={allComputers}
+      />
+
+      {/* ===== Incident Details Dialog ===== */}
+      <IncidentDetailsDialog
+        open={!!selectedIncident}
+        onOpenChange={(open) => !open && setSelectedIncident(null)}
+        incident={selectedIncident}
       />
     </div>
   );

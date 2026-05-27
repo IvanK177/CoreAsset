@@ -21,7 +21,7 @@ interface IncidentRow {
   incident_type: string;
   computer_id: string | null;
   computer: { id: string; inventory_number: string } | null;
-  employee: { id: string; full_name: string; position: string | null } | null;
+  employee: { id: string; full_name: string; position: string | null; room: string | null } | null;
 }
 
 interface IncidentsClientViewProps {
@@ -137,6 +137,7 @@ export function IncidentsClientView({
               </div>
               <p className="text-sm font-medium text-gray-900">
                 {selectedIncident.employee?.full_name ?? "Не указан"}
+                {selectedIncident.employee?.room && ` (Каб. ${selectedIncident.employee.room})`}
               </p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3">

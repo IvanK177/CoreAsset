@@ -76,7 +76,7 @@ export const getCachedActiveEmployees = unstable_cache(
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("employees")
-      .select("id, full_name, position")
+      .select("id, full_name, position, room")
       .eq("is_active", true)
       .order("full_name");
     if (error) throw new Error(error.message);
@@ -119,7 +119,7 @@ export const getCachedIncidentsWithRelations = unstable_cache(
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("incidents")
-      .select("id, description, priority, status, created_at, incident_type, computer_id, employee_id, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position)")
+      .select("id, description, priority, status, created_at, incident_type, computer_id, employee_id, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position, room)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];

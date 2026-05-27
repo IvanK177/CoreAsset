@@ -31,7 +31,7 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
       .select("id, installed_at, licenses(id, software_name, version)")
       .eq("computer_id", id),
     supabase.from("computers").select("id, inventory_number").order("inventory_number"),
-    supabase.from("employees").select("id, full_name").eq("is_active", true).order("full_name"),
+    supabase.from("employees").select("id, full_name, room").eq("is_active", true).order("full_name"),
   ]);
 
   // Check for Supabase errors on the main entity

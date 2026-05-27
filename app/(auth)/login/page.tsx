@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useTransition } from "react";
 import { signIn, demoSignIn } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,9 @@ import {
   EyeOff,
   Mail,
   Loader2,
+  User,
+  Wrench,
 } from "lucide-react";
-import { useTransition } from "react";
 
 interface FormState {
   error: string;
@@ -25,6 +26,7 @@ const initialState: FormState = { error: "", success: "" };
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isDemoPending, startDemoTransition] = useTransition();
+  const [activeDemoRole, setActiveDemoRole] = useState<"admin" | "employee" | "it_specialist" | null>(null);
   const [state, formAction, pending] = useActionState(
     async (prevState: FormState, formData: FormData): Promise<FormState> => {
       const result = await signIn(formData);
@@ -38,6 +40,7 @@ export default function LoginPage() {
   );
 
   const handleDemoLogin = (role: "admin" | "employee" | "it_specialist") => {
+    setActiveDemoRole(role);
     startDemoTransition(async () => {
       await demoSignIn(role);
     });
@@ -168,33 +171,45 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="mt-4 space-y-2">
             <Button
-              variant="default"
-              className="w-full h-10 rounded-lg bg-gray-800 hover:bg-gray-900 text-white text-xs gap-1"
+              variant="outline"
+              className="w-full h-10 rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("admin")}
             >
-              {isDemoPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🖥</span>}
-              {isDemoPending ? "Вход…" : "Администратор"}
+              {isDemoPending && activeDemoRole === "admin" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-red-600" />
+              ) : (
+                <Monitor className="w-3.5 h-3.5 text-red-500" />
+              )}
+              {isDemoPending && activeDemoRole === "admin" ? "Вход…" : "Войти как Администратор"}
             </Button>
             <Button
               variant="outline"
-              className="w-full h-10 rounded-lg border-gray-200 text-gray-700 hover:bg-gray-50 text-xs gap-1"
+              className="w-full h-10 rounded-lg border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("employee")}
             >
-              {isDemoPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>👤</span>}
-              {isDemoPending ? "Вход…" : "Сотрудник"}
+              {isDemoPending && activeDemoRole === "employee" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+              ) : (
+                <User className="w-3.5 h-3.5 text-emerald-500" />
+              )}
+              {isDemoPending && activeDemoRole === "employee" ? "Вход…" : "Войти как Сотрудник"}
             </Button>
             <Button
               variant="outline"
-              className="w-full h-10 rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs gap-1"
+              className="w-full h-10 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("it_specialist")}
             >
-              {isDemoPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🔧</span>}
-              {isDemoPending ? "Вход…" : "IT-специалист"}
+              {isDemoPending && activeDemoRole === "it_specialist" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+              ) : (
+                <Wrench className="w-3.5 h-3.5 text-blue-500" />
+              )}
+              {isDemoPending && activeDemoRole === "it_specialist" ? "Вход…" : "Войти как IT-специалист"}
             </Button>
           </div>
         </div>

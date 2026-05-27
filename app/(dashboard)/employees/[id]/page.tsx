@@ -33,7 +33,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
       .eq("employee_id", id)
       .order("created_at", { ascending: false }),
     supabase.from("computers").select("id, inventory_number").order("inventory_number"),
-    supabase.from("employees").select("id, full_name").eq("is_active", true).order("full_name"),
+    supabase.from("employees").select("id, full_name, room").eq("is_active", true).order("full_name"),
   ]);
 
   // Check for Supabase errors on the main entity

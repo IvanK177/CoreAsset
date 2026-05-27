@@ -56,7 +56,17 @@ export default async function PortalPage() {
   // Fetch incidents created by this employee
   const { data: incidents } = await dataClient
     .from("incidents")
-    .select("id, title, description, priority, status, incident_type, created_at, computer_id")
+    .select(`
+      id,
+      title,
+      description,
+      priority,
+      status,
+      incident_type,
+      created_at,
+      computer_id,
+      computer:computers!incidents_computer_id_fkey(inventory_number, computer_type)
+    `)
     .eq("employee_id", employeeId)
     .order("created_at", { ascending: false });
 
