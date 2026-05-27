@@ -9,10 +9,11 @@ const ADMIN_ROUTES = [
   "/licenses",
   "/incidents",
   "/finances",
+  "/templates",
 ];
 
 /** Public routes that don't require authentication */
-const PUBLIC_ROUTES = ["/login", "/auth/callback"];
+const PUBLIC_ROUTES = ["/login", "/register", "/auth/callback"];
 
 /** Role-based home paths */
 const ROLE_HOME: Record<string, string> = {
@@ -26,6 +27,8 @@ function getRoleHome(role: string): string {
 }
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
   // 1. Create a base response to attach Supabase session cookies to
   let supabaseResponse = NextResponse.next({
     request: {
@@ -63,106 +66,95 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 4. Determine role — query employees table (primary), then demo cookie, then JWT fallback
+  // 4. Determine role & profile status
   const demoRole = request.cookies.get("demo_role")?.value;
   let role: string | null = null;
+  let hasProfile = false;
 
-  if (user) {
-    // Real auth — query role from employees table by user.id
+  if (demoRole) {
+    // Demo mode: bypasses DB checks and onboarding
+    role = demoRole;
+    hasProfile = true;
+  } else if (user) {
+    // Real auth: query role & full_name from employees table
     const { data: employee } = await supabase
       .from("employees")
-      .select("role")
+      .select("role, full_name")
       .eq("id", user.id)
       .single();
 
-    // Use DB role if found, otherwise fall back to JWT metadata
-    role = employee?.role ?? user.app_metadata?.role ?? user.user_metadata?.role ?? "employee";
-  } else if (demoRole) {
-    // Demo mode — use cookie role
-    role = demoRole;
+    if (employee) {
+      role = employee.role;
+      hasProfile = !!employee.full_name;
+    } else {
+      // Authenticated but no employee record yet
+      role = user.app_metadata?.role ?? user.user_metadata?.role ?? "employee";
+      hasProfile = false;
+    }
   }
 
   const isAuthenticated = !!role;
-  const { pathname } = request.nextUrl;
-
-  // 5. Check if this is a public route
   const isPublicRoute = PUBLIC_ROUTES.some((p) => pathname.startsWith(p));
+  const isOnboardingRoute = pathname.startsWith("/onboarding");
 
-  // 6. Unauthenticated user trying to access a protected route → redirect to /login
-  if (!isAuthenticated && !isPublicRoute) {
+  // Helper to make redirects that carry over Supabase refresh cookies
+  const redirectWithCookies = (targetPath: string) => {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = targetPath;
     const redirectResponse = NextResponse.redirect(url);
-    // Carry over any session cookies that Supabase set during refresh attempt
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie.name, cookie.value);
     });
     return redirectResponse;
+  };
+
+  // 5. Unauthenticated user trying to access a protected route → redirect to /login
+  if (!isAuthenticated) {
+    if (isPublicRoute) {
+      return supabaseResponse;
+    }
+    return redirectWithCookies("/login");
   }
 
-  // 7. Authenticated user on /login → redirect based on role
-  if (isAuthenticated && pathname.startsWith("/login")) {
-    const url = request.nextUrl.clone();
-    url.pathname = getRoleHome(role!);
-    const redirectResponse = NextResponse.redirect(url);
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value);
-    });
-    return redirectResponse;
+  // 6. Authenticated user but does NOT have a complete profile → redirect to /onboarding
+  if (!hasProfile) {
+    if (isOnboardingRoute) {
+      return supabaseResponse;
+    }
+    return redirectWithCookies("/onboarding");
+  }
+
+  // 7. Authenticated user with a profile on /onboarding, /login, or /register → redirect to role home
+  if (isOnboardingRoute || pathname.startsWith("/login") || pathname.startsWith("/register")) {
+    return redirectWithCookies(getRoleHome(role!));
   }
 
   // 8. Root path / → redirect to role home
-  if (isAuthenticated && pathname === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = getRoleHome(role!);
-    const redirectResponse = NextResponse.redirect(url);
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value);
-    });
-    return redirectResponse;
+  if (pathname === "/") {
+    return redirectWithCookies(getRoleHome(role!));
   }
 
   // 9. Role-based route protection
-  if (isAuthenticated) {
-    const isAdminRoute =
-      ADMIN_ROUTES.some((r) => pathname.startsWith(r)) || pathname === "/";
-    const isEmployeePortal = pathname.startsWith("/portal");
-    const isITPortal = pathname.startsWith("/it-portal");
-    const roleHome = getRoleHome(role!);
+  const isAdminRoute =
+    ADMIN_ROUTES.some((r) => pathname.startsWith(r)) || pathname === "/";
+  const isEmployeePortal = pathname.startsWith("/portal");
+  const isITPortal = pathname.startsWith("/it-portal");
+  const roleHome = getRoleHome(role!);
 
-    if (role === "admin") {
-      // Admin: can access dashboard; block employee & IT portals
-      if (isEmployeePortal || isITPortal) {
-        const url = request.nextUrl.clone();
-        url.pathname = roleHome;
-        const redirectResponse = NextResponse.redirect(url);
-        supabaseResponse.cookies.getAll().forEach((cookie) => {
-          redirectResponse.cookies.set(cookie.name, cookie.value);
-        });
-        return redirectResponse;
-      }
-    } else if (role === "it_specialist") {
-      // IT specialist: can only access /it-portal; block dashboard & employee portal
-      if (isAdminRoute || isEmployeePortal) {
-        const url = request.nextUrl.clone();
-        url.pathname = roleHome;
-        const redirectResponse = NextResponse.redirect(url);
-        supabaseResponse.cookies.getAll().forEach((cookie) => {
-          redirectResponse.cookies.set(cookie.name, cookie.value);
-        });
-        return redirectResponse;
-      }
-    } else {
-      // Employee (or unknown role): can only access /portal; block dashboard & IT portal
-      if (isAdminRoute || isITPortal) {
-        const url = request.nextUrl.clone();
-        url.pathname = roleHome;
-        const redirectResponse = NextResponse.redirect(url);
-        supabaseResponse.cookies.getAll().forEach((cookie) => {
-          redirectResponse.cookies.set(cookie.name, cookie.value);
-        });
-        return redirectResponse;
-      }
+  if (role === "admin") {
+    // Admin: can access dashboard / admin routes; block employee & IT portals
+    if (isEmployeePortal || isITPortal) {
+      return redirectWithCookies(roleHome);
+    }
+  } else if (role === "it_specialist") {
+    // IT specialist: can only access /it-portal; block dashboard & employee portal
+    if (isAdminRoute || isEmployeePortal) {
+      return redirectWithCookies(roleHome);
+    }
+  } else {
+    // Employee (or unknown role): can only access /portal; block dashboard & IT portal
+    if (isAdminRoute || isITPortal) {
+      return redirectWithCookies(roleHome);
     }
   }
 
