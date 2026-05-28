@@ -6,7 +6,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll([
         OFFLINE_URL,
-        '/manifest.webmanifest',
+        '/manifest.json',
         '/icon-192.png',
         '/icon-512.png'
       ]).catch((err) => console.log('Failed to cache assets during install:', err));

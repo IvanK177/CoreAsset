@@ -19,6 +19,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "CoreAsset — Управление IT-активами",
   description: "Система учёта компьютеров, лицензий и сотрудников",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
