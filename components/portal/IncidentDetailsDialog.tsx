@@ -1,5 +1,8 @@
 "use client";
 
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { formatDate, extractJoinObject } from "@/lib/utils";
-import { Calendar, Monitor, Wrench, AlertTriangle, FileText } from "lucide-react";
+import { Calendar, Monitor, Wrench, AlertTriangle, FileText, Trash2, Loader2 } from "lucide-react";
+import { cancelPortalIncident } from "@/lib/actions/portal";
 
 interface IncidentData {
   id: string;
@@ -56,6 +60,9 @@ export function IncidentDetailsDialog({
   onOpenChange,
   incident,
 }: IncidentDetailsDialogProps) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
   if (!incident) return null;
 
   const title = incident.title || "Заявка без темы";
@@ -71,6 +78,21 @@ export function IncidentDetailsDialog({
   const computerInfo = computer?.inventory_number
     ? `${computer.inventory_number} (${computerTypeLabels[computer.computer_type ?? ""] ?? computer.computer_type ?? "—"})`
     : null;
+
+  const handleCancel = () => {
+    if (!confirm("Вы уверены, что хотите отменить эту заявку?")) return;
+
+    startTransition(async () => {
+      const result = await cancelPortalIncident(incident.id);
+      if (result && result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Заявка успешно отменена");
+        onOpenChange(false);
+        router.refresh();
+      }
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,8 +157,24 @@ export function IncidentDetailsDialog({
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="flex justify-end pt-3">
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+          <div>
+            {incident.status === "open" && (
+              <button
+                onClick={handleCancel}
+                disabled={isPending}
+                className="h-10 px-4 rounded-lg bg-red-50 text-red-600 border border-red-100 font-medium text-sm hover:bg-red-100 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin animate-infinite" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                Отменить заявку
+              </button>
+            )}
+          </div>
           <button
             onClick={() => onOpenChange(false)}
             className="h-10 px-5 rounded-lg border border-gray-200 text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors"

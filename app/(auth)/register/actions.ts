@@ -1,20 +1,19 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { createServiceClient } from "@/lib/supabase/server";
 
 interface SignUpResult {
   error?: string;
 }
 
 /**
- * Self-registration action: signs up a new user with email + password.
- * After successful registration (and auto-login), redirects to /onboarding
- * so the user can fill in their profile.
+ * Self-registration action: validates email + password and saves it
+ * in a temporary secure cookie, then redirects to /onboarding.
+ * Actual creation in Supabase auth is deferred to onboarding completion.
  */
 export async function signUpAction(formData: FormData): Promise<SignUpResult> {
-  const supabase = await createClient();
-
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirm_password") as string;
@@ -32,28 +31,31 @@ export async function signUpAction(formData: FormData): Promise<SignUpResult> {
     return { error: "Пароль должен содержать минимум 6 символов" };
   }
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
-    },
+  // Check if a completed employee profile already exists with this email
+  const serviceClient = createServiceClient();
+  const { data: existingEmployees, error: dbError } = await serviceClient
+    .from("employees")
+    .select("id, full_name")
+    .eq("email", email)
+    .limit(1);
+
+  if (dbError) {
+    return { error: "Ошибка базы данных: " + dbError.message };
+  }
+
+  if (existingEmployees && existingEmployees.length > 0 && existingEmployees[0].full_name) {
+    return { error: "Пользователь с таким email уже зарегистрирован. Пожалуйста, войдите в систему." };
+  }
+
+  // Save registration credentials to a secure cookie for the onboarding step
+  const cookieStore = await cookies();
+  cookieStore.set("pending_reg", JSON.stringify({ email, password }), {
+    path: "/",
+    maxAge: 3600, // 1 hour
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
   });
 
-  if (error) {
-    return { error: error.message };
-  }
-
-  // If email confirmation is required, session will be null
-  if (data.user && !data.session) {
-    return { error: "Письмо с подтверждением отправлено на ваш email. Подвердите его, затем войдите в систему и заполните профиль." };
-  }
-
-  // If immediately confirmed (no email verification), redirect to onboarding
-  if (data.session && data.user?.id) {
-    redirect("/onboarding");
-  }
-
-  // Fallback — shouldn't normally reach here
-  return { error: "Неожиданный результат регистрации. Попробуйте войти." };
-}
+  redirect("/onboarding");
+}

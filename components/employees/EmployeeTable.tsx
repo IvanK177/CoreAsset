@@ -19,7 +19,7 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
         <TableHeader>
           <TableRow className="bg-muted/40">
             <TableHead>ФИО</TableHead>
-            <TableHead>Должность</TableHead>
+            <TableHead>Должность / Отдел</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Кабинет</TableHead>
             <TableHead>Статус</TableHead>

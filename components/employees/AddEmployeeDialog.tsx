@@ -131,7 +131,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
           {/* Other fields — 2 columns */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="position">Должность *</Label>
+              <Label htmlFor="position">Должность / Отдел *</Label>
               <Input
                 id="position"
                 placeholder="Разработчик"

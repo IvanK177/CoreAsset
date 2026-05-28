@@ -2,10 +2,11 @@
 
 import { useState, useActionState } from "react";
 import { completeOnboarding } from "@/lib/actions/onboarding";
-import { signOut } from "@/lib/actions/auth";
+import { goBackFromOnboarding } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Link from "next/link";
 import {
   Monitor,
   User,
@@ -19,19 +20,63 @@ import {
 
 interface FormState {
   error: string;
+  success?: boolean;
+  message?: string;
 }
 
-const initialState: FormState = { error: "" };
+const initialState: FormState = { error: "", success: false, message: "" };
 
 export default function OnboardingPage() {
   const [state, formAction, pending] = useActionState(
     async (prevState: FormState, formData: FormData): Promise<FormState> => {
       const result = await completeOnboarding(formData);
       if (!result) return initialState;
-      return { error: result.error ?? "" };
+      return {
+        error: result.error ?? "",
+        success: result.success ?? false,
+        message: result.message ?? "",
+      };
     },
     initialState
   );
+
+  if (state.success) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] px-4">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-[#2563eb] mb-4">
+            <Monitor className="w-9 h-9 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            CoreAsset
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Система учёта ИТ-активов
+          </p>
+        </div>
+
+        {/* Success Card */}
+        <div className="w-[480px] rounded-2xl bg-white p-8 shadow-xl text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-6">
+            <Send className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Регистрация почти завершена!
+          </h2>
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            {state.message || "Письмо с подтверждением отправлено на ваш email. Пожалуйста, подтвердите его, чтобы войти в систему."}
+          </p>
+          <Link
+            href="/login"
+            className="w-full h-11 rounded-lg font-medium bg-[#2563eb] hover:bg-[#1d4ed8] text-white flex items-center justify-center transition-colors"
+          >
+            Перейти к входу
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] px-4">
@@ -54,7 +99,7 @@ export default function OnboardingPage() {
           <h2 className="text-xl font-semibold text-gray-900">
             Добро пожаловать!
           </h2>
-          <form action={signOut}>
+          <form action={goBackFromOnboarding}>
             <button
               type="submit"
               className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
@@ -97,7 +142,7 @@ export default function OnboardingPage() {
               htmlFor="position"
               className="text-sm font-medium text-gray-700"
             >
-              Должность <span className="text-red-500">*</span>
+              Должность / Отдел <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
               <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

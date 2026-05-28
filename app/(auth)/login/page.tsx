@@ -5,6 +5,7 @@ import { signIn, demoSignIn } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Link from "next/link";
 import {
   Monitor,
   Lock,
@@ -25,6 +26,7 @@ const initialState: FormState = { error: "", success: "" };
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
   const [isDemoPending, startDemoTransition] = useTransition();
   const [activeDemoRole, setActiveDemoRole] = useState<"admin" | "employee" | "it_specialist" | null>(null);
   const [state, formAction, pending] = useActionState(
@@ -83,6 +85,8 @@ export default function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@corp.ru"
                 required
                 autoComplete="email"
@@ -152,12 +156,12 @@ export default function LoginPage() {
         {/* Link to Register */}
         <p className="mt-4 text-center text-sm text-gray-500">
           Нет аккаунта?{" "}
-          <a
-            href="/register"
+          <Link
+            href={email ? `/register?email=${encodeURIComponent(email)}` : "/register"}
             className="text-[#2563eb] hover:text-[#1d4ed8] font-medium"
           >
             Зарегистрироваться
-          </a>
+          </Link>
         </p>
 
         {/* Demo Section */}

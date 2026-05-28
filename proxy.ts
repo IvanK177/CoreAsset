@@ -96,6 +96,7 @@ export async function proxy(request: NextRequest) {
   const isAuthenticated = !!role;
   const isPublicRoute = PUBLIC_ROUTES.some((p) => pathname.startsWith(p));
   const isOnboardingRoute = pathname.startsWith("/onboarding");
+  const hasPendingReg = request.cookies.has("pending_reg");
 
   // Helper to make redirects that carry over Supabase refresh cookies
   const redirectWithCookies = (targetPath: string) => {
@@ -111,6 +112,9 @@ export async function proxy(request: NextRequest) {
   // 5. Unauthenticated user trying to access a protected route → redirect to /login
   if (!isAuthenticated) {
     if (isPublicRoute) {
+      return supabaseResponse;
+    }
+    if (isOnboardingRoute && hasPendingReg) {
       return supabaseResponse;
     }
     return redirectWithCookies("/login");

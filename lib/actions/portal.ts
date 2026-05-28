@@ -64,3 +64,41 @@ export async function portalSignOut() {
   const { redirect } = await import("next/navigation");
   redirect("/login");
 }
+
+/** Cancel (delete) an incident from the employee portal if it is still open */
+export async function cancelPortalIncident(id: string) {
+  const supabase = await createServiceClient();
+
+  // 1. Fetch incident status to ensure it is still "open"
+  const { data: incident, error: fetchError } = await supabase
+    .from("incidents")
+    .select("status")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !incident) {
+    return { error: "Заявка не найдена" };
+  }
+
+  if (incident.status !== "open") {
+    return { error: "Нельзя отменить заявку, которая уже находится в работе или выполнена" };
+  }
+
+  // 2. Delete the incident
+  const { error: deleteError } = await supabase
+    .from("incidents")
+    .delete()
+    .eq("id", id);
+
+  if (deleteError) {
+    return { error: "Ошибка при отмене заявки: " + deleteError.message };
+  }
+
+  revalidateTag("incidents", { expire: 0 });
+  revalidatePath("/portal");
+  revalidatePath("/incidents");
+  revalidatePath("/dashboard");
+  revalidatePath("/it-portal");
+  revalidatePath("/it-portal/my-tasks");
+  return { success: true };
+}
