@@ -104,7 +104,7 @@ export default async function FinancesPage() {
     <div>
       <PageHeader
         title="Финансы · Расходы на ПО"
-        description="FinOps — учёт расходов на подписки и бессрочные лицензии"
+        description="Учёт расходов на подписки и бессрочные лицензии"
       />
       <FinancesClientView
         thisMonth={thisMonth}

@@ -13,7 +13,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, description, action, actionNode }: PageHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         {description && (

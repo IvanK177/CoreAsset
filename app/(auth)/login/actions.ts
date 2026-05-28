@@ -157,3 +157,39 @@ export async function demoSignIn(role: "admin" | "employee" | "it_specialist") {
   });
   redirect("/portal");
 }
+
+/** Reset employee's password by generating a random temporary password using Supabase auth admin API */
+export async function resetEmployeePassword(email: string) {
+  if (!email) {
+    return { error: "Пожалуйста, введите email сотрудника" };
+  }
+
+  const supabase = createServiceClient();
+  const { data: employee, error: empError } = await supabase
+    .from("employees")
+    .select("id, full_name")
+    .eq("email", email.trim().toLowerCase())
+    .single();
+
+  if (empError || !employee) {
+    return { error: "Сотрудник с таким email не найден" };
+  }
+
+  // Generate a temporary password satisfying basic complexity requirements (capital letter, number, special char)
+  const tempPassword = "Temp!" + Math.random().toString(36).slice(2, 10).toUpperCase();
+
+  const { error: authError } = await supabase.auth.admin.updateUserById(
+    employee.id,
+    { password: tempPassword }
+  );
+
+  if (authError) {
+    return { error: "Не удалось сбросить пароль: " + authError.message };
+  }
+
+  return {
+    success: `Пароль для ${employee.full_name} успешно сброшен!`,
+    tempPassword
+  };
+}
+

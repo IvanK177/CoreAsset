@@ -57,7 +57,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Success Card */}
-        <div className="w-[480px] rounded-2xl bg-white p-8 shadow-xl text-center">
+        <div className="w-full max-w-[480px] rounded-2xl bg-white p-6 sm:p-8 shadow-xl text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-6">
             <Send className="w-8 h-8" />
           </div>
@@ -94,7 +94,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Onboarding Card */}
-      <div className="w-[480px] rounded-2xl bg-white p-8 shadow-xl">
+      <div className="w-full max-w-[480px] rounded-2xl bg-white p-6 sm:p-8 shadow-xl">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xl font-semibold text-gray-900">
             Добро пожаловать!

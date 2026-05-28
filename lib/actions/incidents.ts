@@ -27,11 +27,14 @@ export async function createIncident(formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
+  const createdAt = formData.get("created_at") as string | null;
+
   const insertData = {
     ...parsed.data,
     title: parsed.data.title || null,
     computer_id: parsed.data.computer_id || null,
     employee_id: parsed.data.employee_id || null,
+    ...(createdAt ? { created_at: new Date(createdAt).toISOString() } : {}),
   };
   console.log("[createIncident] Inserting incident with computer_id:", insertData.computer_id);
 
@@ -78,11 +81,14 @@ export async function createIncidentDialog(formData: FormData) {
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message, code: undefined };
 
+  const createdAt = formData.get("created_at") as string | null;
+
   const insertData = {
     ...parsed.data,
     title: parsed.data.title || null,
     computer_id: parsed.data.computer_id || null,
     employee_id: parsed.data.employee_id || null,
+    ...(createdAt ? { created_at: new Date(createdAt).toISOString() } : {}),
   };
 
   const { data, error } = await supabase.from("incidents").insert(insertData).select("id").single();

@@ -6,10 +6,10 @@ import { EmployeeStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDate, formatDateTime } from "@/lib/utils";
 import { restoreEmployeeDialog, dismissEmployeeDialog, deleteEmployeeDialog } from "@/lib/actions/employees";
 import { clearCache } from "@/lib/actions/revalidate";
-import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Trash2, Loader2, Edit } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,9 +94,9 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
   if (selectedEmployee) {
     // Master-Detail mode
     return (
-      <div className="flex gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Left: Narrow list */}
-        <div className="w-1/3 space-y-3">
+        <div className="hidden lg:block lg:w-1/3 space-y-3">
           {/* Search + Filter */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -157,7 +157,7 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
         </div>
 
         {/* Right: Detail panel */}
-        <div className="w-2/3 rounded-xl bg-white shadow-sm p-6 space-y-6">
+        <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -178,6 +178,12 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
               </div>
             </div>
             <div className="flex gap-2">
+              <Link
+                href={`/employees/${selectedEmployee.id}/edit`}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
+              >
+                <Edit className="w-4 h-4" /> Изменить
+              </Link>
               {selectedEmployee.is_active ? (
                 <Button
                   variant="outline"
@@ -244,6 +250,7 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
             </div>
           </div>
 
+
           {/* Block 2: Assigned Computers */}
           <div className="rounded-xl border border-gray-200 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплённые ПК</h3>
@@ -293,7 +300,7 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
                     <div className="flex items-center gap-2 shrink-0">
                       <PriorityBadge priority={inc.priority as "low" | "medium" | "high" | "critical"} />
                       <IncidentStatusBadge status={inc.status as "open" | "in_progress" | "resolved"} />
-                      <span className="text-xs text-gray-400">{formatDate(inc.created_at)}</span>
+                      <span className="text-xs text-gray-400">{formatDateTime(inc.created_at)}</span>
                     </div>
                   </Link>
                 ))}
@@ -345,7 +352,7 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
         </span>
       </div>
 
-      <div className="rounded-xl bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
         {filteredEmployees.length === 0 ? (
           <div className="py-16 text-center text-gray-500">
             <Users className="w-10 h-10 mx-auto opacity-40 mb-3" />

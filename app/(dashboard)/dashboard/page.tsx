@@ -86,7 +86,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* 5 Metric Cards */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard
           label="Занятые ПК"
           value={occupied}
@@ -135,9 +135,9 @@ export default async function DashboardPage() {
       </div>
 
       {/* Bottom: Two columns */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Recent Incidents (2/3) */}
-        <div className="col-span-2 rounded-xl bg-white shadow-sm p-5">
+        <div className="lg:col-span-2 rounded-xl bg-white shadow-sm p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Последние заявки</h2>
             <Link href="/incidents" className="text-sm text-[#2563eb] font-medium hover:underline flex items-center gap-1">

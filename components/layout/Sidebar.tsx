@@ -21,7 +21,8 @@ interface SidebarProps {
   openIncidents: number;
   expiringLicenses: number;
   attentionCount: number;
-  userEmail?: string;
+  userName?: string;
+  onClose?: () => void;
 }
 
 const nav = [
@@ -34,7 +35,7 @@ const nav = [
   { href: "/incidents", label: "Инциденты", icon: AlertTriangle },
 ];
 
-export default function Sidebar({ openIncidents, expiringLicenses, attentionCount, userEmail }: SidebarProps) {
+export default function Sidebar({ openIncidents, expiringLicenses, attentionCount, userName, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   const getBadge = (href: string) => {
@@ -69,6 +70,7 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
             <Link
               key={href}
               href={href}
+              onClick={() => onClose?.()}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
                 active
@@ -108,11 +110,11 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
       <div className="px-3 py-3 border-t border-white/10">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#2563eb] text-white text-sm font-bold shrink-0">
-            {userEmail ? userEmail.charAt(0).toUpperCase() : "А"}
+            {userName ? userName.charAt(0).toUpperCase() : "А"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
-              {userEmail ?? "Администратор"}
+            <p className="text-sm font-medium text-white truncate" title={userName}>
+              {userName ?? "Администратор"}
             </p>
             <p className="text-xs text-gray-400">Администратор</p>
           </div>

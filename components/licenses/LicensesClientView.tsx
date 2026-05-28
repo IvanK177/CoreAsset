@@ -99,7 +99,7 @@ export function LicensesClientView({ licenses, installations, expiringLicenses }
       )}
 
       {/* Table with expandable rows */}
-      <div className="rounded-xl bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">

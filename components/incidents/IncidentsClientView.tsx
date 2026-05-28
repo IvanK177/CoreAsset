@@ -1,15 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { updateIncidentStatus } from "@/lib/actions/incidents";
 import { X, AlertTriangle, Monitor, Users, Calendar, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-type IncidentStatus = "open" | "in_progress" | "resolved";
+type IncidentStatus = "open" | "in_progress" | "resolved" | "cancelled";
 type IncidentPriority = "low" | "medium" | "high" | "critical";
 
 interface IncidentRow {
@@ -29,6 +36,7 @@ interface IncidentsClientViewProps {
   openCount: number;
   inProgressCount: number;
   resolvedCount: number;
+  cancelledCount: number;
   initialSelectedId?: string | null;
 }
 
@@ -37,22 +45,35 @@ const tabs: { value: "all" | IncidentStatus; label: string }[] = [
   { value: "open", label: "Открытые" },
   { value: "in_progress", label: "В работе" },
   { value: "resolved", label: "Исправленные" },
+  { value: "cancelled", label: "Отменённые" },
 ];
+
+const PRIORITY_ITEMS: Record<string, React.ReactNode> = {
+  all: "Все приоритеты",
+  low: "Низкий",
+  medium: "Средний",
+  high: "Высокий",
+  critical: "Критический",
+};
 
 export function IncidentsClientView({
   incidents,
   openCount,
   inProgressCount,
   resolvedCount,
+  cancelledCount,
   initialSelectedId,
 }: IncidentsClientViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId ?? null);
   const [activeTab, setActiveTab] = useState<"all" | IncidentStatus>("all");
+  const [priorityFilter, setPriorityFilter] = useState<"all" | IncidentPriority>("all");
   const [isPending, startTransition] = useTransition();
 
-  const filteredIncidents = activeTab === "all"
-    ? incidents
-    : incidents.filter((i) => i.status === activeTab);
+  const filteredIncidents = incidents.filter((i) => {
+    const matchesStatus = activeTab === "all" || i.status === activeTab;
+    const matchesPriority = priorityFilter === "all" || i.priority === priorityFilter;
+    return matchesStatus && matchesPriority;
+  });
 
   const selectedIncident = selectedId
     ? incidents.find((i) => i.id === selectedId)
@@ -63,15 +84,34 @@ export function IncidentsClientView({
     if (tab === "open") return openCount;
     if (tab === "in_progress") return inProgressCount;
     if (tab === "resolved") return resolvedCount;
+    if (tab === "cancelled") return cancelledCount;
     return 0;
   };
 
   if (selectedIncident) {
     // Master-Detail mode
     return (
-      <div className="flex gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Left: Compact list */}
-        <div className="w-1/3 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)]">
+        <div className="hidden lg:block lg:w-1/3 space-y-2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] pr-1">
+          <div className="mb-2">
+            <Select
+              value={priorityFilter}
+              onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
+              items={PRIORITY_ITEMS}
+            >
+              <SelectTrigger className="w-full h-8 text-xs bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все приоритеты</SelectItem>
+                <SelectItem value="low">Низкий</SelectItem>
+                <SelectItem value="medium">Средний</SelectItem>
+                <SelectItem value="high">Высокий</SelectItem>
+                <SelectItem value="critical">Критический</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {filteredIncidents.map((inc) => (
             <button
               key={inc.id}
@@ -93,7 +133,7 @@ export function IncidentsClientView({
         </div>
 
         {/* Right: Detail panel */}
-        <div className="w-2/3 rounded-xl bg-white shadow-sm p-6 space-y-5">
+        <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-5">
           {/* Header with badges and close button */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -145,7 +185,7 @@ export function IncidentsClientView({
                 <Calendar className="w-4 h-4 text-gray-400" />
                 <span className="text-xs text-gray-500">Создан</span>
               </div>
-              <p className="text-sm font-medium text-gray-900">{formatDate(selectedIncident.created_at)}</p>
+              <p className="text-sm font-medium text-gray-900">{formatDateTime(selectedIncident.created_at)}</p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
@@ -210,24 +250,48 @@ export function IncidentsClientView({
         <span className="text-gray-600">⚠ {openCount} открытых</span>
         <span className="text-gray-600">🕐 {inProgressCount} в работе</span>
         <span className="text-gray-600">✅ {resolvedCount} решено</span>
+        <span className="text-gray-600">🚫 {cancelledCount} отменено</span>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            className={cn(
-              "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-              activeTab === tab.value
-                ? "bg-[#2563eb] text-white"
-                : "text-gray-600 hover:bg-gray-100"
-            )}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Tabs */}
+        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                activeTab === tab.value
+                  ? "bg-[#2563eb] text-white"
+                  : "text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              {tab.label} {getCounts(tab.value)}
+            </button>
+          ))}
+        </div>
+
+        {/* Priority Filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 font-medium">Приоритет:</span>
+          <Select
+            value={priorityFilter}
+            onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
+            items={PRIORITY_ITEMS}
           >
-            {tab.label} {getCounts(tab.value)}
-          </button>
-        ))}
+            <SelectTrigger className="w-[140px] h-9 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все приоритеты</SelectItem>
+              <SelectItem value="low">Низкий</SelectItem>
+              <SelectItem value="medium">Средний</SelectItem>
+              <SelectItem value="high">Высокий</SelectItem>
+              <SelectItem value="critical">Критический</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Incident cards */}
@@ -252,7 +316,7 @@ export function IncidentsClientView({
                 </div>
                 <p className="text-sm font-semibold text-gray-900 truncate">{inc.description}</p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {inc.computer?.inventory_number ?? "—"} · {formatDate(inc.created_at)}
+                  {inc.computer?.inventory_number ?? "—"} · {formatDateTime(inc.created_at)}
                 </p>
               </div>
               <span className="text-gray-400 ml-4">›</span>

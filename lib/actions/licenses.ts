@@ -142,3 +142,30 @@ export async function createLicenseDialog(formData: FormData) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+export async function installMultipleSoftware(computerId: string, licenseIds: string[], installedAt?: string) {
+  const supabase = await createServiceClient();
+
+  const installDate = installedAt || new Date().toISOString();
+
+  // Create array of inserts
+  const inserts = licenseIds.map((licenseId) => ({
+    computer_id: computerId,
+    license_id: licenseId,
+    installed_at: installDate,
+  }));
+
+  const { error } = await supabase.from("computer_licenses").insert(inserts);
+
+  if (error) {
+    console.error("[installMultipleSoftware] DB Error:", error.message);
+    return { error: error.message, code: error.code };
+  }
+
+  revalidateTag("licenses", { expire: 0 });
+  revalidatePath("/computers");
+  revalidatePath(`/computers/${computerId}`);
+  revalidatePath("/licenses");
+  revalidatePath("/dashboard");
+  return { success: true };
+}

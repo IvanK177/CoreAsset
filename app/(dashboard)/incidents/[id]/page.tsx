@@ -7,7 +7,7 @@ import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { deleteIncident, updateIncidentStatus } from "@/lib/actions/incidents";
-import { formatDate, extractJoinObject } from "@/lib/utils";
+import { formatDateTime, extractJoinObject } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/shared/SubmitButton";
@@ -67,8 +67,8 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
             </Link>
           ) : "Не указан"
         } />
-        <Row label="Создан" value={formatDate(inc.created_at)} />
-        {inc.resolved_at && <Row label="Закрыт" value={formatDate(inc.resolved_at)} />}
+        <Row label="Создан" value={formatDateTime(inc.created_at)} />
+        {inc.resolved_at && <Row label="Закрыт" value={formatDateTime(inc.resolved_at)} />}
       </div>
 
       <div className="rounded-xl border border-border bg-card p-5">

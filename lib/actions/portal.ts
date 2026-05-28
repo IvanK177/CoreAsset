@@ -12,6 +12,7 @@ export async function createPortalIncident(formData: FormData) {
   const computerId = formData.get("computer_id") as string | null;
   const employeeId = formData.get("employee_id") as string;
   const priority = formData.get("priority") as string;
+  const createdAt = formData.get("created_at") as string | null;
 
   const insertData = {
     title: title || null,
@@ -21,6 +22,7 @@ export async function createPortalIncident(formData: FormData) {
     incident_type: "other" as const,
     priority: priority as "low" | "medium" | "high" | "critical",
     status: "open" as const,
+    ...(createdAt ? { created_at: new Date(createdAt).toISOString() } : {}),
   };
 
   const { data, error } = await supabase

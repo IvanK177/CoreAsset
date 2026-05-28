@@ -16,7 +16,7 @@ import type { Tables } from "@/types/database.types";
 type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
 type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
-type IncidentStatus = "open" | "in_progress" | "resolved";
+type IncidentStatus = "open" | "in_progress" | "resolved" | "cancelled";
 type IncidentPriority = "low" | "medium" | "high" | "critical";
 
 interface IncidentRow {
@@ -36,6 +36,7 @@ interface IncidentsPageClientProps {
   openCount: number;
   inProgressCount: number;
   resolvedCount: number;
+  cancelledCount: number;
   computers: Computer[];
   employees: Employee[];
   initialSelectedId?: string | null;
@@ -46,6 +47,7 @@ export function IncidentsPageClient({
   openCount,
   inProgressCount,
   resolvedCount,
+  cancelledCount,
   computers,
   employees,
   initialSelectedId,
@@ -69,6 +71,7 @@ export function IncidentsPageClient({
         openCount={openCount}
         inProgressCount={inProgressCount}
         resolvedCount={resolvedCount}
+        cancelledCount={cancelledCount}
         initialSelectedId={initialSelectedId}
       />
       <AddIncidentDialog

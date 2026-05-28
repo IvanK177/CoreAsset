@@ -16,19 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { installSoftwareDialog } from "@/lib/actions/licenses";
+import { installMultipleSoftware } from "@/lib/actions/licenses";
 import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const installSoftwareSchema = z.object({
-  license_id: z.string().min(1, "Выберите программу"),
   installed_at: z.string().min(1, "Укажите дату"),
 });
 
@@ -56,6 +49,7 @@ export function InstallSoftwareDialog({
 }: InstallSoftwareDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLicenseIds, setSelectedLicenseIds] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -64,16 +58,20 @@ export function InstallSoftwareDialog({
   const form = useForm<InstallSoftwareValues>({
     resolver: zodResolver(installSoftwareSchema),
     defaultValues: {
-      license_id: "",
       installed_at: today,
     },
   });
 
   const onSubmit = async (data: InstallSoftwareValues) => {
+    if (selectedLicenseIds.length === 0) {
+      setError("Выберите хотя бы одну лицензию");
+      return;
+    }
+
     setPending(true);
     setError(null);
 
-    const result = await installSoftwareDialog(computerId, data.license_id, data.installed_at);
+    const result = await installMultipleSoftware(computerId, selectedLicenseIds, data.installed_at);
     if (result.error) {
       if (result.code === "23505") {
         toast.error("ПО уже установлено на этот компьютер");
@@ -89,14 +87,24 @@ export function InstallSoftwareDialog({
     await clearCache('/licenses');
     await clearCache('/dashboard');
     toast.success("ПО успешно установлено");
-    form.reset({ license_id: "", installed_at: today });
+    setSelectedLicenseIds([]);
+    form.reset({ installed_at: today });
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
     setPending(false);
   };
 
+  const handleOpenChange = (v: boolean) => {
+    onOpenChange(v);
+    if (!v) {
+      setSelectedLicenseIds([]);
+      setError(null);
+      form.reset({ installed_at: today });
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Установить ПО</DialogTitle>
@@ -107,26 +115,46 @@ export function InstallSoftwareDialog({
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label>Программа *</Label>
-            <Select
-              value={form.watch("license_id")}
-              onValueChange={(v) => form.setValue("license_id", v ?? "")}
-              items={Object.fromEntries(licenseOptions.map((l) => [l.id, `${l.software_name} (${l.used_seats}/${l.total_seats} использовано)`]))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Выберите лицензию..." />
-              </SelectTrigger>
-              <SelectContent>
-                {licenseOptions.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>
-                    {l.software_name} ({l.used_seats}/{l.total_seats} использовано)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {form.formState.errors.license_id && (
-              <p className="text-xs text-destructive">{form.formState.errors.license_id.message}</p>
-            )}
+            <Label>Программы / Лицензии *</Label>
+            <div className="border border-gray-200 rounded-lg max-h-60 overflow-y-auto p-3 space-y-2 bg-gray-50">
+              {licenseOptions.map((l) => {
+                const isSelected = selectedLicenseIds.includes(l.id);
+                const isFull = l.used_seats >= l.total_seats;
+                return (
+                  <label
+                    key={l.id}
+                    className={cn(
+                      "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border text-sm bg-white",
+                      isSelected ? "border-blue-200 bg-blue-50/50" : "border-transparent hover:bg-gray-50",
+                      isFull && !isSelected && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      disabled={isFull && !isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLicenseIds([...selectedLicenseIds, l.id]);
+                        } else {
+                          setSelectedLicenseIds(selectedLicenseIds.filter((id) => id !== l.id));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{l.software_name}</p>
+                      <p className="text-xs text-gray-500">
+                        {l.used_seats} из {l.total_seats} мест занято
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
+              {licenseOptions.length === 0 && (
+                <p className="text-sm text-gray-500 py-4 text-center">Нет доступных лицензий</p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -149,7 +177,7 @@ export function InstallSoftwareDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => { onOpenChange(false); form.reset({ license_id: "", installed_at: today }); }}
+              onClick={() => { handleOpenChange(false); }}
               disabled={pending}
             >
               Отмена

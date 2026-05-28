@@ -71,6 +71,11 @@ const computerTypeLabels: Record<string, string> = {
   server: "Server",
 };
 
+const getLocalDateTimeString = (date: Date = new Date()) => {
+  const tzoffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - tzoffset).toISOString().slice(0, 16);
+};
+
 export function NewTicketDialog({
   open,
   onOpenChange,
@@ -81,6 +86,7 @@ export function NewTicketDialog({
   const [description, setDescription] = useState("");
   const [computerId, setComputerId] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>("medium");
+  const [createdAt, setCreatedAt] = useState(getLocalDateTimeString());
   const [pending, setPending] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +108,7 @@ export function NewTicketDialog({
     formData.set("computer_id", computerId);
     formData.set("employee_id", employeeId);
     formData.set("priority", priority);
+    formData.set("created_at", createdAt);
 
     const result = await createPortalIncident(formData);
 
@@ -126,6 +133,7 @@ export function NewTicketDialog({
     setDescription("");
     setComputerId("");
     setPriority("medium");
+    setCreatedAt(getLocalDateTimeString());
     setPending(false);
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
@@ -137,6 +145,7 @@ export function NewTicketDialog({
       setDescription("");
       setComputerId("");
       setPriority("medium");
+      setCreatedAt(getLocalDateTimeString());
       setError(null);
       onOpenChange(false);
     }
@@ -187,6 +196,21 @@ export function NewTicketDialog({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               className="rounded-lg border-gray-200 resize-none"
+            />
+          </div>
+
+          {/* Date and Time */}
+          <div className="space-y-2">
+            <Label htmlFor="ticket-created-at" className="text-sm font-medium">
+              Время инцидента *
+            </Label>
+            <Input
+              id="ticket-created-at"
+              type="datetime-local"
+              value={createdAt}
+              onChange={(e) => setCreatedAt(e.target.value)}
+              className="h-11 rounded-lg border-gray-200"
+              required
             />
           </div>
 

@@ -134,8 +134,8 @@ export function ComputersClientView({ computers, activeEmployees, installations,
 
   if (selectedComputer) {
     return (
-      <div className="flex gap-4">
-        <div className="w-1/3 space-y-3">
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="hidden lg:block lg:w-1/3 space-y-3">
           <ComputerFilterBar
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
@@ -164,7 +164,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
           </div>
         </div>
 
-        <div className="w-2/3 rounded-xl bg-white shadow-sm p-6 space-y-6">
+        <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button onClick={() => setSelectedId(null)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
@@ -379,7 +379,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
-      <div className="rounded-xl bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
         {filteredComputers.length === 0 ? (
           <div className="py-16 text-center text-gray-500">
             <Monitor className="w-10 h-10 mx-auto opacity-40 mb-3" />

@@ -28,7 +28,7 @@ export default function PortalHeader({ employeeName, employeePosition }: PortalH
 
       {/* Right: Employee info + Logout */}
       <div className="flex items-center gap-4">
-        <div className="flex flex-col items-end">
+        <div className="hidden sm:flex flex-col items-end">
           <span className="text-sm font-medium text-gray-900">{employeeName}</span>
           <span className="text-xs text-gray-500">{employeePosition}</span>
         </div>
@@ -37,10 +37,10 @@ export default function PortalHeader({ employeeName, employeePosition }: PortalH
             variant="ghost"
             size="sm"
             type="submit"
-            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3"
           >
             <LogOut className="w-4 h-4" />
-            Выйти
+            <span className="hidden sm:inline">Выйти</span>
           </Button>
         </form>
       </div>

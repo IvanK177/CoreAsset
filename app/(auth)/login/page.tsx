@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState, useTransition } from "react";
-import { signIn, demoSignIn } from "./actions";
+import { signIn, demoSignIn, resetEmployeePassword } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [isDemoPending, startDemoTransition] = useTransition();
   const [activeDemoRole, setActiveDemoRole] = useState<"admin" | "employee" | "it_specialist" | null>(null);
+  const [resetMessage, setResetMessage] = useState<{ error?: string; success?: string; tempPassword?: string } | null>(null);
+  const [resetPending, setResetPending] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setResetMessage({ error: "Пожалуйста, введите email в поле выше перед сбросом пароля" });
+      return;
+    }
+    setResetPending(true);
+    setResetMessage(null);
+    try {
+      const res = await resetEmployeePassword(email);
+      setResetMessage(res);
+    } catch (e: any) {
+      setResetMessage({ error: e?.message || "Произошла неизвестная ошибка при сбросе пароля" });
+    } finally {
+      setResetPending(false);
+    }
+  };
+
   const [state, formAction, pending] = useActionState(
     async (prevState: FormState, formData: FormData): Promise<FormState> => {
       const result = await signIn(formData);
@@ -64,7 +84,7 @@ export default function LoginPage() {
       </div>
 
       {/* Login Card */}
-      <div className="w-[420px] rounded-2xl bg-white p-8 shadow-xl">
+      <div className="w-full max-w-[420px] rounded-2xl bg-white p-6 sm:p-8 shadow-xl">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
           Войти в систему
         </h2>
@@ -97,12 +117,22 @@ export default function LoginPage() {
 
           {/* Password */}
           <div className="space-y-2">
-            <Label
-              htmlFor="password"
-              className="text-sm font-medium text-gray-700"
-            >
-              Пароль
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700"
+              >
+                Пароль
+              </Label>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetPending}
+                className="text-xs text-[#2563eb] hover:text-[#1d4ed8] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resetPending ? "Сброс..." : "Забыли пароль?"}
+              </button>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -127,6 +157,33 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
+          {/* Reset Message */}
+          {resetMessage && (
+            <div className={`text-sm px-3 py-2 rounded-lg ${resetMessage.error ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50 border border-green-200'}`}>
+              {resetMessage.error && <p>{resetMessage.error}</p>}
+              {resetMessage.success && (
+                <div className="space-y-1.5">
+                  <p className="font-semibold">{resetMessage.success}</p>
+                  {resetMessage.tempPassword && (
+                    <div className="flex flex-col gap-1 bg-white p-2 rounded border border-green-200">
+                      <span className="text-[11px] text-gray-500 font-normal">Временный пароль (нажмите, чтобы скопировать):</span>
+                      <code 
+                        onClick={() => {
+                          if (resetMessage.tempPassword) {
+                            navigator.clipboard.writeText(resetMessage.tempPassword);
+                          }
+                        }}
+                        className="font-mono text-base font-bold text-center block select-all cursor-pointer bg-gray-50 p-1 hover:bg-gray-100 rounded border transition-colors"
+                      >
+                        {resetMessage.tempPassword}
+                      </code>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Error Message */}
           {state.error && (

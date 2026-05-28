@@ -27,6 +27,11 @@ const PRIORITY_ITEMS: Record<string, React.ReactNode> = {
 };
 const initialState = { error: "" };
 
+const getLocalDateTimeString = (date: Date = new Date()) => {
+  const tzoffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - tzoffset).toISOString().slice(0, 16);
+};
+
 export default function NewIncidentClient({ computers, employees, defaultComputerId }: { computers: Computer[]; employees: Employee[]; defaultComputerId?: string }) {
   // Controlled state for computer_id and employee_id — guarantees the hidden input value
   // always matches the current selection, bypassing @base-ui/react Select's
@@ -61,6 +66,17 @@ export default function NewIncidentClient({ computers, employees, defaultCompute
       <div className="space-y-2">
         <Label htmlFor="title">Заголовок *</Label>
         <Input id="title" name="title" placeholder="Опишите проблему кратко" required />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="created_at">Время инцидента *</Label>
+        <Input
+          id="created_at"
+          name="created_at"
+          type="datetime-local"
+          defaultValue={getLocalDateTimeString()}
+          required
+        />
       </div>
 
       <div className="space-y-2">

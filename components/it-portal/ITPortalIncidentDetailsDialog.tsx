@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
-import { formatDate, extractJoinObject } from "@/lib/utils";
+import { formatDateTime, extractJoinObject } from "@/lib/utils";
 import { Calendar, Monitor, Wrench, User, FileText, CheckCircle } from "lucide-react";
 
 interface RelatedEmployee {
@@ -114,7 +114,7 @@ export function ITPortalIncidentDetailsDialog({
               <span className="text-xs font-medium text-gray-400 block">Создана</span>
               <div className="flex items-center gap-1.5 font-medium text-gray-700">
                 <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>{formatDate(incident.created_at)}</span>
+                <span>{formatDateTime(incident.created_at)}</span>
               </div>
             </div>
 
@@ -132,7 +132,7 @@ export function ITPortalIncidentDetailsDialog({
               <span className="text-xs font-medium text-gray-400 block">Закрыта</span>
               <div className="flex items-center gap-1.5 font-medium text-gray-700">
                 <CheckCircle className="w-4 h-4 text-violet-500 shrink-0" />
-                <span>{incident.resolved_at ? formatDate(incident.resolved_at) : "—"}</span>
+                <span>{incident.resolved_at ? formatDateTime(incident.resolved_at) : "—"}</span>
               </div>
             </div>
 

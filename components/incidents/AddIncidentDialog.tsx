@@ -32,12 +32,18 @@ import type { Tables } from "@/types/database.types";
 type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
 type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
+const getLocalDateTimeString = (date: Date = new Date()) => {
+  const tzoffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - tzoffset).toISOString().slice(0, 16);
+};
+
 const incidentDialogSchema = z.object({
   title: z.string().min(1, "Обязательное поле"),
   description: z.string().optional().or(z.literal("")),
   priority: z.enum(["low", "medium", "high", "critical"]),
   computer_id: z.string().optional().or(z.literal("")),
   employee_id: z.string().optional().or(z.literal("")),
+  created_at: z.string().optional().or(z.literal("")),
 });
 
 type IncidentDialogValues = z.infer<typeof incidentDialogSchema>;
@@ -72,6 +78,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
       priority: "medium",
       computer_id: defaultComputerId ?? "",
       employee_id: defaultEmployeeId ?? "",
+      created_at: getLocalDateTimeString(),
     },
   });
 
@@ -90,6 +97,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
     formData.set("incident_type", "other");
     if (data.computer_id) formData.set("computer_id", data.computer_id);
     if (data.employee_id) formData.set("employee_id", data.employee_id);
+    if (data.created_at) formData.set("created_at", data.created_at);
 
     const result = await createIncidentDialog(formData);
     if (result.error) {
@@ -114,6 +122,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
       priority: "medium",
       computer_id: defaultComputerId ?? "",
       employee_id: defaultEmployeeId ?? "",
+      created_at: getLocalDateTimeString(),
     });
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
@@ -129,6 +138,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
         priority: "medium",
         computer_id: defaultComputerId ?? "",
         employee_id: defaultEmployeeId ?? "",
+        created_at: getLocalDateTimeString(),
       });
     }}>
       <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6">
@@ -161,6 +171,17 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
               placeholder="Подробное описание..."
               rows={4}
               {...form.register("description")}
+            />
+          </div>
+
+          {/* Date and Time */}
+          <div className="space-y-2">
+            <Label htmlFor="created_at">Время инцидента *</Label>
+            <Input
+              id="created_at"
+              type="datetime-local"
+              {...form.register("created_at")}
+              required
             />
           </div>
 
@@ -247,7 +268,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
             <Button
               type="button"
               variant="outline"
-              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", computer_id: defaultComputerId ?? "", employee_id: defaultEmployeeId ?? "" }); }}
+              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", computer_id: defaultComputerId ?? "", employee_id: defaultEmployeeId ?? "", created_at: getLocalDateTimeString() }); }}
               disabled={pending}
             >
               Отмена

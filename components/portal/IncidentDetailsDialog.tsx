@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
-import { formatDate, extractJoinObject } from "@/lib/utils";
+import { formatDateTime, extractJoinObject } from "@/lib/utils";
 import { Calendar, Monitor, Wrench, AlertTriangle, FileText, XCircle, Loader2 } from "lucide-react";
 import { cancelPortalIncident } from "@/lib/actions/portal";
 
@@ -128,7 +128,7 @@ export function IncidentDetailsDialog({
               <span className="text-xs font-medium text-gray-400 block">Дата создания</span>
               <div className="flex items-center gap-1.5 font-medium text-gray-700">
                 <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>{formatDate(incident.created_at)}</span>
+                <span>{formatDateTime(incident.created_at)}</span>
               </div>
             </div>
 

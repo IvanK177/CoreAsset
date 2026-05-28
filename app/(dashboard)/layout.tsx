@@ -1,6 +1,7 @@
-import Sidebar from "@/components/layout/Sidebar";
+import DashboardLayoutClient from "@/components/layout/DashboardLayoutClient";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { daysUntilExpiry } from "@/lib/utils";
+import { cookies } from "next/headers";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Use regular client for auth (needs user JWT), service client for data (bypasses RLS)
@@ -28,19 +29,53 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }).length;
 
   const attentionCount = criticalIncidents + expiringLicenses;
-  const userEmail = userRes.data.user?.email;
+
+  // Retrieve employee data for the profile section
+  const cookieStore = await cookies();
+  const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
+  const user = userRes.data.user;
+
+  let employeeData = null;
+
+  if (user?.id) {
+    const { data } = await dataClient
+      .from("employees")
+      .select("id, full_name, email")
+      .eq("id", user.id)
+      .single();
+    employeeData = data;
+  }
+
+  if (!employeeData && demoEmployeeId) {
+    const { data } = await dataClient
+      .from("employees")
+      .select("id, full_name, email")
+      .eq("id", demoEmployeeId)
+      .single();
+    employeeData = data;
+  }
+
+  if (!employeeData) {
+    // Fallback: try to find any admin in the database
+    const { data } = await dataClient
+      .from("employees")
+      .select("id, full_name, email")
+      .eq("role", "admin")
+      .limit(1)
+      .single();
+    employeeData = data;
+  }
+
+  const userName = employeeData?.full_name || user?.email || "Администратор";
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
-      <Sidebar
-        openIncidents={openIncidents}
-        expiringLicenses={expiringLicenses}
-        attentionCount={attentionCount}
-        userEmail={userEmail}
-      />
-      <main className="pl-[220px]">
-        <div className="p-6">{children}</div>
-      </main>
-    </div>
+    <DashboardLayoutClient
+      openIncidents={openIncidents}
+      expiringLicenses={expiringLicenses}
+      attentionCount={attentionCount}
+      userName={userName}
+    >
+      {children}
+    </DashboardLayoutClient>
   );
 }

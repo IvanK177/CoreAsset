@@ -387,3 +387,23 @@ export async function createEmployeeDialog(formData: FormData) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+export async function updateEmployeeRole(id: string, role: "admin" | "employee" | "it_specialist") {
+  const supabase = createServiceClient();
+
+  const { error } = await supabase
+    .from("employees")
+    .update({ role, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[updateEmployeeRole] DB Error:", error.message);
+    return { error: error.message };
+  }
+
+  revalidateTag("employees", { expire: 0 });
+  revalidatePath("/employees");
+  revalidatePath(`/employees/${id}`);
+  revalidatePath("/dashboard");
+  return { success: true };
+}
