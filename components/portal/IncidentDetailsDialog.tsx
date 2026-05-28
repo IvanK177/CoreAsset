@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { formatDate, extractJoinObject } from "@/lib/utils";
-import { Calendar, Monitor, Wrench, AlertTriangle, FileText, Trash2, Loader2 } from "lucide-react";
+import { Calendar, Monitor, Wrench, AlertTriangle, FileText, XCircle, Loader2 } from "lucide-react";
 import { cancelPortalIncident } from "@/lib/actions/portal";
 
 interface IncidentData {
@@ -169,7 +169,7 @@ export function IncidentDetailsDialog({
                 {isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin animate-infinite" />
                 ) : (
-                  <Trash2 className="w-4 h-4" />
+                  <XCircle className="w-4 h-4" />
                 )}
                 Отменить заявку
               </button>

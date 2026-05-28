@@ -84,14 +84,14 @@ export async function cancelPortalIncident(id: string) {
     return { error: "Нельзя отменить заявку, которая уже находится в работе или выполнена" };
   }
 
-  // 2. Delete the incident
-  const { error: deleteError } = await supabase
+  // 2. Update status to 'cancelled'
+  const { error: updateError } = await supabase
     .from("incidents")
-    .delete()
+    .update({ status: "cancelled", updated_at: new Date().toISOString() })
     .eq("id", id);
 
-  if (deleteError) {
-    return { error: "Ошибка при отмене заявки: " + deleteError.message };
+  if (updateError) {
+    return { error: "Ошибка при отмене заявки: " + updateError.message };
   }
 
   revalidateTag("incidents", { expire: 0 });

@@ -296,7 +296,7 @@ export type Database = {
     Enums: {
       computer_status: "active" | "repair" | "decommissioned" | "storage"
       incident_priority: "low" | "medium" | "high" | "critical"
-      incident_status: "open" | "in_progress" | "resolved"
+      incident_status: "open" | "in_progress" | "resolved" | "cancelled"
       incident_type: "hardware" | "software" | "network" | "other"
       license_type: "perpetual" | "subscription"
       user_role: "admin" | "employee" | "it_specialist"
@@ -411,7 +411,7 @@ export const Constants = {
     Enums: {
       computer_status: ["active", "repair", "decommissioned", "storage"],
       incident_priority: ["low", "medium", "high", "critical"],
-      incident_status: ["open", "in_progress", "resolved"],
+      incident_status: ["open", "in_progress", "resolved", "cancelled"],
       incident_type: ["hardware", "software", "network", "other"],
       license_type: ["perpetual", "subscription"],
       user_role: ["admin", "employee", "it_specialist"],

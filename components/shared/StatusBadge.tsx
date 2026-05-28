@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 
 type ComputerStatus = "active" | "repair" | "decommissioned" | "storage";
 type EmployeeStatus = "active" | "dismissed";
-type IncidentStatus = "open" | "in_progress" | "resolved";
+type IncidentStatus = "open" | "in_progress" | "resolved" | "cancelled";
 
 const computerLabels: Record<ComputerStatus, string> = {
   active: "Активен",
@@ -33,12 +33,14 @@ const incidentLabels: Record<IncidentStatus, string> = {
   open: "Открыт",
   in_progress: "В работе",
   resolved: "Исправлен",
+  cancelled: "Отменён",
 };
 
 const incidentColors: Record<IncidentStatus, string> = {
   open: "bg-yellow-100 text-yellow-700 border-yellow-200",
   in_progress: "bg-blue-100 text-blue-700 border-blue-200",
   resolved: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  cancelled: "bg-gray-100 text-gray-600 border-gray-200",
 };
 
 export function ComputerStatusBadge({ status }: { status: ComputerStatus }) {
