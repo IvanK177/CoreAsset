@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { DollarSign, TrendingUp, Calendar, Package, Key } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface BreakdownItem {
   name: string;
@@ -59,6 +60,46 @@ export function FinancesClientView({
 
   // Current month name for table header
   const currentMonthName = fullMonths[currentMonth];
+
+  const handleExportToExcel = () => {
+    let html = `<table border="1">
+      <thead>
+        <tr style="background-color: #f3f4f6; font-weight: bold;">
+          <th>Программа</th>
+          <th>Вендор</th>
+          <th>Тип</th>
+          <th>Цена / ед. (руб)</th>
+          <th>Мест / Установок</th>
+          <th>Итого (руб)</th>
+          <th>Доля (%)</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    breakdown.forEach((item) => {
+      const share = grandTotal > 0 ? ((item.total / grandTotal) * 100).toFixed(1) : "0.0";
+      const typeText = item.type === "subscription" ? "Подписка" : "Бессрочная";
+      html += `<tr>
+        <td>${item.name}</td>
+        <td>${item.vendor}</td>
+        <td>${typeText}</td>
+        <td>${item.pricePerUnit}</td>
+        <td>${item.seats}</td>
+        <td>${item.total}</td>
+        <td>${share}%</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table>`;
+
+    const blob = new Blob(["\ufeff" + html], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `finances_report_${new Date().toISOString().slice(0, 10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
@@ -204,6 +245,16 @@ export function FinancesClientView({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Export to XLS Button */}
+      <div className="flex justify-end mt-4">
+        <Button
+          onClick={handleExportToExcel}
+          className="bg-green-600 hover:bg-green-700 text-white gap-2 text-sm font-medium h-9 rounded-lg"
+        >
+          Экспорт в XLS
+        </Button>
       </div>
     </div>
   );

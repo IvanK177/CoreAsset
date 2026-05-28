@@ -66,7 +66,15 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div>
                       <h3 className="font-bold text-gray-900 text-base">{tpl.name}</h3>
-                      <p className="text-xs text-gray-400 mt-0.5">{computerTypeLabels[tpl.computer_type ?? ""] ?? tpl.computer_type ?? "—"}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {tpl.computer_type === "desktop" ? (
+                          <>
+                            <span className="hidden sm:inline">PC / </span>Десктоп
+                          </>
+                        ) : (
+                          computerTypeLabels[tpl.computer_type ?? ""] ?? tpl.computer_type ?? "—"
+                        )}
+                      </p>
                     </div>
                     <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200 font-medium">
                       Шаблон

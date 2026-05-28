@@ -7,7 +7,7 @@ import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { updateIncidentStatus } from "@/lib/actions/incidents";
 import { X, AlertTriangle, Monitor, Users, Calendar, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -88,155 +88,215 @@ export function IncidentsClientView({
     return 0;
   };
 
+  const handleExportToExcel = () => {
+    let html = `<table border="1">
+      <thead>
+        <tr style="background-color: #f3f4f6; font-weight: bold;">
+          <th>ID</th>
+          <th>Описание</th>
+          <th>Приоритет</th>
+          <th>Статус</th>
+          <th>Тип инцидента</th>
+          <th>Компьютер (Инв. номер)</th>
+          <th>Дата создания</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    filteredIncidents.forEach((inc) => {
+      const priorityText = 
+        inc.priority === "low" ? "Низкий" :
+        inc.priority === "medium" ? "Средний" :
+        inc.priority === "high" ? "Высокий" : "Критический";
+      
+      const statusText = 
+        inc.status === "open" ? "Открыт" :
+        inc.status === "in_progress" ? "В работе" :
+        inc.status === "resolved" ? "Решен" : "Отменен";
+
+      const typeText = 
+        inc.incident_type === "hardware" ? "Аппаратная проблема" :
+        inc.incident_type === "software" ? "Программная проблема" :
+        inc.incident_type === "network" ? "Сетевая проблема" : "Другое";
+
+      const compNumber = inc.computer?.inventory_number || "—";
+      const dateText = new Date(inc.created_at).toLocaleString("ru-RU");
+
+      html += `<tr>
+        <td>#T${inc.id.slice(0, 4)}</td>
+        <td>${inc.description}</td>
+        <td>${priorityText}</td>
+        <td>${statusText}</td>
+        <td>${typeText}</td>
+        <td>${compNumber}</td>
+        <td>${dateText}</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table>`;
+
+    const blob = new Blob(["\ufeff" + html], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `incidents_report_${new Date().toISOString().slice(0, 10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (selectedIncident) {
     // Master-Detail mode
     return (
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Left: Compact list */}
-        <div className="hidden lg:block lg:w-1/3 space-y-2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] pr-1">
-          <div className="mb-2">
-            <Select
-              value={priorityFilter}
-              onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
-              items={PRIORITY_ITEMS}
-            >
-              <SelectTrigger className="w-full h-8 text-xs bg-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все приоритеты</SelectItem>
-                <SelectItem value="low">Низкий</SelectItem>
-                <SelectItem value="medium">Средний</SelectItem>
-                <SelectItem value="high">Высокий</SelectItem>
-                <SelectItem value="critical">Критический</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="space-y-4">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Left: Compact list */}
+          <div className="hidden lg:block lg:w-1/3 space-y-2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] pr-1">
+            <div className="mb-2">
+              <Select
+                value={priorityFilter}
+                onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
+              >
+                <SelectTrigger className="w-full h-8 text-xs bg-white">
+                  <SelectValue placeholder="Все приоритеты" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PRIORITY_ITEMS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {filteredIncidents.map((inc) => (
+              <button
+                key={inc.id}
+                onClick={() => setSelectedId(inc.id)}
+                className={cn(
+                  "w-full p-3 rounded-lg text-left transition-colors",
+                  inc.id === selectedId ? "bg-white shadow-sm" : "bg-gray-100 hover:bg-gray-200"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
+                  <PriorityBadge priority={inc.priority} />
+                  <IncidentStatusBadge status={inc.status} />
+                </div>
+                <p className="text-sm font-medium text-gray-900 truncate">{inc.description}</p>
+                <p className="text-xs text-gray-500">{inc.computer?.inventory_number ?? "—"}</p>
+              </button>
+            ))}
           </div>
-          {filteredIncidents.map((inc) => (
-            <button
-              key={inc.id}
-              onClick={() => setSelectedId(inc.id)}
-              className={cn(
-                "w-full p-3 rounded-lg text-left transition-colors",
-                inc.id === selectedId ? "bg-white shadow-sm" : "bg-gray-100 hover:bg-gray-200"
-              )}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
-                <PriorityBadge priority={inc.priority} />
-                <IncidentStatusBadge status={inc.status} />
+
+          {/* Right: Detail panel */}
+          <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">#T{selectedIncident.id.slice(0, 4)}</span>
+                <PriorityBadge priority={selectedIncident.priority} />
+                <IncidentStatusBadge status={selectedIncident.status} />
               </div>
-              <p className="text-sm font-medium text-gray-900 truncate">{inc.description}</p>
-              <p className="text-xs text-gray-500">{inc.computer?.inventory_number ?? "—"}</p>
-            </button>
-          ))}
+              <button
+                onClick={() => setSelectedId(null)}
+                className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">{selectedIncident.description}</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {selectedIncident.incident_type === "hardware" ? "Аппаратная проблема" :
+                 selectedIncident.incident_type === "software" ? "Программная проблема" :
+                 selectedIncident.incident_type === "network" ? "Сетевая проблема" : "Другое"}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Monitor className="w-4 h-4 text-gray-400" />
+                  <span className="text-xs text-gray-500">Компьютер</span>
+                </div>
+                <p className="text-sm font-medium text-gray-900">
+                  {selectedIncident.computer?.inventory_number ?? "—"}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  <span className="text-xs text-gray-500">Сотрудник</span>
+                </div>
+                <p className="text-sm font-medium text-gray-900">
+                  {selectedIncident.employee?.full_name ?? "Не указан"}
+                  {selectedIncident.employee?.room && ` (Каб. ${selectedIncident.employee.room})`}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <span className="text-xs text-gray-500">Создан</span>
+                </div>
+                <p className="text-sm font-medium text-gray-900">{formatDateTime(selectedIncident.created_at)}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="w-4 h-4 text-gray-400" />
+                  <span className="text-xs text-gray-500">Приоритет</span>
+                </div>
+                <p className="text-sm font-medium text-gray-900">
+                  {selectedIncident.priority === "critical" ? "Критический" :
+                   selectedIncident.priority === "high" ? "Высокий" :
+                   selectedIncident.priority === "medium" ? "Средний" : "Низкий"}
+                </p>
+              </div>
+            </div>
+
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">ИЗМЕНИТЬ СТАТУС</h3>
+              <div className="flex items-center gap-3">
+                {selectedIncident.status === "open" && (
+                  <button
+                    onClick={() => { startTransition(async () => { await updateIncidentStatus(selectedIncident.id, "in_progress"); }); }}
+                    disabled={isPending}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] text-white text-sm font-medium hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🕐</span>}
+                    {isPending ? "Выполнение…" : "Взять в работу"}
+                  </button>
+                )}
+                {selectedIncident.status === "in_progress" && (
+                  <button
+                    onClick={() => { startTransition(async () => { await updateIncidentStatus(selectedIncident.id, "resolved"); }); }}
+                    disabled={isPending}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    {isPending ? "Закрытие…" : "Отметить исправленным"}
+                  </button>
+                )}
+                {selectedIncident.status === "resolved" && (
+                  <span className="text-sm text-green-600 font-medium flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" /> Инцидент решён
+                  </span>
+                )}
+                <Link
+                  href={`/incidents/${selectedIncident.id}`}
+                  className={buttonVariants({ variant: "outline", size: "sm" }) + " gap-2"}
+                >
+                  Подробнее
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Right: Detail panel */}
-        <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-5">
-          {/* Header with badges and close button */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">#T{selectedIncident.id.slice(0, 4)}</span>
-              <PriorityBadge priority={selectedIncident.priority} />
-              <IncidentStatusBadge status={selectedIncident.status} />
-            </div>
-            <button
-              onClick={() => setSelectedId(null)}
-              className="p-1 rounded-md hover:bg-gray-100 transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
-          </div>
-
-          {/* Title and description */}
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">{selectedIncident.description}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {selectedIncident.incident_type === "hardware" ? "Аппаратная проблема" :
-               selectedIncident.incident_type === "software" ? "Программная проблема" :
-               selectedIncident.incident_type === "network" ? "Сетевая проблема" : "Другое"}
-            </p>
-          </div>
-
-          {/* Info grid 2x2 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Monitor className="w-4 h-4 text-gray-400" />
-                <span className="text-xs text-gray-500">Компьютер</span>
-              </div>
-              <p className="text-sm font-medium text-gray-900">
-                {selectedIncident.computer?.inventory_number ?? "—"}
-              </p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4 text-gray-400" />
-                <span className="text-xs text-gray-500">Сотрудник</span>
-              </div>
-              <p className="text-sm font-medium text-gray-900">
-                {selectedIncident.employee?.full_name ?? "Не указан"}
-                {selectedIncident.employee?.room && ` (Каб. ${selectedIncident.employee.room})`}
-              </p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <span className="text-xs text-gray-500">Создан</span>
-              </div>
-              <p className="text-sm font-medium text-gray-900">{formatDateTime(selectedIncident.created_at)}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="w-4 h-4 text-gray-400" />
-                <span className="text-xs text-gray-500">Приоритет</span>
-              </div>
-              <p className="text-sm font-medium text-gray-900">
-                {selectedIncident.priority === "critical" ? "Критический" :
-                 selectedIncident.priority === "high" ? "Высокий" :
-                 selectedIncident.priority === "medium" ? "Средний" : "Низкий"}
-              </p>
-            </div>
-          </div>
-
-          {/* Change Status */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">ИЗМЕНИТЬ СТАТУС</h3>
-            <div className="flex items-center gap-3">
-              {selectedIncident.status === "open" && (
-                <button
-                  onClick={() => { startTransition(async () => { await updateIncidentStatus(selectedIncident.id, "in_progress"); }); }}
-                  disabled={isPending}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2563eb] text-white text-sm font-medium hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🕐</span>}
-                  {isPending ? "Выполнение…" : "Взять в работу"}
-                </button>
-              )}
-              {selectedIncident.status === "in_progress" && (
-                <button
-                  onClick={() => { startTransition(async () => { await updateIncidentStatus(selectedIncident.id, "resolved"); }); }}
-                  disabled={isPending}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                  {isPending ? "Закрытие…" : "Отметить исправленным"}
-                </button>
-              )}
-              {selectedIncident.status === "resolved" && (
-                <span className="text-sm text-green-600 font-medium flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" /> Инцидент решён
-                </span>
-              )}
-              <Link
-                href={`/incidents/${selectedIncident.id}`}
-                className={buttonVariants({ variant: "outline", size: "sm" }) + " gap-2"}
-              >
-                Подробнее
-              </Link>
-            </div>
-          </div>
+        <div className="flex justify-end mt-4">
+          <Button
+            onClick={handleExportToExcel}
+            className="bg-green-600 hover:bg-green-700 text-white gap-2 text-sm font-medium h-9 rounded-lg"
+          >
+            Экспорт в XLS
+          </Button>
         </div>
       </div>
     );
@@ -323,6 +383,16 @@ export function IncidentsClientView({
             </button>
           ))
         )}
+      </div>
+
+      {/* Export to XLS Button */}
+      <div className="flex justify-end mt-4">
+        <Button
+          onClick={handleExportToExcel}
+          className="bg-green-600 hover:bg-green-700 text-white gap-2 text-sm font-medium h-9 rounded-lg"
+        >
+          Экспорт в XLS
+        </Button>
       </div>
     </div>
   );

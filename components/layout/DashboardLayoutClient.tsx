@@ -73,7 +73,7 @@ export default function DashboardLayoutClient({
       </div>
 
       {/* Main content container */}
-      <main className="flex-1 w-full min-w-0 lg:pl-0">
+      <main className="flex-1 w-full min-w-0 lg:pl-[220px]">
         <div className="p-4 md:p-6">{children}</div>
       </main>
     </div>
