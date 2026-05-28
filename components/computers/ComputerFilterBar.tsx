@@ -61,13 +61,13 @@ export function ComputerFilterBar({
       )}
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+      <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 overflow-x-auto max-w-full">
         {filterOptions.map((option) => (
           <button
             key={option.value}
             onClick={() => onFilterChange(option.value)}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 whitespace-nowrap",
               activeFilter === option.value
                 ? "bg-white text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"

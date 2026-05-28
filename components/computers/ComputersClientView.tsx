@@ -165,27 +165,27 @@ export function ComputersClientView({ computers, activeEmployees, installations,
         </div>
 
         <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button onClick={() => setSelectedId(null)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <button onClick={() => setSelectedId(null)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors shrink-0">
                 <ArrowLeft className="w-5 h-5 text-gray-500" />
               </button>
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#dbeafe]">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#dbeafe] shrink-0">
                 <Monitor className="w-5 h-5 text-[#2563eb]" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-gray-900">{selectedComputer.inventory_number}</h2>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-bold text-gray-900 truncate">{selectedComputer.inventory_number}</h2>
                   <ComputerStatusBadge status={selectedComputer.lifecycle_status} />
                 </div>
-                <p className="text-sm text-gray-500">{selectedComputer.computer_type}</p>
+                <p className="text-sm text-gray-500 truncate">{selectedComputer.computer_type}</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-end sm:justify-start">
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 shrink-0"
                 onClick={() => setEditDialogOpen(true)}
               >
                 <Edit className="w-4 h-4" /> Редактировать
@@ -199,7 +199,7 @@ export function ComputersClientView({ computers, activeEmployees, installations,
 
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Основные данные / Железо</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <InfoRow label="Серийный номер" value={selectedComputer.serial_number} />
               <InfoRow label="Кабинет" value={selectedComputer.room} />
               <InfoRow label="MAC-адрес" value={hw.mac_address} />

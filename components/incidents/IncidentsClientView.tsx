@@ -15,6 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type IncidentStatus = "open" | "in_progress" | "resolved" | "cancelled";
 type IncidentPriority = "low" | "medium" | "high" | "critical";
@@ -68,6 +78,9 @@ export function IncidentsClientView({
   const [activeTab, setActiveTab] = useState<"all" | IncidentStatus>("all");
   const [priorityFilter, setPriorityFilter] = useState<"all" | IncidentPriority>("all");
   const [isPending, startTransition] = useTransition();
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
 
   const filteredIncidents = incidents.filter((i) => {
     const matchesStatus = activeTab === "all" || i.status === activeTab;
@@ -89,6 +102,19 @@ export function IncidentsClientView({
   };
 
   const handleExportToExcel = () => {
+    let exportData = filteredIncidents;
+
+    if (exportStartDate) {
+      const start = new Date(exportStartDate);
+      start.setHours(0, 0, 0, 0);
+      exportData = exportData.filter((inc) => new Date(inc.created_at) >= start);
+    }
+    if (exportEndDate) {
+      const end = new Date(exportEndDate);
+      end.setHours(23, 59, 59, 999);
+      exportData = exportData.filter((inc) => new Date(inc.created_at) <= end);
+    }
+
     let html = `<table border="1">
       <thead>
         <tr style="background-color: #f3f4f6; font-weight: bold;">
@@ -103,7 +129,7 @@ export function IncidentsClientView({
       </thead>
       <tbody>`;
 
-    filteredIncidents.forEach((inc) => {
+    exportData.forEach((inc) => {
       const priorityText = 
         inc.priority === "low" ? "Низкий" :
         inc.priority === "medium" ? "Средний" :
@@ -143,6 +169,61 @@ export function IncidentsClientView({
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  const renderExportDialog = () => (
+    <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Экспорт отчета в Excel</DialogTitle>
+          <DialogDescription>
+            Выберите диапазон дат для фильтрации инцидентов в отчете. Оставьте поля пустыми, чтобы выгрузить за всё время.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="export-start-date" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Дата начала</Label>
+            <Input
+              id="export-start-date"
+              type="date"
+              value={exportStartDate}
+              onChange={(e) => setExportStartDate(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="export-end-date" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Дата окончания</Label>
+            <Input
+              id="export-end-date"
+              type="date"
+              value={exportEndDate}
+              onChange={(e) => setExportEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setExportStartDate("");
+              setExportEndDate("");
+            }}
+          >
+            Сбросить
+          </Button>
+          <Button
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white"
+            onClick={() => {
+              handleExportToExcel();
+              setExportDialogOpen(false);
+            }}
+          >
+            Скачать XLS
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   if (selectedIncident) {
     // Master-Detail mode
@@ -211,7 +292,7 @@ export function IncidentsClientView({
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-gray-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Monitor className="w-4 h-4 text-gray-400" />
@@ -253,7 +334,7 @@ export function IncidentsClientView({
 
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">ИЗМЕНИТЬ СТАТУС</h3>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {selectedIncident.status === "open" && (
                   <button
                     onClick={() => { startTransition(async () => { await updateIncidentStatus(selectedIncident.id, "in_progress"); }); }}
@@ -292,12 +373,13 @@ export function IncidentsClientView({
 
         <div className="flex justify-end mt-4">
           <Button
-            onClick={handleExportToExcel}
+            onClick={() => setExportDialogOpen(true)}
             className="bg-green-600 hover:bg-green-700 text-white gap-2 text-sm font-medium h-9 rounded-lg"
           >
             Экспорт в XLS
           </Button>
         </div>
+        {renderExportDialog()}
       </div>
     );
   }
@@ -305,23 +387,16 @@ export function IncidentsClientView({
   // Default mode: list with tabs
   return (
     <div className="space-y-4">
-      {/* Counters */}
-      <div className="flex items-center gap-4 text-sm">
-        <span className="text-gray-600">⚠ {openCount} открытых</span>
-        <span className="text-gray-600">🕐 {inProgressCount} в работе</span>
-        <span className="text-gray-600">✅ {resolvedCount} решено</span>
-        <span className="text-gray-600">🚫 {cancelledCount} отменено</span>
-      </div>
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Tabs */}
-        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 overflow-x-auto max-w-full">
           {tabs.map((tab) => (
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 whitespace-nowrap",
                 activeTab === tab.value
                   ? "bg-[#2563eb] text-white"
                   : "text-gray-600 hover:bg-gray-100"
@@ -388,12 +463,13 @@ export function IncidentsClientView({
       {/* Export to XLS Button */}
       <div className="flex justify-end mt-4">
         <Button
-          onClick={handleExportToExcel}
+          onClick={() => setExportDialogOpen(true)}
           className="bg-green-600 hover:bg-green-700 text-white gap-2 text-sm font-medium h-9 rounded-lg"
         >
           Экспорт в XLS
         </Button>
       </div>
+      {renderExportDialog()}
     </div>
   );
 }

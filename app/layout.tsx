@@ -24,6 +24,14 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "CoreAsset",
   },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" }
+    ],
+    apple: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" }
+    ]
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
