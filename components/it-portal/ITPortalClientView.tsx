@@ -95,6 +95,7 @@ function formatDate(dateStr: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Moscow",
   });
 }
 
@@ -137,6 +138,7 @@ export default function ITPortalClientView({
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
   const [resolvingIncidentId, setResolvingIncidentId] = useState<string | null>(null);
   const [resolutionText, setResolutionText] = useState("");
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const [buildingFilter, setBuildingFilter] = useState(() => {
     if (typeof window !== "undefined") {
@@ -298,6 +300,31 @@ export default function ITPortalClientView({
                   </div>
                 </div>
               </div>
+
+              {/* Attached Photos */}
+              {selectedIncident.photo_urls && selectedIncident.photo_urls.length > 0 && (
+                <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100/50 space-y-2">
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    Фотографии ({selectedIncident.photo_urls.length})
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedIncident.photo_urls.map((url, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setPreviewImageUrl(url)}
+                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
+                      >
+                        <img
+                          src={url}
+                          alt={`Вложение ${idx + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
@@ -333,6 +360,27 @@ export default function ITPortalClientView({
             </div>
           </div>
         </div>
+      {/* Photo Preview Dialog */}
+      <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+        <DialogContent className="sm:max-w-3xl bg-transparent border-none shadow-none p-0 flex items-center justify-center">
+          {previewImageUrl && (
+            <div className="relative max-w-full max-h-[85vh] rounded-xl overflow-hidden bg-black/50 p-1 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(null)}
+                className="absolute top-4 right-4 bg-black/60 hover:bg-black/85 text-white rounded-full p-2 cursor-pointer transition-colors z-50 focus:outline-none"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img
+                src={previewImageUrl}
+                alt="Просмотр изображения"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       </div>
     );
   }

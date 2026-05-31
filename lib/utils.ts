@@ -5,7 +5,10 @@ export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 export const formatDate = (date: string | null | undefined): string => {
   if (!date) return "—";
-  return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium" }).format(new Date(date));
+  return new Intl.DateTimeFormat("ru-RU", { 
+    dateStyle: "medium",
+    timeZone: "Europe/Moscow"
+  }).format(new Date(date));
 };
 
 export const formatDateTime = (date: string | null | undefined): string => {
@@ -13,8 +16,20 @@ export const formatDateTime = (date: string | null | undefined): string => {
   return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Europe/Moscow"
   }).format(new Date(date));
 };
+
+/**
+ * Parses a date string, treating it as Moscow time (+03:00) if no timezone is specified.
+ */
+export function parseMoscowDateTime(dateStr: string | null | undefined): Date | null {
+  if (!dateStr) return null;
+  // If it already has a timezone indicator (ends with Z, or contains +/-XX:XX), parse normally.
+  const hasTimezone = dateStr.includes("Z") || /[+-]\d{2}:?\d{2}$/.test(dateStr);
+  const formattedStr = hasTimezone ? dateStr : `${dateStr}+03:00`;
+  return new Date(formattedStr);
+}
 
 export const daysUntilExpiry = (expiresAt: string | null | undefined): number | null => {
   if (!expiresAt) return null;

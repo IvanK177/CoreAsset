@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   Dialog,
   DialogContent,
@@ -10,7 +12,7 @@ import {
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { formatDateTime, extractJoinObject } from "@/lib/utils";
-import { Calendar, Monitor, Wrench, User, FileText, CheckCircle } from "lucide-react";
+import { Calendar, Monitor, Wrench, User, FileText, CheckCircle, X } from "lucide-react";
 import { DecompressedText } from "@/components/shared/DecompressedText";
 
 interface RelatedEmployee {
@@ -68,6 +70,8 @@ export function ITPortalIncidentDetailsDialog({
   onOpenChange,
   incident,
 }: ITPortalIncidentDetailsDialogProps) {
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
   if (!incident) return null;
 
   const title = incident.title || "Заявка без темы";
@@ -189,19 +193,18 @@ export function ITPortalIncidentDetailsDialog({
               </span>
               <div className="flex flex-wrap gap-2">
                 {incident.photo_urls.map((url, idx) => (
-                  <a
+                  <button
                     key={idx}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block hover:opacity-85 transition-opacity"
+                    type="button"
+                    onClick={() => setPreviewImageUrl(url)}
+                    className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
                   >
                     <img
                       src={url}
                       alt={`Вложение ${idx + 1}`}
                       className="object-cover w-full h-full"
                     />
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
@@ -232,6 +235,27 @@ export function ITPortalIncidentDetailsDialog({
             Закрыть
           </button>
         </div>
+      {/* Photo Preview Dialog */}
+      <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+        <DialogContent className="sm:max-w-3xl bg-transparent border-none shadow-none p-0 flex items-center justify-center">
+          {previewImageUrl && (
+            <div className="relative max-w-full max-h-[85vh] rounded-xl overflow-hidden bg-black/50 p-1 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(null)}
+                className="absolute top-4 right-4 bg-black/60 hover:bg-black/85 text-white rounded-full p-2 cursor-pointer transition-colors z-50 focus:outline-none"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img
+                src={previewImageUrl}
+                alt="Просмотр изображения"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       </DialogContent>
     </Dialog>
   );

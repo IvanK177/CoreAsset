@@ -175,7 +175,7 @@ export function IncidentsClientView({
       const deviceText = inc.device
         ? `[${deviceTypeRussianLabels[inc.device.device_type] || "Устройство"}] ${inc.device.computer_type || ""} (${inc.device.inventory_number})`
         : "—";
-      const dateText = new Date(inc.created_at).toLocaleString("ru-RU");
+      const dateText = new Date(inc.created_at).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
 
       html += `<tr>
         <td>#T${inc.id.slice(0, 4)}</td>

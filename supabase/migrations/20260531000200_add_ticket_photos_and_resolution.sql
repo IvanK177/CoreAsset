@@ -18,14 +18,15 @@ ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 -- 4. Drop old policies if they exist (using specific names to avoid collision)
 DROP POLICY IF EXISTS "Allow authenticated uploads on ticket-attachments" ON storage.objects;
 DROP POLICY IF EXISTS "Allow authenticated select on ticket-attachments" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public select on ticket-attachments" ON storage.objects;
 DROP POLICY IF EXISTS "Allow authenticated delete on ticket-attachments" ON storage.objects;
 
 -- 5. Create storage policies with specific names
 CREATE POLICY "Allow authenticated uploads on ticket-attachments" ON storage.objects
   FOR INSERT TO authenticated WITH CHECK (bucket_id = 'ticket-attachments');
 
-CREATE POLICY "Allow authenticated select on ticket-attachments" ON storage.objects
-  FOR SELECT TO authenticated USING (bucket_id = 'ticket-attachments');
+CREATE POLICY "Allow public select on ticket-attachments" ON storage.objects
+  FOR SELECT TO public USING (bucket_id = 'ticket-attachments');
 
 CREATE POLICY "Allow authenticated delete on ticket-attachments" ON storage.objects
   FOR DELETE TO authenticated USING (bucket_id = 'ticket-attachments');

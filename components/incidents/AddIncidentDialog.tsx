@@ -32,9 +32,11 @@ import type { Tables } from "@/types/database.types";
 type Device = Pick<Tables<"devices">, "id" | "inventory_number">;
 type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
-const getLocalDateTimeString = (date: Date = new Date()) => {
-  const tzoffset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - tzoffset).toISOString().slice(0, 16);
+const getMoscowDateTimeString = (date: Date = new Date()) => {
+  // Moscow timezone is UTC+3 (3 hours in ms is 3 * 3600000)
+  const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
+  const moscowTime = new Date(utcTime + 3 * 3600 * 1000);
+  return moscowTime.toISOString().slice(0, 16);
 };
 
 const incidentDialogSchema = z.object({
@@ -78,7 +80,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
       priority: "medium",
       device_id: defaultDeviceId ?? "",
       employee_id: defaultEmployeeId ?? "",
-      created_at: getLocalDateTimeString(),
+      created_at: getMoscowDateTimeString(),
     },
   });
 
@@ -122,7 +124,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
       priority: "medium",
       device_id: defaultDeviceId ?? "",
       employee_id: defaultEmployeeId ?? "",
-      created_at: getLocalDateTimeString(),
+      created_at: getMoscowDateTimeString(),
     });
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
@@ -138,7 +140,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
         priority: "medium",
         device_id: defaultDeviceId ?? "",
         employee_id: defaultEmployeeId ?? "",
-        created_at: getLocalDateTimeString(),
+        created_at: getMoscowDateTimeString(),
       });
     }}>
       <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6">
@@ -268,7 +270,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
             <Button
               type="button"
               variant="outline"
-              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", device_id: defaultDeviceId ?? "", employee_id: defaultEmployeeId ?? "", created_at: getLocalDateTimeString() }); }}
+              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", device_id: defaultDeviceId ?? "", employee_id: defaultEmployeeId ?? "", created_at: getMoscowDateTimeString() }); }}
               disabled={pending}
             >
               Отмена

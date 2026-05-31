@@ -37,9 +37,11 @@ const PRIORITY_ITEMS: Record<string, React.ReactNode> = {
 };
 const initialState = { error: "" };
 
-const getLocalDateTimeString = (date: Date = new Date()) => {
-  const tzoffset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - tzoffset).toISOString().slice(0, 16);
+const getMoscowDateTimeString = (date: Date = new Date()) => {
+  // Moscow timezone is UTC+3 (3 hours in ms is 3 * 3600000)
+  const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
+  const moscowTime = new Date(utcTime + 3 * 3600 * 1000);
+  return moscowTime.toISOString().slice(0, 16);
 };
 
 export default function NewIncidentClient({ devices, employees, defaultDeviceId }: { devices: Device[]; employees: Employee[]; defaultDeviceId?: string }) {
@@ -88,7 +90,7 @@ export default function NewIncidentClient({ devices, employees, defaultDeviceId 
           id="created_at"
           name="created_at"
           type="datetime-local"
-          defaultValue={getLocalDateTimeString()}
+          defaultValue={getMoscowDateTimeString()}
           required
         />
       </div>
