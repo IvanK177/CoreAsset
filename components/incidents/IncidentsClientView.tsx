@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime, BUILDING_ADDRESSES } from "@/lib/utils";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { updateIncidentStatus } from "@/lib/actions/incidents";
 import { X, AlertTriangle, Monitor, Users, Calendar, CheckCircle, Loader2 } from "lucide-react";
+import { DecompressedText } from "@/components/shared/DecompressedText";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ type IncidentPriority = "low" | "medium" | "high" | "critical";
 
 interface IncidentRow {
   id: string;
+  title: string | null;
   description: string;
   priority: IncidentPriority;
   status: IncidentStatus;
@@ -38,7 +40,8 @@ interface IncidentRow {
   incident_type: string;
   computer_id: string | null;
   computer: { id: string; inventory_number: string } | null;
-  employee: { id: string; full_name: string; position: string | null; room: string | null } | null;
+  employee: { id: string; full_name: string; position: string | null; room: string | null; building: string | null } | null;
+  assignee?: { id: string; full_name: string | null } | null;
 }
 
 interface IncidentsClientViewProps {
@@ -50,12 +53,12 @@ interface IncidentsClientViewProps {
   initialSelectedId?: string | null;
 }
 
-const tabs: { value: "all" | IncidentStatus; label: string }[] = [
-  { value: "all", label: "Все" },
+const tabs: { value: "active" | IncidentStatus; label: string }[] = [
+  { value: "active", label: "Активные" },
   { value: "open", label: "Открытые" },
   { value: "in_progress", label: "В работе" },
-  { value: "resolved", label: "Исправленные" },
   { value: "cancelled", label: "Отменённые" },
+  { value: "resolved", label: "Архив" },
 ];
 
 const PRIORITY_ITEMS: Record<string, React.ReactNode> = {
@@ -75,29 +78,35 @@ export function IncidentsClientView({
   initialSelectedId,
 }: IncidentsClientViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId ?? null);
-  const [activeTab, setActiveTab] = useState<"all" | IncidentStatus>("all");
+  const [activeTab, setActiveTab] = useState<"active" | IncidentStatus>("active");
   const [priorityFilter, setPriorityFilter] = useState<"all" | IncidentPriority>("all");
+  const [buildingFilter, setBuildingFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportStartDate, setExportStartDate] = useState("");
   const [exportEndDate, setExportEndDate] = useState("");
 
   const filteredIncidents = incidents.filter((i) => {
-    const matchesStatus = activeTab === "all" || i.status === activeTab;
+    const matchesStatus =
+      activeTab === "active"
+        ? i.status !== "resolved"
+        : i.status === activeTab;
     const matchesPriority = priorityFilter === "all" || i.priority === priorityFilter;
-    return matchesStatus && matchesPriority;
+    const matchesBuilding = buildingFilter === "all" || i.employee?.building === buildingFilter;
+    return matchesStatus && matchesPriority && matchesBuilding;
   });
 
   const selectedIncident = selectedId
     ? incidents.find((i) => i.id === selectedId)
     : null;
 
-  const getCounts = (tab: "all" | IncidentStatus) => {
-    if (tab === "all") return incidents.length;
-    if (tab === "open") return openCount;
-    if (tab === "in_progress") return inProgressCount;
-    if (tab === "resolved") return resolvedCount;
-    if (tab === "cancelled") return cancelledCount;
+  const getCounts = (tab: "active" | IncidentStatus) => {
+    const filteredByBuilding = incidents.filter((i) => buildingFilter === "all" || i.employee?.building === buildingFilter);
+    if (tab === "active") return filteredByBuilding.filter((i) => i.status !== "resolved").length;
+    if (tab === "open") return filteredByBuilding.filter((i) => i.status === "open").length;
+    if (tab === "in_progress") return filteredByBuilding.filter((i) => i.status === "in_progress").length;
+    if (tab === "resolved") return filteredByBuilding.filter((i) => i.status === "resolved").length;
+    if (tab === "cancelled") return filteredByBuilding.filter((i) => i.status === "cancelled").length;
     return 0;
   };
 
@@ -231,8 +240,23 @@ export function IncidentsClientView({
       <div className="space-y-4">
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Left: Compact list */}
-          <div className="hidden lg:block lg:w-1/3 space-y-2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] pr-1">
-            <div className="mb-2">
+          <div className="hidden lg:block lg:w-1/3 space-y-2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] pr-1 custom-scrollbar">
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <Select
+                value={buildingFilter}
+                onValueChange={(val) => setBuildingFilter(val ?? "all")}
+              >
+                <SelectTrigger className="w-full h-8 text-xs bg-white">
+                  <SelectValue placeholder="Все корпуса" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Все корпуса</SelectItem>
+                  {Object.keys(BUILDING_ADDRESSES).map((building) => (
+                    <SelectItem key={building} value={building}>{building}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select
                 value={priorityFilter}
                 onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
@@ -261,8 +285,18 @@ export function IncidentsClientView({
                   <PriorityBadge priority={inc.priority} />
                   <IncidentStatusBadge status={inc.status} />
                 </div>
-                <p className="text-sm font-medium text-gray-900 truncate">{inc.description}</p>
-                <p className="text-xs text-gray-500">{inc.computer?.inventory_number ?? "—"}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  <DecompressedText text={inc.title || inc.description} truncate={80} />
+                </p>
+                <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mt-0.5">
+                  <span>{inc.computer?.inventory_number ?? "—"}</span>
+                  {inc.status === "resolved" && (
+                    <>
+                      <span>·</span>
+                      <span className="text-emerald-600 font-medium">Решено кем: {inc.assignee?.full_name ?? "IT-специалист"}</span>
+                    </>
+                  )}
+                </p>
               </button>
             ))}
           </div>
@@ -284,12 +318,17 @@ export function IncidentsClientView({
             </div>
 
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{selectedIncident.description}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{selectedIncident.title || "Инцидент IT"}</h2>
               <p className="text-sm text-gray-500 mt-1">
                 {selectedIncident.incident_type === "hardware" ? "Аппаратная проблема" :
                  selectedIncident.incident_type === "software" ? "Программная проблема" :
                  selectedIncident.incident_type === "network" ? "Сетевая проблема" : "Другое"}
               </p>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Описание</h4>
+              <DecompressedText text={selectedIncident.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -330,6 +369,17 @@ export function IncidentsClientView({
                    selectedIncident.priority === "medium" ? "Средний" : "Низкий"}
                 </p>
               </div>
+              {selectedIncident.status === "resolved" && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <span className="text-xs text-gray-500">Решено кем</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {selectedIncident.assignee?.full_name ?? "IT-специалист"}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="border border-gray-200 rounded-lg p-4">
@@ -407,30 +457,50 @@ export function IncidentsClientView({
           ))}
         </div>
 
-        {/* Priority Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">Приоритет:</span>
-          <Select
-            value={priorityFilter}
-            onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
-            items={PRIORITY_ITEMS}
-          >
-            <SelectTrigger className="w-[140px] h-9 bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все приоритеты</SelectItem>
-              <SelectItem value="low">Низкий</SelectItem>
-              <SelectItem value="medium">Средний</SelectItem>
-              <SelectItem value="high">Высокий</SelectItem>
-              <SelectItem value="critical">Критический</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-4">
+          {/* Building Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium">Корпус:</span>
+            <Select
+              value={buildingFilter}
+              onValueChange={(val) => setBuildingFilter(val ?? "all")}
+            >
+              <SelectTrigger className="w-[180px] h-9 bg-white text-xs">
+                <SelectValue placeholder="Все корпуса" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все корпуса</SelectItem>
+                {Object.keys(BUILDING_ADDRESSES).map((building) => (
+                  <SelectItem key={building} value={building}>{building}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Priority Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium">Приоритет:</span>
+            <Select
+              value={priorityFilter}
+              onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
+            >
+              <SelectTrigger className="w-[140px] h-9 bg-white">
+                <SelectValue placeholder="Все приоритеты" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все приоритеты</SelectItem>
+                <SelectItem value="low">Низкий</SelectItem>
+                <SelectItem value="medium">Средний</SelectItem>
+                <SelectItem value="high">Высокий</SelectItem>
+                <SelectItem value="critical">Критический</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {/* Incident cards */}
-      <div className="space-y-2">
+      <div className="max-h-[600px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
         {filteredIncidents.length === 0 ? (
           <div className="py-16 text-center text-gray-500">
             <AlertTriangle className="w-10 h-10 mx-auto opacity-40 mb-3" />
@@ -449,9 +519,19 @@ export function IncidentsClientView({
                   <PriorityBadge priority={inc.priority} />
                   <IncidentStatusBadge status={inc.status} />
                 </div>
-                <p className="text-sm font-semibold text-gray-900 truncate">{inc.description}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {inc.computer?.inventory_number ?? "—"} · {formatDateTime(inc.created_at)}
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  <DecompressedText text={inc.title || inc.description} truncate={100} />
+                </p>
+                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                  <span>{inc.computer?.inventory_number ?? "—"}</span>
+                  <span>·</span>
+                  <span>{formatDateTime(inc.created_at)}</span>
+                  {inc.status === "resolved" && (
+                    <>
+                      <span>·</span>
+                      <span className="text-emerald-600 font-medium">Решено кем: {inc.assignee?.full_name ?? "IT-специалист"}</span>
+                    </>
+                  )}
                 </p>
               </div>
               <span className="text-gray-400 ml-4">›</span>

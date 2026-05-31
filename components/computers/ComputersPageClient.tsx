@@ -16,9 +16,9 @@ import type { Tables } from "@/types/database.types";
 
 interface InstallRow {
   id: string;
-  computer_id: string;
-  license_id: string;
-  installed_at: string;
+  computer_id: string | null;
+  license_id: string | null;
+  installed_at: string | null;
   licenses: unknown;
 }
 
@@ -38,7 +38,6 @@ interface ComputersPageClientProps {
   installations: InstallRow[];
   incidents: IncidentRow[];
   licenseOptions: LicenseOption[];
-  totalCount: number;
   initialFilter?: string;
   templates: Tables<"computer_templates">[];
 }
@@ -49,17 +48,33 @@ export function ComputersPageClient({
   installations,
   incidents,
   licenseOptions,
-  totalCount,
   initialFilter = "all",
   templates,
 }: ComputersPageClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [buildingFilter, setBuildingFilter] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_building_filter") || "all";
+    }
+    return "all";
+  });
+
+  const handleBuildingChange = (val: string) => {
+    setBuildingFilter(val);
+    localStorage.setItem("admin_building_filter", val);
+  };
+
+  const filteredCount = computers.filter((c) => {
+    if (buildingFilter === "all") return true;
+    const emp = Array.isArray(c.employees) ? c.employees[0] : c.employees;
+    return emp && emp.building === buildingFilter;
+  }).length;
 
   return (
     <div>
       <PageHeader
         title="Компьютеры"
-        description={`${totalCount} устройств в реестре`}
+        description={`${filteredCount} устройств в реестре`}
         actionNode={
           <Button size="sm" className="gap-2" onClick={() => setDialogOpen(true)}>
             <Plus className="w-4 h-4" />
@@ -75,6 +90,8 @@ export function ComputersPageClient({
         licenseOptions={licenseOptions}
         initialFilter={initialFilter}
         templates={templates}
+        buildingFilter={buildingFilter}
+        onBuildingFilterChange={handleBuildingChange}
       />
       <AddComputerDialog open={dialogOpen} onOpenChange={setDialogOpen} templates={templates} />
     </div>

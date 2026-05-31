@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { compressText, decompressText } from "@/lib/compression";
 
 /** Create an incident from the employee portal (non-redirecting) */
 export async function createPortalIncident(formData: FormData) {
@@ -74,7 +75,7 @@ export async function cancelPortalIncident(id: string) {
   // 1. Fetch incident status to ensure it is still "open"
   const { data: incident, error: fetchError } = await supabase
     .from("incidents")
-    .select("status")
+    .select("status, description, title")
     .eq("id", id)
     .single();
 
@@ -86,10 +87,24 @@ export async function cancelPortalIncident(id: string) {
     return { error: "Нельзя отменить заявку, которая уже находится в работе или выполнена" };
   }
 
-  // 2. Update status to 'cancelled'
+  const description = incident.description ?? "";
+  let title = incident.title ?? "";
+
+  const plainDescription = description.startsWith("gz:") ? await decompressText(description) : description;
+  if (!title) {
+    title = plainDescription.split("\n")[0]?.substring(0, 80) || "Инцидент";
+  }
+  const compressedDescription = await compressText(plainDescription);
+
+  // 2. Update status to 'cancelled' and compress description
   const { error: updateError } = await supabase
     .from("incidents")
-    .update({ status: "cancelled", updated_at: new Date().toISOString() })
+    .update({
+      status: "cancelled",
+      description: compressedDescription,
+      title: title || null,
+      updated_at: new Date().toISOString()
+    })
     .eq("id", id);
 
   if (updateError) {
@@ -103,4 +118,39 @@ export async function cancelPortalIncident(id: string) {
   revalidatePath("/it-portal");
   revalidatePath("/it-portal/my-tasks");
   return { success: true };
+}
+
+/** Create a room request from the employee portal */
+export async function createPortalRoomRequest(formData: FormData) {
+  const supabase = createServiceClient();
+
+  const room = formData.get("room") as string;
+  const type = formData.get("type") as string;
+  const description = formData.get("description") as string;
+  const authorId = formData.get("author_id") as string;
+
+  const insertData = {
+    room: room.trim(),
+    type: type,
+    description: description.trim(),
+    author_id: authorId,
+    status: "open" as const,
+  };
+
+  const { data, error } = await supabase
+    .from("room_requests")
+    .insert(insertData)
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[createPortalRoomRequest] Error:", error.message);
+    return { error: error.message };
+  }
+
+  revalidateTag("room_requests", { expire: 0 });
+  revalidatePath("/portal");
+  revalidatePath("/incidents");
+  revalidatePath("/facilities-portal");
+  return { success: true, id: data.id };
 }

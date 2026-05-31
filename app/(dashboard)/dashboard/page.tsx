@@ -25,7 +25,15 @@ export default async function DashboardPage() {
     getCachedEmployees(),
   ]);
 
-  const openIncidents = (rawIncidents as any[])
+  const openIncidents = (rawIncidents as unknown as {
+    id: string;
+    description: string;
+    priority: "low" | "medium" | "high" | "critical";
+    status: "open" | "in_progress" | "resolved" | "cancelled";
+    created_at: string;
+    computers: unknown;
+    "computers!incidents_computer_id_fkey": unknown;
+  }[])
     .filter((inc) => inc.status !== "resolved")
     .slice(0, 10)
     .map((inc) => ({

@@ -52,3 +52,13 @@ export function safeHardware(raw: unknown): { cpu?: string; ram?: string; storag
     mac_address: typeof obj.mac_address === "string" ? obj.mac_address : undefined,
   };
 }
+
+export const BUILDING_ADDRESSES = {
+  "Центр программирования и кибербезопасности": "г.Москва, ул. Академика Миллионщикова, дом 20",
+  "Центр Вернадский": "г.Москва, проспект Вернадского, дом 29А",
+  "IT.Бирюлево": "г.Москва, проезд Харьковский, дом 5А",
+  "Центр городских технологий": "г.Москва, ул. Судостроительная, дом 48",
+  "Дизайн колледж": "г.Москва, ул. Коломенская, дом 5, корпус 3",
+} as const;
+
+export type BuildingName = keyof typeof BUILDING_ADDRESSES;

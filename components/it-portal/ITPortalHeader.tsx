@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MonitorIcon, LogOut, TicketCheck, ClipboardList } from "lucide-react";
+import { MonitorIcon, LogOut, TicketCheck, ClipboardList, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/auth";
@@ -15,6 +15,7 @@ interface ITPortalHeaderProps {
 const navItems = [
   { href: "/it-portal", label: "Заявки", icon: ClipboardList },
   { href: "/it-portal/my-tasks", label: "Мои задачи", icon: TicketCheck },
+  { href: "/it-portal/archive", label: "Архив", icon: Archive },
 ];
 
 export default function ITPortalHeader({ specialistName, specialistPosition }: ITPortalHeaderProps) {

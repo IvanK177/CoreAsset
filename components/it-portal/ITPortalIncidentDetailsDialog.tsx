@@ -11,6 +11,7 @@ import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { formatDateTime, extractJoinObject } from "@/lib/utils";
 import { Calendar, Monitor, Wrench, User, FileText, CheckCircle } from "lucide-react";
+import { DecompressedText } from "@/components/shared/DecompressedText";
 
 interface RelatedEmployee {
   full_name: string | null;
@@ -34,6 +35,7 @@ interface IncidentRow {
   assigned_to: string | null;
   employee: RelatedEmployee | RelatedEmployee[] | null;
   computer: RelatedComputer | RelatedComputer[] | null;
+  assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
 }
 
 interface ITPortalIncidentDetailsDialogProps {
@@ -70,6 +72,7 @@ export function ITPortalIncidentDetailsDialog({
   // Safe extract relations
   const emp = extractJoinObject(incident.employee) as RelatedEmployee | null;
   const comp = extractJoinObject(incident.computer) as RelatedComputer | null;
+  const assignee = extractJoinObject(incident.assignee) as { full_name: string | null } | null;
 
   const employeeName = emp?.full_name ?? "Не указан";
   const employeeRoom = emp?.room ? `Каб. ${emp.room}` : null;
@@ -77,6 +80,8 @@ export function ITPortalIncidentDetailsDialog({
   const computerInfo = comp?.inventory_number
     ? `${comp.inventory_number} (${computerTypeLabels[comp.computer_type ?? ""] ?? comp.computer_type ?? "—"})`
     : null;
+
+  const resolvedBy = assignee?.full_name ?? "—";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -136,6 +141,17 @@ export function ITPortalIncidentDetailsDialog({
               </div>
             </div>
 
+            {/* Resolved By */}
+            {incident.status === "resolved" && (
+              <div className="space-y-1 pt-2 border-t border-gray-100">
+                <span className="text-xs font-medium text-gray-400 block">Решено кем</span>
+                <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                  <User className="w-4 h-4 text-violet-500 shrink-0" />
+                  <span>{resolvedBy}</span>
+                </div>
+              </div>
+            )}
+
             {/* Device */}
             <div className="col-span-2 space-y-1 pt-2 border-t border-gray-100">
               <span className="text-xs font-medium text-gray-400 block">Устройство / Оборудование</span>
@@ -155,9 +171,7 @@ export function ITPortalIncidentDetailsDialog({
               Описание инцидента
             </span>
             <div className="p-4 rounded-xl bg-white border border-gray-100 max-h-[220px] overflow-y-auto shadow-inner-sm">
-              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
-                {incident.description}
-              </p>
+              <DecompressedText text={incident.description} className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed" />
             </div>
           </div>
         </div>

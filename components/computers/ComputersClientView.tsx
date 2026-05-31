@@ -27,8 +27,8 @@ const AddIncidentDialog = dynamic(
 );
 import { deleteComputer, linkEmployeeToComputer } from "@/lib/actions/computers";
 import { removeSoftware } from "@/lib/actions/licenses";
-import { cn, formatDate, safeHardware } from "@/lib/utils";
-import { ArrowLeft, Edit, Monitor, X, Plus, Key, AlertTriangle } from "lucide-react";
+import { cn, formatDate, safeHardware, BUILDING_ADDRESSES } from "@/lib/utils";
+import { ArrowLeft, Edit, Monitor, X, Plus, Key, AlertTriangle, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Tables } from "@/types/database.types";
 
@@ -41,6 +41,7 @@ interface EmployeeJoin {
   position: string | null;
   email: string | null;
   room: string | null;
+  building: string | null;
 }
 
 /** Computer row with joined employees relation from Supabase query */
@@ -57,9 +58,9 @@ export interface ActiveEmployee {
 
 interface InstallRow {
   id: string;
-  computer_id: string;
-  license_id: string;
-  installed_at: string;
+  computer_id: string | null;
+  license_id: string | null;
+  installed_at: string | null;
   licenses: unknown;
 }
 
@@ -88,9 +89,21 @@ interface ComputersClientViewProps {
   licenseOptions: LicenseOption[];
   initialFilter?: string;
   templates: Tables<"computer_templates">[];
+  buildingFilter: string;
+  onBuildingFilterChange: (val: string) => void;
 }
 
-export function ComputersClientView({ computers, activeEmployees, installations, incidents, licenseOptions, initialFilter = "all", templates }: ComputersClientViewProps) {
+export function ComputersClientView({
+  computers,
+  activeEmployees,
+  installations,
+  incidents,
+  licenseOptions,
+  initialFilter = "all",
+  templates,
+  buildingFilter,
+  onBuildingFilterChange,
+}: ComputersClientViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<ComputerStatus | "all">(initialFilter as ComputerStatus | "all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,7 +118,9 @@ export function ComputersClientView({ computers, activeEmployees, installations,
   const filteredComputers = computers.filter((c) => {
     const matchesFilter = activeFilter === "all" || c.lifecycle_status === activeFilter;
     const matchesSearch = !searchQuery || c.inventory_number.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
+    const emp = Array.isArray(c.employees) ? c.employees[0] : c.employees;
+    const matchesBuilding = buildingFilter === "all" || (emp && emp.building === buildingFilter);
+    return matchesFilter && matchesSearch && matchesBuilding;
   });
 
   const selectedComputer = selectedId ? computers.find((c) => c.id === selectedId) : null;
@@ -136,6 +151,19 @@ export function ComputersClientView({ computers, activeEmployees, installations,
     return (
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="hidden lg:block lg:w-1/3 space-y-3">
+          <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+            <Building className="w-4 h-4 text-gray-400 shrink-0" />
+            <select
+              value={buildingFilter}
+              onChange={(e) => onBuildingFilterChange(e.target.value)}
+              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate"
+            >
+              <option value="all">Все корпуса</option>
+              {Object.keys(BUILDING_ADDRESSES).map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
           <ComputerFilterBar
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
@@ -372,13 +400,28 @@ export function ComputersClientView({ computers, activeEmployees, installations,
 
   return (
     <div className="space-y-4">
-      <ComputerFilterBar
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-        resultCount={filteredComputers.length}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+        <ComputerFilterBar
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          resultCount={filteredComputers.length}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+        <div className="flex items-center gap-2 shrink-0">
+          <Building className="w-4 h-4 text-gray-400 shrink-0" />
+          <select
+            value={buildingFilter}
+            onChange={(e) => onBuildingFilterChange(e.target.value)}
+            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
+          >
+            <option value="all">Все корпуса</option>
+            {Object.keys(BUILDING_ADDRESSES).map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
         {filteredComputers.length === 0 ? (
           <div className="py-16 text-center text-gray-500">

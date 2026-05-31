@@ -28,7 +28,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [isDemoPending, startDemoTransition] = useTransition();
-  const [activeDemoRole, setActiveDemoRole] = useState<"admin" | "employee" | "it_specialist" | null>(null);
+  const [activeDemoRole, setActiveDemoRole] = useState<"admin" | "employee" | "it_specialist" | "facilities" | null>(null);
   const [resetMessage, setResetMessage] = useState<{ error?: string; success?: string; tempPassword?: string } | null>(null);
   const [resetPending, setResetPending] = useState(false);
 
@@ -42,8 +42,9 @@ export default function LoginPage() {
     try {
       const res = await resetEmployeePassword(email);
       setResetMessage(res);
-    } catch (e: any) {
-      setResetMessage({ error: e?.message || "Произошла неизвестная ошибка при сбросе пароля" });
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : "Произошла неизвестная ошибка при сбросе пароля";
+      setResetMessage({ error: errMsg });
     } finally {
       setResetPending(false);
     }
@@ -61,7 +62,7 @@ export default function LoginPage() {
     initialState
   );
 
-  const handleDemoLogin = (role: "admin" | "employee" | "it_specialist") => {
+  const handleDemoLogin = (role: "admin" | "employee" | "it_specialist" | "facilities") => {
     setActiveDemoRole(role);
     startDemoTransition(async () => {
       await demoSignIn(role);
@@ -271,6 +272,19 @@ export default function LoginPage() {
                 <Wrench className="w-3.5 h-3.5 text-blue-500" />
               )}
               {isDemoPending && activeDemoRole === "it_specialist" ? "Вход…" : "Войти как IT-специалист"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full h-10 rounded-lg border-teal-200 text-teal-700 hover:bg-teal-50 hover:border-teal-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
+              disabled={pending || isDemoPending}
+              onClick={() => handleDemoLogin("facilities")}
+            >
+              {isDemoPending && activeDemoRole === "facilities" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-600" />
+              ) : (
+                <Wrench className="w-3.5 h-3.5 text-teal-500" />
+              )}
+              {isDemoPending && activeDemoRole === "facilities" ? "Вход…" : "Войти как сотрудник АХО"}
             </Button>
           </div>
         </div>

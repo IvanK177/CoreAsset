@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
+import { compressText, decompressText } from "@/lib/compression";
 
 /**
  * Assign an incident to the current IT specialist and set status to "in_progress".
@@ -10,10 +11,22 @@ import { createServiceClient } from "@/lib/supabase/server";
 export async function takeIncidentToWork(incidentId: string, specialistId: string) {
   const supabase = createServiceClient();
 
+  const { data: current } = await supabase
+    .from("incidents")
+    .select("description")
+    .eq("id", incidentId)
+    .single();
+
+  let description = current?.description ?? "";
+  if (description.startsWith("gz:")) {
+    description = await decompressText(description);
+  }
+
   const { error } = await supabase
     .from("incidents")
     .update({
       status: "in_progress",
+      description,
       assigned_to: specialistId,
       updated_at: new Date().toISOString(),
     })
@@ -38,10 +51,27 @@ export async function takeIncidentToWork(incidentId: string, specialistId: strin
 export async function resolveIncident(incidentId: string) {
   const supabase = createServiceClient();
 
+  const { data: current } = await supabase
+    .from("incidents")
+    .select("description, title")
+    .eq("id", incidentId)
+    .single();
+
+  const description = current?.description ?? "";
+  let title = current?.title ?? "";
+
+  const plainDescription = description.startsWith("gz:") ? await decompressText(description) : description;
+  if (!title) {
+    title = plainDescription.split("\n")[0]?.substring(0, 80) || "Инцидент";
+  }
+  const compressedDescription = await compressText(plainDescription);
+
   const { error } = await supabase
     .from("incidents")
     .update({
       status: "resolved",
+      description: compressedDescription,
+      title: title || null,
       resolved_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })

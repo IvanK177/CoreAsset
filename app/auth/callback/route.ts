@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   // Create a preliminary response so that exchangeCodeForSession
   // can set auth cookies via the setAll callback
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: { headers: request.headers },
   });
 
@@ -89,7 +89,13 @@ export async function GET(request: NextRequest) {
 
   // Has a complete profile — redirect based on role
   const redirectPath =
-    employee.role === "admin" ? "/dashboard" : employee.role === "it_specialist" ? "/it-portal" : "/portal";
+    employee.role === "admin"
+      ? "/dashboard"
+      : employee.role === "it_specialist"
+      ? "/it-portal"
+      : employee.role === "facilities"
+      ? "/facilities-portal"
+      : "/portal";
 
   // Build final redirect response, preserving all auth cookies
   const finalResponse = NextResponse.redirect(new URL(redirectPath, origin));

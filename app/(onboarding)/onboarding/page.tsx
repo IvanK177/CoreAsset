@@ -16,7 +16,9 @@ import {
   Send,
   Loader2,
   ArrowLeft,
+  Building,
 } from "lucide-react";
+import { BUILDING_ADDRESSES } from "@/lib/utils";
 
 interface FormState {
   error: string;
@@ -27,6 +29,7 @@ interface FormState {
 const initialState: FormState = { error: "", success: false, message: "" };
 
 export default function OnboardingPage() {
+  const [selectedBuilding, setSelectedBuilding] = useState("");
   const [state, formAction, pending] = useActionState(
     async (prevState: FormState, formData: FormData): Promise<FormState> => {
       const result = await completeOnboarding(formData);
@@ -156,6 +159,40 @@ export default function OnboardingPage() {
                 className="pl-10 h-11 rounded-lg border-gray-200"
               />
             </div>
+          </div>
+
+          {/* Building (required) */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="building"
+              className="text-sm font-medium text-gray-700"
+            >
+              Корпус <span className="text-red-500">*</span>
+            </Label>
+            <div className="relative">
+              <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+              <select
+                id="building"
+                name="building"
+                required
+                value={selectedBuilding}
+                onChange={(e) => setSelectedBuilding(e.target.value)}
+                className="w-full pl-10 pr-8 h-11 rounded-lg border border-gray-200 bg-white text-sm focus:border-blue-500 focus:outline-none appearance-none"
+              >
+                <option value="" disabled>Выберите корпус</option>
+                {Object.keys(BUILDING_ADDRESSES).map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">
+                ▼
+              </div>
+            </div>
+            {selectedBuilding && (
+              <p className="text-xs text-gray-500 mt-1 italic leading-relaxed">
+                Адрес: {BUILDING_ADDRESSES[selectedBuilding as keyof typeof BUILDING_ADDRESSES]}
+              </p>
+            )}
           </div>
 
           {/* Room (optional) */}

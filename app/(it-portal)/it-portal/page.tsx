@@ -8,6 +8,7 @@ import ITPortalClientView from "@/components/it-portal/ITPortalClientView";
 interface RelatedEmployee {
   full_name: string | null;
   room: string | null;
+  building: string | null;
 }
 
 interface RelatedComputer {
@@ -76,8 +77,9 @@ export default async function ITPortalPage() {
       created_at,
       resolved_at,
       assigned_to,
-      employee:employees!incidents_employee_id_fkey(full_name, room),
-      computer:computers!incidents_computer_id_fkey(inventory_number, computer_type)
+      employee:employees!incidents_employee_id_fkey(full_name, room, building),
+      computer:computers!incidents_computer_id_fkey(inventory_number, computer_type),
+      assignee:employees!incidents_assigned_to_fkey(full_name)
     `)
     .order("created_at", { ascending: false });
 
@@ -87,17 +89,11 @@ export default async function ITPortalPage() {
 
   // Count stats
   const allIncidents: IncidentRow[] = (incidents as IncidentRow[]) ?? [];
-  const openCount = allIncidents.filter((i) => i.status === "open").length;
-  const inProgressCount = allIncidents.filter((i) => i.status === "in_progress").length;
-  const resolvedCount = allIncidents.filter((i) => i.status === "resolved").length;
 
   return (
     <ITPortalClientView
       specialistId={specialistId ?? ""}
       incidents={allIncidents}
-      openCount={openCount}
-      inProgressCount={inProgressCount}
-      resolvedCount={resolvedCount}
       currentPath="/it-portal"
     />
   );

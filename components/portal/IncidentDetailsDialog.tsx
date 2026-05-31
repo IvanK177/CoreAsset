@@ -10,12 +10,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { formatDateTime, extractJoinObject } from "@/lib/utils";
-import { Calendar, Monitor, Wrench, AlertTriangle, FileText, XCircle, Loader2 } from "lucide-react";
+import { Calendar, Monitor, Wrench, FileText, XCircle, Loader2, User } from "lucide-react";
 import { cancelPortalIncident } from "@/lib/actions/portal";
+import { DecompressedText } from "@/components/shared/DecompressedText";
 
 interface IncidentData {
   id: string;
@@ -32,6 +32,11 @@ interface IncidentData {
   } | {
     inventory_number: string | null;
     computer_type: string | null;
+  }[] | null;
+  assignee?: {
+    full_name: string | null;
+  } | {
+    full_name: string | null;
   }[] | null;
 }
 
@@ -78,6 +83,9 @@ export function IncidentDetailsDialog({
   const computerInfo = computer?.inventory_number
     ? `${computer.inventory_number} (${computerTypeLabels[computer.computer_type ?? ""] ?? computer.computer_type ?? "—"})`
     : null;
+
+  const assignee = extractJoinObject(incident.assignee) as { full_name: string | null } | null;
+  const resolvedBy = assignee?.full_name ?? "IT-специалист";
 
   const handleCancel = () => {
     if (!confirm("Вы уверены, что хотите отменить эту заявку?")) return;
@@ -132,6 +140,16 @@ export function IncidentDetailsDialog({
               </div>
             </div>
 
+            {incident.status === "resolved" && (
+              <div className="space-y-1">
+                <span className="text-xs font-medium text-gray-400 block">Решено кем</span>
+                <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                  <User className="w-4 h-4 text-violet-500 shrink-0" />
+                  <span>{resolvedBy}</span>
+                </div>
+              </div>
+            )}
+
             <div className="col-span-2 space-y-1 pt-1 border-t border-gray-100">
               <span className="text-xs font-medium text-gray-400 block">Устройство / Оборудование</span>
               <div className="flex items-center gap-1.5 font-medium text-gray-700">
@@ -150,9 +168,7 @@ export function IncidentDetailsDialog({
               Описание инцидента
             </span>
             <div className="p-4 rounded-xl bg-white border border-gray-100 max-h-[220px] overflow-y-auto shadow-inner-sm">
-              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
-                {incident.description}
-              </p>
+              <DecompressedText text={incident.description} className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed" />
             </div>
           </div>
         </div>

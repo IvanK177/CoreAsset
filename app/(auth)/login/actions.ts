@@ -31,6 +31,7 @@ async function redirectAfterAuth(userId: string): Promise<never> {
   // Has a complete profile — redirect by role
   if (employee.role === "admin") redirect("/dashboard");
   if (employee.role === "it_specialist") redirect("/it-portal");
+  if (employee.role === "facilities") redirect("/facilities-portal");
   redirect("/portal");
 }
 
@@ -83,7 +84,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
 }
 
 /** Demo sign-in: sets cookies for demo mode and redirects based on role */
-export async function demoSignIn(role: "admin" | "employee" | "it_specialist") {
+export async function demoSignIn(role: "admin" | "employee" | "it_specialist" | "facilities") {
   const cookieStore = await cookies();
 
   if (role === "admin") {
@@ -139,6 +140,35 @@ export async function demoSignIn(role: "admin" | "employee" | "it_specialist") {
       });
     }
     redirect("/it-portal");
+  }
+
+  // Facilities demo - cookie-based demo mode
+  if (role === "facilities") {
+    cookieStore.set("demo_role", "facilities", {
+      path: "/",
+      maxAge: 60 * 60 * 24,
+      httpOnly: true,
+      sameSite: "lax",
+    });
+    // Try to find a facilities employee in the database
+    const supabase = createServiceClient();
+    const { data: facilitiesEmp } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("role", "facilities")
+      .eq("is_active", true)
+      .limit(1)
+      .single();
+
+    if (facilitiesEmp) {
+      cookieStore.set("demo_employee_id", facilitiesEmp.id, {
+        path: "/",
+        maxAge: 60 * 60 * 24,
+        httpOnly: true,
+        sameSite: "lax",
+      });
+    }
+    redirect("/facilities-portal");
   }
 
   // Employee demo — always use cookie-based demo mode

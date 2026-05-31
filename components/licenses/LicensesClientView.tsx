@@ -2,12 +2,12 @@
 
 import { Fragment, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { cn, daysUntilExpiry, formatDate } from "@/lib/utils";
+import { cn, daysUntilExpiry, formatDate, extractJoinObject, BUILDING_ADDRESSES } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteLicenseDialog } from "@/lib/actions/licenses";
 import { clearCache } from "@/lib/actions/revalidate";
-import { Key, Clock, ChevronDown, ChevronUp, CheckCircle, Eye, EyeOff, Copy } from "lucide-react";
+import { Key, Clock, ChevronDown, ChevronUp, CheckCircle, Eye, EyeOff, Copy, Building } from "lucide-react";
 import { toast } from "sonner";
 
 interface LicenseRow {
@@ -37,12 +37,20 @@ interface LicensesClientViewProps {
   licenses: LicenseRow[];
   installations: InstallationRow[];
   expiringLicenses: LicenseRow[];
+  buildingFilter: string;
+  onBuildingFilterChange: (val: string) => void;
 }
 
-export function LicensesClientView({ licenses, installations, expiringLicenses }: LicensesClientViewProps) {
+export function LicensesClientView({
+  licenses,
+  installations,
+  expiringLicenses,
+  buildingFilter,
+  onBuildingFilterChange,
+}: LicensesClientViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [showKeys, setShowKeys] = useState<Set<string>>(new Set());
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const toggleShowKey = (id: string) => {
@@ -71,22 +79,44 @@ export function LicensesClientView({ licenses, installations, expiringLicenses }
 
   // Get installations for a specific license
   const getLicenseInstallations = (licenseId: string) => {
-    return installations.filter((i) => i.license_id === licenseId);
+    const rawInst = installations.filter((i) => i.license_id === licenseId);
+    if (buildingFilter === "all") return rawInst;
+    return rawInst.filter((inst) => {
+      const comp = extractJoinObject(inst.computers) as {
+        inventory_number: string | null;
+        employees: { building: string | null } | { building: string | null }[] | null;
+      } | null;
+      const emp = comp ? extractJoinObject(comp.employees) : null;
+      return emp && emp.building === buildingFilter;
+    });
   };
+
+  const filteredExpiring = expiringLicenses.filter((lic) => {
+    if (buildingFilter === "all") return true;
+    const licInstalls = installations.filter(i => i.license_id === lic.id).filter((inst) => {
+      const comp = extractJoinObject(inst.computers) as {
+        inventory_number: string | null;
+        employees: { building: string | null } | { building: string | null }[] | null;
+      } | null;
+      const emp = comp ? extractJoinObject(comp.employees) : null;
+      return emp && emp.building === buildingFilter;
+    });
+    return licInstalls.length > 0;
+  });
 
   return (
     <div className="space-y-4">
       {/* Expiring licenses alert banner */}
-      {expiringLicenses.length > 0 && (
+      {filteredExpiring.length > 0 && (
         <div className="border border-red-200 bg-red-50 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-4 h-4 text-red-500 shrink-0" />
             <span className="text-sm font-semibold text-red-700">
-              Истекают подписки ({expiringLicenses.length})
+              Истекают подписки ({filteredExpiring.length})
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {expiringLicenses.map((l) => {
+            {filteredExpiring.map((l) => {
               const days = daysUntilExpiry(l.expires_at);
               return (
                 <Badge key={l.id} variant="outline" className="text-xs bg-white border-red-200 text-red-700">
@@ -97,6 +127,22 @@ export function LicensesClientView({ licenses, installations, expiringLicenses }
           </div>
         </div>
       )}
+
+      {/* Building Filter Bar */}
+      <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+        <Building className="w-4 h-4 text-gray-400 shrink-0" />
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Корпус:</span>
+        <select
+          value={buildingFilter}
+          onChange={(e) => onBuildingFilterChange(e.target.value)}
+          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
+        >
+          <option value="all">Все корпуса</option>
+          {Object.keys(BUILDING_ADDRESSES).map((b) => (
+            <option key={b} value={b}>{b}</option>
+          ))}
+        </select>
+      </div>
 
       {/* Table with expandable rows */}
       <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
@@ -116,8 +162,9 @@ export function LicensesClientView({ licenses, installations, expiringLicenses }
               const isExpanded = expandedIds.has(lic.id);
               const days = daysUntilExpiry(lic.expires_at);
               const isExpiring = days !== null && days <= 30;
-              const pct = lic.total_seats > 0 ? (lic.used_seats / lic.total_seats) * 100 : 0;
               const licInstalls = getLicenseInstallations(lic.id);
+              const usedSeats = licInstalls.length;
+              const pct = lic.total_seats > 0 ? (usedSeats / lic.total_seats) * 100 : 0;
 
               return (
                 <Fragment key={lic.id}>
@@ -150,7 +197,7 @@ export function LicensesClientView({ licenses, installations, expiringLicenses }
                             style={{ width: `${Math.min(pct, 100)}%` }}
                           />
                         </div>
-                        <span className="text-sm text-gray-700">{lic.used_seats} / {lic.total_seats}</span>
+                        <span className="text-sm text-gray-700">{usedSeats} / {lic.total_seats}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">

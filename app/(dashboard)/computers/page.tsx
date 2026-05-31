@@ -15,7 +15,6 @@ import {
   getCachedTemplates,
 } from "@/lib/supabase/cached";
 
-type Computer = Tables<"computers">;
 type Employee = Tables<"employees">;
 
 export default async function ComputersPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
@@ -23,8 +22,8 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
     getCachedComputers(),
     getCachedEmployees(),
     getCachedActiveEmployees() as Promise<ActiveEmployee[]>,
-    getCachedComputerLicenses() as any,
-    getCachedIncidents() as any,
+    getCachedComputerLicenses() as Promise<unknown[]>,
+    getCachedIncidents() as Promise<Tables<"incidents">[]>,
     getCachedLicenses(),
     getCachedTemplates(),
   ]);
@@ -50,6 +49,7 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
         position: employee.position,
         email: employee.email,
         room: employee.room ?? null,
+        building: employee.building ?? null,
       } : null,
     };
   });
@@ -67,12 +67,18 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
   }));
 
   // Normalize installations — extract joined license data
-  const installations = rawInstalls.map((inst: any) => ({
+  const installations = (rawInstalls as {
+    id: string;
+    computer_id: string | null;
+    license_id: string | null;
+    installed_at: string | null;
+    licenses: unknown;
+  }[]).map((inst) => ({
     id: inst.id,
     computer_id: inst.computer_id,
     license_id: inst.license_id,
     installed_at: inst.installed_at,
-    licenses: extractJoinObject(inst.licenses as unknown) as { id: string; software_name: string; version: string | null; license_type: string; total_seats: number; used_seats: number; price_per_unit: number | null; expires_at: string | null } | null,
+    licenses: extractJoinObject(inst.licenses) as { id: string; software_name: string; version: string | null; license_type: string; total_seats: number; used_seats: number; price_per_unit: number | null; expires_at: string | null } | null,
   }));
 
   return (
@@ -82,7 +88,6 @@ export default async function ComputersPage({ searchParams }: { searchParams: Pr
       installations={installations}
       incidents={incidents}
       licenseOptions={licenseOptions}
-      totalCount={computers.length}
       initialFilter={initialFilter}
       templates={templates}
     />

@@ -50,6 +50,7 @@ export async function completeOnboarding(formData: FormData): Promise<Onboarding
   const raw = {
     full_name: formData.get("full_name") as string,
     position: formData.get("position") as string,
+    building: formData.get("building") as string,
     room: (formData.get("room") as string) || undefined,
     phone: (formData.get("phone") as string) || undefined,
     telegram: (formData.get("telegram") as string) || undefined,
@@ -94,6 +95,7 @@ export async function completeOnboarding(formData: FormData): Promise<Onboarding
           email: email,
           full_name: parsed.data.full_name,
           position: parsed.data.position,
+          building: parsed.data.building,
           room: parsed.data.room || null,
           phone: parsed.data.phone || null,
           telegram: parsed.data.telegram || null,
@@ -134,6 +136,7 @@ export async function completeOnboarding(formData: FormData): Promise<Onboarding
     email: email,
     full_name: parsed.data.full_name,
     position: parsed.data.position,
+    building: parsed.data.building,
     room: parsed.data.room || null,
     phone: parsed.data.phone || null,
     telegram: parsed.data.telegram || null,

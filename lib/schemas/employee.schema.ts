@@ -7,7 +7,7 @@ export const employeeSchema = z.object({
   room: z.string().optional(),
   phone: z.string().optional(),
   telegram: z.string().optional(),
-  role: z.enum(["admin", "employee", "it_specialist"]),
+  role: z.enum(["admin", "employee", "it_specialist", "facilities"]),
   is_active: z.boolean().default(true),
 });
 
@@ -26,7 +26,7 @@ export const employeeRowSchema = z.object({
   room: z.string().nullable(),
   phone: z.string().nullable(),
   telegram: z.string().nullable(),
-  role: z.enum(["admin", "employee", "it_specialist"]),
+  role: z.enum(["admin", "employee", "it_specialist", "facilities"]),
   is_active: z.boolean(),
   created_at: z.string(),
   updated_at: z.string(),

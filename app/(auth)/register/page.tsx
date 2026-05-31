@@ -32,6 +32,7 @@ export default function RegisterPage() {
       const params = new URLSearchParams(window.location.search);
       const emailParam = params.get("email");
       if (emailParam) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setEmail(emailParam);
       }
     }

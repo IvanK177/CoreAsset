@@ -1,13 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Monitor, Plus, AlertTriangle, CheckCircle2, Cpu, HardDrive, MemoryStick } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { Monitor, Plus, AlertTriangle, CheckCircle2, Cpu, HardDrive, MemoryStick, Laptop, Wrench } from "lucide-react";
+import { cn, extractJoinObject } from "@/lib/utils";
 import { ComputerStatusBadge, IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
+import { Badge } from "@/components/ui/badge";
 import { NewTicketDialog } from "@/components/portal/NewTicketDialog";
 import { IncidentDetailsDialog } from "@/components/portal/IncidentDetailsDialog";
+import { NewRoomRequestDialog } from "@/components/portal/NewRoomRequestDialog";
+import { DecompressedText } from "@/components/shared/DecompressedText";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface ComputerData {
   id: string;
@@ -41,6 +50,20 @@ interface IncidentData {
     inventory_number: string | null;
     computer_type: string | null;
   }[] | null;
+  assignee?: {
+    full_name: string | null;
+  } | {
+    full_name: string | null;
+  }[] | null;
+}
+
+interface RoomRequestData {
+  id: string;
+  room: string;
+  type: string;
+  description: string;
+  status: string;
+  created_at: string;
 }
 
 interface PortalClientViewProps {
@@ -50,6 +73,7 @@ interface PortalClientViewProps {
   computers: ComputerData[];
   allComputers: ComputerOption[];
   incidents: IncidentData[];
+  roomRequests: RoomRequestData[];
   openIncidents: number;
   resolvedIncidents: number;
 }
@@ -59,6 +83,20 @@ const computerTypeLabels: Record<string, string> = {
   laptop: "Laptop",
   monoblock: "Monoblock",
   server: "Server",
+};
+
+const statusLabels: Record<string, string> = {
+  open: "Открыта",
+  in_progress: "В работе",
+  resolved: "Решена",
+  cancelled: "Отменена",
+};
+
+const statusColors: Record<string, string> = {
+  open: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  in_progress: "bg-blue-100 text-blue-700 border-blue-200",
+  resolved: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  cancelled: "bg-gray-100 text-gray-600 border-gray-200",
 };
 
 function formatDate(dateStr: string): string {
@@ -88,17 +126,33 @@ function getIncidentNumber(incident: IncidentData): string {
 export default function PortalClientView({
   employeeId,
   employeeName,
-  employeePosition,
   computers,
   allComputers,
   incidents,
+  roomRequests,
   openIncidents,
   resolvedIncidents,
 }: PortalClientViewProps) {
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
+  const [roomRequestDialogOpen, setRoomRequestDialogOpen] = useState(false);
+  const [typeChoiceOpen, setTypeChoiceOpen] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<IncidentData | null>(null);
+  const [selectedRoomRequest, setSelectedRoomRequest] = useState<RoomRequestData | null>(null);
+  const [portalTab, setPortalTab] = useState<"active" | "archive">("active");
 
   const firstName = employeeName.split(" ")[0] ?? employeeName;
+
+  const activeItems = [
+    ...incidents.filter((i) => i.status === "open" || i.status === "in_progress").map((i) => ({ ...i, itemType: "it" as const })),
+    ...roomRequests.filter((r) => r.status === "open" || r.status === "in_progress").map((r) => ({ ...r, itemType: "aho" as const })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const archivedItems = [
+    ...incidents.filter((i) => i.status === "resolved" || i.status === "cancelled").map((i) => ({ ...i, itemType: "it" as const })),
+    ...roomRequests.filter((r) => r.status === "resolved").map((r) => ({ ...r, itemType: "aho" as const })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const currentItems = portalTab === "active" ? activeItems : archivedItems;
 
   return (
     <div className="space-y-6">
@@ -108,11 +162,11 @@ export default function PortalClientView({
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-2">Привет, {firstName}!</h1>
             <p className="text-blue-100 text-sm mb-4">
-              Есть проблема с компьютером? Создайте заявку и мы разберёмся.
+              Есть проблема с компьютером или кабинетом? Создайте заявку и мы разберёмся.
             </p>
             <button
-              onClick={() => setTicketDialogOpen(true)}
-              className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-white text-blue-600 font-medium text-sm hover:bg-blue-50 transition-colors"
+              onClick={() => setTypeChoiceOpen(true)}
+              className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-white text-blue-600 font-medium text-sm hover:bg-blue-50 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Создать заявку
@@ -141,7 +195,7 @@ export default function PortalClientView({
             Нет привязанных компьютеров
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="max-h-[220px] overflow-y-auto pr-1 custom-scrollbar space-y-3">
             {computers.map((comp) => {
               const hw = (comp.hardware as Record<string, string> | null) ?? null;
               return (
@@ -197,58 +251,113 @@ export default function PortalClientView({
         )}
       </div>
 
-      {/* ===== Block 3: My Tickets ===== */}
+      {/* ===== Block 3: My Tickets & AHO Requests ===== */}
       <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Мои заявки ({incidents.length})
-        </h2>
+        {/* Tab switcher header */}
+        <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 flex-wrap gap-2">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Мои заявки ({activeItems.length + archivedItems.length})
+          </h2>
+          <div className="flex bg-gray-100 p-0.5 rounded-lg">
+            <button
+              onClick={() => setPortalTab("active")}
+              className={cn(
+                "px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                portalTab === "active" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-750"
+              )}
+            >
+              Активные ({activeItems.length})
+            </button>
+            <button
+              onClick={() => setPortalTab("archive")}
+              className={cn(
+                "px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                portalTab === "archive" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-750"
+              )}
+            >
+              Архив ({archivedItems.length})
+            </button>
+          </div>
+        </div>
 
-        {incidents.length === 0 ? (
-          <p className="text-sm text-gray-500 py-4 text-center">
-            Нет созданных заявок
+        {currentItems.length === 0 ? (
+          <p className="text-sm text-gray-500 py-8 text-center bg-gray-50/50 rounded-xl border border-gray-100 border-dashed">
+            {portalTab === "active" ? "Нет активных заявок" : "Архив пуст"}
           </p>
         ) : (
-          <div className="space-y-3">
-            {incidents.map((incident) => {
-              const isOpen = incident.status === "open" || incident.status === "in_progress";
+          <div className="max-h-[380px] overflow-y-auto pr-1 custom-scrollbar space-y-3">
+            {currentItems.map((item) => {
+              const isOpen = item.status === "open" || item.status === "in_progress";
+              const isIT = item.itemType === "it";
+
               return (
                 <div
-                  key={incident.id}
-                  onClick={() => setSelectedIncident(incident)}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-blue-300 hover:bg-blue-50/10 cursor-pointer transition-all duration-150"
+                  key={item.id}
+                  onClick={() => {
+                    if (isIT) {
+                      setSelectedIncident(item as IncidentData);
+                    } else {
+                      setSelectedRoomRequest(item as RoomRequestData);
+                    }
+                  }}
+                  className={cn(
+                    "flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-blue-300 hover:bg-blue-50/10 cursor-pointer transition-all duration-150",
+                    portalTab === "archive" && "p-3 bg-gray-50/30"
+                  )}
                 >
-                  {/* Status icon */}
+                  {/* Status/Type icon */}
                   <div className={cn(
                     "flex items-center justify-center w-8 h-8 rounded-full shrink-0",
-                    isOpen
-                      ? "bg-yellow-100"
-                      : "bg-emerald-100"
+                    isOpen ? "bg-yellow-100 text-yellow-600" : "bg-emerald-100 text-emerald-600"
                   )}>
-                    {isOpen
-                      ? <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                      : <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    }
+                    {isIT ? (
+                      isOpen ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                      <Wrench className="w-4 h-4" />
+                    )}
                   </div>
 
-                  {/* Ticket info */}
+                  {/* Request info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-400">
-                        {getIncidentNumber(incident)}
+                      <span className="text-xs font-mono text-gray-400">
+                        {isIT ? getIncidentNumber(item as IncidentData) : `#R${item.id.substring(0, 4).toUpperCase()}`}
                       </span>
-                      <span className="font-medium text-sm text-gray-900 truncate">
-                        {getIncidentTitle(incident)}
+                      <span className="font-semibold text-sm text-gray-900 truncate">
+                        {isIT ? getIncidentTitle(item as IncidentData) : `Заявка АХО: каб. ${item.room}`}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-400 mt-0.5">
-                      {formatDate(incident.created_at)}
-                    </span>
+                    <div className="text-xs text-gray-400 mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+                        {isIT ? "IT инцидент" : "АХО"}
+                      </span>
+                      <span>·</span>
+                      <span>{formatDate(item.created_at)}</span>
+                      {isIT && item.status === "resolved" && (
+                        <>
+                          <span>·</span>
+                          <span className="text-emerald-600 font-medium">Решено кем: {(() => {
+                            const assignee = extractJoinObject((item as IncidentData).assignee) as { full_name: string | null } | null;
+                            return assignee?.full_name ?? "IT-специалист";
+                          })()}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Badges */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <PriorityBadge priority={incident.priority as "low" | "medium" | "high" | "critical"} />
-                    <IncidentStatusBadge status={incident.status as "open" | "in_progress" | "resolved"} />
+                    {isIT && (
+                      <PriorityBadge priority={(item as IncidentData).priority as "low" | "medium" | "high" | "critical"} />
+                    )}
+                    {!isIT && (
+                      <Badge variant="outline" className={cn("text-xs font-semibold px-2 py-0.5", item.type === "ремонт" ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-indigo-50 text-indigo-700 border-indigo-200")}>
+                        {item.type === "ремонт" ? "Ремонт" : "Оснащение"}
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className={cn("text-xs font-medium px-2 py-0.5", statusColors[item.status] || "bg-gray-100")}>
+                      {statusLabels[item.status] || item.status}
+                    </Badge>
                   </div>
                 </div>
               );
@@ -265,12 +374,118 @@ export default function PortalClientView({
         computers={allComputers}
       />
 
+      {/* ===== New Room Request Dialog ===== */}
+      <NewRoomRequestDialog
+        open={roomRequestDialogOpen}
+        onOpenChange={setRoomRequestDialogOpen}
+        employeeId={employeeId}
+        defaultRoom={computers[0]?.room ?? ""}
+      />
+
+      {/* ===== Request Type Choice Dialog ===== */}
+      <Dialog open={typeChoiceOpen} onOpenChange={setTypeChoiceOpen}>
+        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-center">Создать заявку</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground text-center">
+              Выберите тип проблемы для обращения в соответствующую службу
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-4 py-4">
+            {/* IT Incident Card */}
+            <button
+              onClick={() => {
+                setTypeChoiceOpen(false);
+                setTicketDialogOpen(true);
+              }}
+              className="flex items-start gap-4 p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50/20 text-left transition-all duration-150 group cursor-pointer"
+            >
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+                <Laptop className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 text-sm mb-1">Проблемы с IT-оборудованием</h4>
+                <p className="text-xs text-gray-500 leading-normal">
+                  Не работает ПК, монитор, клавиатура, ПО, интернет, принтер или телефония.
+                </p>
+              </div>
+            </button>
+
+            {/* Room Request Card */}
+            <button
+              onClick={() => {
+                setTypeChoiceOpen(false);
+                setRoomRequestDialogOpen(true);
+              }}
+              className="flex items-start gap-4 p-4 rounded-xl border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/20 text-left transition-all duration-150 group cursor-pointer"
+            >
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
+                <Wrench className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 text-sm mb-1">Ремонт или оснащение кабинета</h4>
+                <p className="text-xs text-gray-500 leading-normal">
+                  Сломалась мебель, перегорела лампа, розетка, нужен ремонт или доп. оснащение.
+                </p>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* ===== Incident Details Dialog ===== */}
       <IncidentDetailsDialog
         open={!!selectedIncident}
         onOpenChange={(open) => !open && setSelectedIncident(null)}
         incident={selectedIncident}
       />
+
+      {/* ===== Room Request Details Dialog ===== */}
+      <Dialog open={!!selectedRoomRequest} onOpenChange={(open) => !open && setSelectedRoomRequest(null)}>
+        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+          {selectedRoomRequest && (
+            <>
+              <DialogHeader className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-0.5 rounded">
+                    #R{selectedRoomRequest.id.substring(0, 4).toUpperCase()}
+                  </span>
+                  <Badge variant="outline" className={cn("text-xs font-semibold px-2 py-0.5", selectedRoomRequest.type === "ремонт" ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-indigo-50 text-indigo-700 border-indigo-200")}>
+                    {selectedRoomRequest.type === "ремонт" ? "Ремонт" : "Оснащение"}
+                  </Badge>
+                  <Badge variant="outline" className={cn("text-xs font-medium px-2 py-0.5", selectedRoomRequest.status === "open" ? "bg-yellow-100 text-yellow-700 border-yellow-200" : selectedRoomRequest.status === "in_progress" ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-emerald-100 text-emerald-700 border-emerald-200")}>
+                    {selectedRoomRequest.status === "open" ? "Открыта" : selectedRoomRequest.status === "in_progress" ? "В работе" : "Решена"}
+                  </Badge>
+                </div>
+                <DialogTitle className="text-lg font-bold text-gray-900">
+                  Заявка АХО: Кабинет {selectedRoomRequest.room}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-400">
+                  Создана: {formatDate(selectedRoomRequest.created_at)}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="py-4 space-y-4">
+                <div className="space-y-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Описание проблемы</h4>
+                  <DecompressedText text={selectedRoomRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={() => setSelectedRoomRequest(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+                >
+                  Закрыть
+                </button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

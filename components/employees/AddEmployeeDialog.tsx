@@ -31,6 +31,7 @@ const ROLE_ITEMS: Record<string, React.ReactNode> = {
   employee: "Сотрудник",
   admin: "Администратор",
   it_specialist: "IT-специалист",
+  facilities: "Сотрудник АХО",
 };
 
 const employeeDialogSchema = z.object({
@@ -40,7 +41,7 @@ const employeeDialogSchema = z.object({
   email: z.string().email("Некорректный email"),
   phone: z.string().optional().or(z.literal("")),
   telegram: z.string().optional().or(z.literal("")),
-  role: z.enum(["admin", "employee", "it_specialist"]),
+  role: z.enum(["admin", "employee", "it_specialist", "facilities"]),
 });
 
 type EmployeeDialogValues = z.infer<typeof employeeDialogSchema>;
@@ -164,7 +165,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
               <Label>Роль</Label>
               <Select
                 value={form.watch("role")}
-                onValueChange={(v) => form.setValue("role", v as "admin" | "employee" | "it_specialist")}
+                onValueChange={(v) => form.setValue("role", v as "admin" | "employee" | "it_specialist" | "facilities")}
                 items={ROLE_ITEMS}
               >
                 <SelectTrigger className="w-full">
@@ -174,6 +175,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
                   <SelectItem value="employee">Сотрудник</SelectItem>
                   <SelectItem value="admin">Администратор</SelectItem>
                   <SelectItem value="it_specialist">IT-специалист</SelectItem>
+                  <SelectItem value="facilities">Сотрудник АХО</SelectItem>
                 </SelectContent>
               </Select>
             </div>

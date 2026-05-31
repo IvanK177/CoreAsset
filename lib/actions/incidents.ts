@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { incidentSchema } from "@/lib/schemas/incident.schema";
+import { compressText, decompressText } from "@/lib/compression";
 
 /** Convert FormData entry values: null → undefined, empty string → undefined */
 function emptyToUndefined(value: FormDataEntryValue | null): string | undefined {
@@ -54,11 +55,36 @@ export async function createIncident(formData: FormData) {
 
 export async function updateIncidentStatus(id: string, status: "open" | "in_progress" | "resolved") {
   const supabase = await createServiceClient();
+
+  const { data: current } = await supabase
+    .from("incidents")
+    .select("description, title")
+    .eq("id", id)
+    .single();
+
+  let description = current?.description ?? "";
+  let title = current?.title ?? "";
+
+  if (status === "resolved") {
+    const plainDescription = description.startsWith("gz:") ? await decompressText(description) : description;
+    if (!title) {
+      title = plainDescription.split("\n")[0]?.substring(0, 80) || "Инцидент";
+    }
+    description = await compressText(plainDescription);
+  } else {
+    if (description.startsWith("gz:")) {
+      description = await decompressText(description);
+    }
+  }
+
   await supabase.from("incidents").update({
     status,
+    description,
+    title: title || null,
     resolved_at: status === "resolved" ? new Date().toISOString() : null,
     updated_at: new Date().toISOString(),
   }).eq("id", id);
+
   revalidateTag("incidents", { expire: 0 });
   revalidatePath(`/incidents/${id}`);
   revalidatePath("/incidents");

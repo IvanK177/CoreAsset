@@ -9,7 +9,6 @@ import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { deleteIncident, updateIncidentStatus } from "@/lib/actions/incidents";
 import { formatDateTime, extractJoinObject } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/shared/SubmitButton";
 import Link from "next/link";
 
@@ -19,7 +18,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
 
   const { data: inc } = await supabase
     .from("incidents")
-    .select("*, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position, room)")
+    .select("*, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position, room), assignee:employees!incidents_assigned_to_fkey(full_name)")
     .eq("id", id)
     .single();
 
@@ -27,7 +26,9 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
 
   const computer = extractJoinObject(inc.computers as unknown) as { id: string; inventory_number: string } | null;
   const employee = extractJoinObject(inc.employees as unknown) as { id: string; full_name: string; position: string | null; room: string | null } | null;
+  const assignee = extractJoinObject(inc.assignee as unknown) as { full_name: string | null } | null;
   const isResolved = inc.status === "resolved";
+  const resolvedBy = assignee?.full_name ?? "IT-специалист";
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -69,6 +70,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
         } />
         <Row label="Создан" value={formatDateTime(inc.created_at)} />
         {inc.resolved_at && <Row label="Закрыт" value={formatDateTime(inc.resolved_at)} />}
+        {isResolved && <Row label="Решено кем" value={resolvedBy} />}
       </div>
 
       <div className="rounded-xl border border-border bg-card p-5">

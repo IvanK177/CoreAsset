@@ -76,7 +76,7 @@ export const getCachedActiveEmployees = unstable_cache(
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("employees")
-      .select("id, full_name, position, room")
+      .select("id, full_name, position, room, building")
       .eq("is_active", true)
       .order("full_name");
     if (error) throw new Error(error.message);
@@ -105,7 +105,7 @@ export const getCachedComputerLicensesWithComputers = unstable_cache(
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("computer_licenses")
-      .select("id, computer_id, license_id, installed_at, computers(inventory_number)")
+      .select("id, computer_id, license_id, installed_at, computers(inventory_number, employees!computers_employee_id_fkey(building))")
       .order("installed_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -119,7 +119,7 @@ export const getCachedIncidentsWithRelations = unstable_cache(
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("incidents")
-      .select("id, description, priority, status, created_at, incident_type, computer_id, employee_id, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position, room)")
+      .select("id, title, description, priority, status, created_at, incident_type, computer_id, employee_id, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position, room), assignee:employees!incidents_assigned_to_fkey(id, full_name)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -127,3 +127,18 @@ export const getCachedIncidentsWithRelations = unstable_cache(
   ["incidents-with-relations-list"],
   { tags: ["incidents", "computers", "employees"] }
 );
+
+export const getCachedRoomRequests = unstable_cache(
+  async () => {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("room_requests")
+      .select("id, room, type, description, status, author_id, created_at, employees!room_requests_author_id_fkey(id, full_name, position, room, building)")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  },
+  ["room-requests-list"],
+  { tags: ["room_requests", "employees"] }
+);
+

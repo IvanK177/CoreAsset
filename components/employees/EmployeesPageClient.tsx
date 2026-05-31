@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import PageHeader from "@/components/layout/PageHeader";
 import { EmployeesClientView } from "@/components/employees/EmployeesClientView";
 import type { Tables } from "@/types/database.types";
@@ -28,27 +31,44 @@ interface EmployeesPageClientProps {
   employees: Employee[];
   computers: ComputerRow[];
   incidents: IncidentRow[];
-  activeCount: number;
-  dismissedCount: number;
 }
 
 export function EmployeesPageClient({
   employees,
   computers,
   incidents,
-  activeCount,
-  dismissedCount,
 }: EmployeesPageClientProps) {
+  const [buildingFilter, setBuildingFilter] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_building_filter") || "all";
+    }
+    return "all";
+  });
+
+  const handleBuildingChange = (val: string) => {
+    setBuildingFilter(val);
+    localStorage.setItem("admin_building_filter", val);
+  };
+
+  const filteredEmployees = employees.filter(
+    (e) => buildingFilter === "all" || e.building === buildingFilter
+  );
+
+  const activeFiltered = filteredEmployees.filter((e) => e.is_active).length;
+  const dismissedFiltered = filteredEmployees.filter((e) => !e.is_active).length;
+
   return (
     <div>
       <PageHeader
         title="Сотрудники"
-        description={`${activeCount} активных, ${dismissedCount} уволенных`}
+        description={`${activeFiltered} активных, ${dismissedFiltered} уволенных`}
       />
       <EmployeesClientView
         employees={employees}
         computers={computers}
         incidents={incidents}
+        buildingFilter={buildingFilter}
+        onBuildingFilterChange={handleBuildingChange}
       />
     </div>
   );

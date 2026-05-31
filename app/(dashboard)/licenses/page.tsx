@@ -8,12 +8,11 @@ import { getCachedLicenses, getCachedComputerLicensesWithComputers } from "@/lib
 export default async function LicensesPage() {
   const [licenses, installations] = await Promise.all([
     getCachedLicenses(),
-    getCachedComputerLicensesWithComputers() as any,
+    getCachedComputerLicensesWithComputers() as Promise<unknown[]>,
   ]);
 
   // Calculate stats
   const totalLicenses = licenses.length;
-  const totalInstallations = licenses.reduce((sum, l) => sum + l.used_seats, 0);
 
   // Expiring licenses
   const expiringLicenses = licenses.filter((l) => {
@@ -24,10 +23,9 @@ export default async function LicensesPage() {
   return (
     <LicensesPageClient
       licenses={licenses}
-      installations={installations}
+      installations={installations as unknown as Parameters<typeof LicensesPageClient>[0]["installations"]}
       expiringLicenses={expiringLicenses}
       totalLicenses={totalLicenses}
-      totalInstallations={totalInstallations}
     />
   );
 }

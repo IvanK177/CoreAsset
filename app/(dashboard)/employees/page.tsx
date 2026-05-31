@@ -4,15 +4,14 @@ export const revalidate = 0;
 import { EmployeesPageClient } from "@/components/employees/EmployeesPageClient";
 import { getCachedEmployees, getCachedComputers, getCachedIncidents } from "@/lib/supabase/cached";
 
+import type { Tables } from "@/types/database.types";
+
 export default async function EmployeesPage() {
   const [employees, allComputers, incidents] = await Promise.all([
     getCachedEmployees(),
     getCachedComputers(),
-    getCachedIncidents() as any,
+    getCachedIncidents() as Promise<Tables<"incidents">[]>,
   ]);
-
-  const activeCount = employees.filter((e) => e.is_active).length;
-  const dismissedCount = employees.filter((e) => !e.is_active).length;
 
   // Filter computers to only those assigned to an employee
   const assignedComputers = allComputers.filter((c) => c.employee_id !== null);
@@ -21,9 +20,7 @@ export default async function EmployeesPage() {
     <EmployeesPageClient
       employees={employees}
       computers={assignedComputers}
-      incidents={incidents}
-      activeCount={activeCount}
-      dismissedCount={dismissedCount}
+      incidents={incidents as unknown as Parameters<typeof EmployeesPageClient>[0]["incidents"]}
     />
   );
 }

@@ -1,27 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { DollarSign, TrendingUp, Calendar, Package, Key } from "lucide-react";
+import { cn, extractJoinObject, BUILDING_ADDRESSES } from "@/lib/utils";
+import { DollarSign, TrendingUp, Calendar, Package, Key, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface BreakdownItem {
-  name: string;
-  vendor: string;
-  pricePerUnit: number;
-  seats: number;
-  total: number;
-  type: "subscription" | "perpetual";
+interface LicenseRow {
+  id: string;
+  software_name: string;
+  vendor: string | null;
+  license_type: string;
+  total_seats: number;
+  used_seats: number;
+  price_per_unit: number | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+interface InstallationRow {
+  id: string;
+  computer_id: string;
+  license_id: string;
+  installed_at: string;
+  computers: unknown;
 }
 
 interface FinancesClientViewProps {
-  thisMonth: number;
-  nextMonth: number;
-  yearTotal: number;
-  activeSubscriptions: number;
-  breakdown: BreakdownItem[];
-  grandTotal: number;
-  monthlyCosts: number[];
+  licenses: LicenseRow[];
+  installations: InstallationRow[];
 }
 
 const months = [
@@ -34,20 +40,121 @@ const fullMonths = [
   "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
 ];
 
-export function FinancesClientView({
-  thisMonth,
-  nextMonth,
-  yearTotal,
-  activeSubscriptions,
-  breakdown,
-  grandTotal,
-  monthlyCosts,
-}: FinancesClientViewProps) {
+export function FinancesClientView({ licenses, installations }: FinancesClientViewProps) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const currentMonth = new Date().getMonth(); // 0-11
 
-  // Generate monthly data from the server-provided monthlyCosts array
+  const [buildingFilter, setBuildingFilter] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_building_filter") || "all";
+    }
+    return "all";
+  });
+
+  const handleBuildingChange = (val: string) => {
+    setBuildingFilter(val);
+    localStorage.setItem("admin_building_filter", val);
+  };
+
+  // Re-calculate financial data dynamically based on selected building filter
+  const monthlyCosts: number[] = Array(12).fill(0);
+  const subscriptionBreakdown: Array<{
+    name: string;
+    vendor: string;
+    pricePerUnit: number;
+    seats: number;
+    total: number;
+    type: "subscription";
+  }> = [];
+
+  const perpetualBreakdown: Array<{
+    name: string;
+    vendor: string;
+    pricePerUnit: number;
+    seats: number;
+    total: number;
+    type: "perpetual";
+  }> = [];
+
+  for (const l of licenses) {
+    const price = l.price_per_unit ?? 0;
+    const createdDate = new Date(l.created_at);
+    const createdMonth = createdDate.getMonth(); // 0-11
+    const createdYear = createdDate.getFullYear();
+
+    // Filter installations of this software in the selected building
+    const licInstalls = installations.filter((inst) => {
+      if (inst.license_id !== l.id) return false;
+      if (buildingFilter === "all") return true;
+      const comp = extractJoinObject(inst.computers) as {
+        inventory_number: string | null;
+        employees: { building: string | null } | { building: string | null }[] | null;
+      } | null;
+      const emp = comp ? extractJoinObject(comp.employees) : null;
+      return emp && emp.building === buildingFilter;
+    });
+
+    const installCount = licInstalls.length;
+
+    // Allocate seats
+    // For subscription, seats = installations in this building (or l.used_seats if all)
+    // For perpetual, seats = installations in this building (or l.total_seats if all)
+    const seats = buildingFilter === "all"
+      ? (l.license_type === "subscription" ? l.used_seats : l.total_seats)
+      : installCount;
+
+    if (l.license_type === "subscription") {
+      const monthlyCost = price * seats;
+
+      // Add to each month from creation month to current month (within this year)
+      for (let m = 0; m <= currentMonth; m++) {
+        if (createdYear < currentYear || (createdYear === currentYear && createdMonth <= m)) {
+          monthlyCosts[m] += monthlyCost;
+        }
+      }
+
+      subscriptionBreakdown.push({
+        name: l.software_name ?? "—",
+        vendor: l.vendor ?? "—",
+        pricePerUnit: price,
+        seats: seats,
+        total: monthlyCost,
+        type: "subscription",
+      });
+    } else if (l.license_type === "perpetual") {
+      const oneTimeCost = price * seats;
+
+      if (createdYear === currentYear && createdMonth <= currentMonth) {
+        monthlyCosts[createdMonth] += oneTimeCost;
+      }
+
+      if (createdYear === currentYear && createdMonth === currentMonth) {
+        perpetualBreakdown.push({
+          name: l.software_name ?? "—",
+          vendor: l.vendor ?? "—",
+          pricePerUnit: price,
+          seats: seats,
+          total: oneTimeCost,
+          type: "perpetual",
+        });
+      }
+    }
+  }
+
+  // Metrics
+  const thisMonth = monthlyCosts[currentMonth];
+  const nextMonth = subscriptionBreakdown.reduce((sum, s) => sum + s.total, 0); // Only subscriptions recur next month
+  const yearTotal = monthlyCosts.reduce((sum, v) => sum + v, 0);
+  const activeSubscriptions = subscriptionBreakdown.filter(s => s.seats > 0).length;
+
+  // Combined breakdown for the table
+  const breakdown = [...subscriptionBreakdown, ...perpetualBreakdown].filter(
+    (item) => item.seats > 0 || buildingFilter === "all"
+  );
+  const grandTotal = breakdown.reduce((sum, b) => sum + b.total, 0);
+
+  // Generate monthly data for chart
   const monthlyData = months.map((label, index) => ({
     label,
     value: monthlyCosts[index],
@@ -57,8 +164,6 @@ export function FinancesClientView({
   }));
 
   const maxBarValue = Math.max(...monthlyData.map((d) => d.value), 1);
-
-  // Current month name for table header
   const currentMonthName = fullMonths[currentMonth];
 
   const handleExportToExcel = () => {
@@ -103,6 +208,22 @@ export function FinancesClientView({
 
   return (
     <div className="space-y-6">
+      {/* Building Filter Bar */}
+      <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+        <Building className="w-4 h-4 text-gray-400 shrink-0" />
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Корпус:</span>
+        <select
+          value={buildingFilter}
+          onChange={(e) => handleBuildingChange(e.target.value)}
+          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
+        >
+          <option value="all">Все корпуса</option>
+          {Object.keys(BUILDING_ADDRESSES).map((b) => (
+            <option key={b} value={b}>{b}</option>
+          ))}
+        </select>
+      </div>
+
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
@@ -222,7 +343,7 @@ export function FinancesClientView({
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">{item.pricePerUnit.toLocaleString("ru-RU")} ₽</td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      {item.type === "subscription" ? item.seats : item.seats}
+                      {item.seats}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.total.toLocaleString("ru-RU")} ₽</td>
                     <td className="px-4 py-3">

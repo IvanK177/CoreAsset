@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { LicensesClientView } from "@/components/licenses/LicensesClientView";
+import { extractJoinObject } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
 const AddLicenseDialog = dynamic(
@@ -40,7 +41,6 @@ interface LicensesPageClientProps {
   installations: InstallationRow[];
   expiringLicenses: LicenseRow[];
   totalLicenses: number;
-  totalInstallations: number;
 }
 
 export function LicensesPageClient({
@@ -48,15 +48,35 @@ export function LicensesPageClient({
   installations,
   expiringLicenses,
   totalLicenses,
-  totalInstallations,
 }: LicensesPageClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [buildingFilter, setBuildingFilter] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_building_filter") || "all";
+    }
+    return "all";
+  });
+
+  const handleBuildingChange = (val: string) => {
+    setBuildingFilter(val);
+    localStorage.setItem("admin_building_filter", val);
+  };
+
+  const filteredInstallationsCount = installations.filter((inst) => {
+    if (buildingFilter === "all") return true;
+    const comp = extractJoinObject(inst.computers) as {
+      inventory_number: string | null;
+      employees: { building: string | null } | { building: string | null }[] | null;
+    } | null;
+    const emp = comp ? extractJoinObject(comp.employees) : null;
+    return emp && emp.building === buildingFilter;
+  }).length;
 
   return (
     <div>
       <PageHeader
         title="Лицензии ПО"
-        description={`${totalLicenses} лицензий · ${totalInstallations} активных установок`}
+        description={`${totalLicenses} лицензий · ${filteredInstallationsCount} активных установок`}
         actionNode={
           <Button size="sm" className="gap-2" onClick={() => setDialogOpen(true)}>
             <Plus className="w-4 h-4" />
@@ -68,6 +88,8 @@ export function LicensesPageClient({
         licenses={licenses}
         installations={installations}
         expiringLicenses={expiringLicenses}
+        buildingFilter={buildingFilter}
+        onBuildingFilterChange={handleBuildingChange}
       />
       <AddLicenseDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>

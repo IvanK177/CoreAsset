@@ -20,6 +20,7 @@ const ROLE_HOME: Record<string, string> = {
   admin: "/dashboard",
   it_specialist: "/it-portal",
   employee: "/portal",
+  facilities: "/facilities-portal",
 };
 
 function getRoleHome(role: string): string {
@@ -143,21 +144,27 @@ export async function proxy(request: NextRequest) {
     ADMIN_ROUTES.some((r) => pathname.startsWith(r)) || pathname === "/";
   const isEmployeePortal = pathname.startsWith("/portal");
   const isITPortal = pathname.startsWith("/it-portal");
+  const isFacilitiesPortal = pathname.startsWith("/facilities-portal");
   const roleHome = getRoleHome(role!);
 
   if (role === "admin") {
-    // Admin: can access dashboard / admin routes; block employee & IT portals
-    if (isEmployeePortal || isITPortal) {
+    // Admin: can access dashboard / admin routes; block employee, IT, & facilities portals
+    if (isEmployeePortal || isITPortal || isFacilitiesPortal) {
       return redirectWithCookies(roleHome);
     }
   } else if (role === "it_specialist") {
-    // IT specialist: can only access /it-portal; block dashboard & employee portal
-    if (isAdminRoute || isEmployeePortal) {
+    // IT specialist: can only access /it-portal; block dashboard, employee, & facilities portals
+    if (isAdminRoute || isEmployeePortal || isFacilitiesPortal) {
+      return redirectWithCookies(roleHome);
+    }
+  } else if (role === "facilities") {
+    // Facilities: can only access /facilities-portal; block dashboard, employee, & IT portals
+    if (isAdminRoute || isEmployeePortal || isITPortal) {
       return redirectWithCookies(roleHome);
     }
   } else {
-    // Employee (or unknown role): can only access /portal; block dashboard & IT portal
-    if (isAdminRoute || isITPortal) {
+    // Employee (or unknown role): can only access /portal; block dashboard, IT, & facilities portals
+    if (isAdminRoute || isITPortal || isFacilitiesPortal) {
       return redirectWithCookies(roleHome);
     }
   }
@@ -168,6 +175,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.json|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

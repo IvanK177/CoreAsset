@@ -28,9 +28,10 @@ interface IncidentRow {
   assigned_to: string | null;
   employee: RelatedEmployee | RelatedEmployee[] | null;
   computer: RelatedComputer | RelatedComputer[] | null;
+  assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
 }
 
-export default async function MyTasksPage() {
+export default async function ITPortalArchivePage() {
   const authClient = await createClient();
   const dataClient = createServiceClient();
 
@@ -64,38 +65,37 @@ export default async function MyTasksPage() {
     specialistId = data?.id;
   }
 
-  // Fetch only incidents assigned to this specialist
-  let myIncidents: IncidentRow[] = [];
-  if (specialistId) {
-    const { data, error: myError } = await dataClient
-      .from("incidents")
-      .select(`
-        id,
-        title,
-        description,
-        priority,
-        status,
-        incident_type,
-        created_at,
-        resolved_at,
-        assigned_to,
-        employee:employees!incidents_employee_id_fkey(full_name, room, building),
-        computer:computers!incidents_computer_id_fkey(inventory_number, computer_type),
-        assignee:employees!incidents_assigned_to_fkey(full_name)
-      `)
-      .eq("assigned_to", specialistId)
-      .order("created_at", { ascending: false });
-    if (myError) {
-      console.error("[MyTasksPage] Supabase query error:", myError.code, myError.message);
-    }
-    myIncidents = (data as IncidentRow[]) ?? [];
+  // Fetch only resolved incidents
+  const { data: incidents, error: incidentsError } = await dataClient
+    .from("incidents")
+    .select(`
+      id,
+      title,
+      description,
+      priority,
+      status,
+      incident_type,
+      created_at,
+      resolved_at,
+      assigned_to,
+      employee:employees!incidents_employee_id_fkey(full_name, room, building),
+      computer:computers!incidents_computer_id_fkey(inventory_number, computer_type),
+      assignee:employees!incidents_assigned_to_fkey(full_name)
+    `)
+    .eq("status", "resolved")
+    .order("resolved_at", { ascending: false });
+
+  if (incidentsError) {
+    console.error("[ITPortalArchivePage] Supabase query error:", incidentsError.code, incidentsError.message);
   }
+
+  const resolvedIncidents = (incidents as IncidentRow[]) ?? [];
 
   return (
     <ITPortalClientView
       specialistId={specialistId ?? ""}
-      incidents={myIncidents}
-      currentPath="/it-portal/my-tasks"
+      incidents={resolvedIncidents}
+      currentPath="/it-portal/archive"
     />
   );
 }

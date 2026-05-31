@@ -65,18 +65,42 @@ export default async function PortalPage() {
       incident_type,
       created_at,
       computer_id,
-      computer:computers!incidents_computer_id_fkey(inventory_number, computer_type)
+      computer:computers!incidents_computer_id_fkey(inventory_number, computer_type),
+      assignee:employees!incidents_assigned_to_fkey(full_name)
     `)
     .eq("employee_id", employeeId)
     .order("created_at", { ascending: false });
 
+  // Fetch room requests created by this employee
+  const { data: roomRequests } = await dataClient
+    .from("room_requests")
+    .select(`
+      id,
+      room,
+      type,
+      description,
+      status,
+      created_at
+    `)
+    .eq("author_id", employeeId)
+    .order("created_at", { ascending: false });
+
   // Calculate stats
-  const openIncidents = (incidents ?? []).filter(
+  const activeIT = (incidents ?? []).filter(
     (i) => i.status === "open" || i.status === "in_progress"
   ).length;
-  const resolvedIncidents = (incidents ?? []).filter(
+  const activeAHO = (roomRequests ?? []).filter(
+    (r) => r.status === "open" || r.status === "in_progress"
+  ).length;
+  const openIncidents = activeIT + activeAHO;
+
+  const resolvedIT = (incidents ?? []).filter(
     (i) => i.status === "resolved"
   ).length;
+  const resolvedAHO = (roomRequests ?? []).filter(
+    (r) => r.status === "resolved"
+  ).length;
+  const resolvedIncidents = resolvedIT + resolvedAHO;
 
   return (
     <PortalClientView
@@ -86,8 +110,9 @@ export default async function PortalPage() {
       computers={computers ?? []}
       allComputers={allComputers ?? []}
       incidents={incidents ?? []}
+      roomRequests={roomRequests ?? []}
       openIncidents={openIncidents}
       resolvedIncidents={resolvedIncidents}
     />
   );
-}
+}

@@ -6,10 +6,10 @@ import { EmployeeStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
-import { cn, formatDate, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime, BUILDING_ADDRESSES } from "@/lib/utils";
 import { restoreEmployeeDialog, dismissEmployeeDialog, deleteEmployeeDialog } from "@/lib/actions/employees";
 import { clearCache } from "@/lib/actions/revalidate";
-import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Trash2, Loader2, Edit } from "lucide-react";
+import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Loader2, Edit, Building } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,9 +54,17 @@ interface EmployeesClientViewProps {
   employees: Employee[];
   computers: ComputerRow[];
   incidents: IncidentRow[];
+  buildingFilter: string;
+  onBuildingFilterChange: (val: string) => void;
 }
 
-export function EmployeesClientView({ employees, computers, incidents }: EmployeesClientViewProps) {
+export function EmployeesClientView({
+  employees,
+  computers,
+  incidents,
+  buildingFilter,
+  onBuildingFilterChange,
+}: EmployeesClientViewProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -70,7 +78,8 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
       (statusFilter === "dismissed" && !e.is_active);
     const matchesSearch =
       !searchQuery || e.full_name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
+    const matchesBuilding = buildingFilter === "all" || e.building === buildingFilter;
+    return matchesStatus && matchesSearch && matchesBuilding;
   });
 
   const selectedEmployee = selectedId ? employees.find((e) => e.id === selectedId) : null;
@@ -97,6 +106,19 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left: Narrow list */}
         <div className="hidden lg:block lg:w-1/3 space-y-3">
+          <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+            <Building className="w-4 h-4 text-gray-400 shrink-0" />
+            <select
+              value={buildingFilter}
+              onChange={(e) => onBuildingFilterChange(e.target.value)}
+              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate"
+            >
+              <option value="all">Все корпуса</option>
+              {Object.keys(BUILDING_ADDRESSES).map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
           {/* Search + Filter */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -315,8 +337,8 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
   // Default mode: full-width table with search + filter
   return (
     <div className="space-y-4">
-      {/* Search + Status Filter */}
-      <div className="flex items-center gap-3">
+      {/* Search + Status Filter + Building Filter */}
+      <div className="flex items-center gap-3 flex-wrap bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
@@ -338,7 +360,7 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as EmployeeStatusFilter)}
         >
-          <SelectTrigger className="w-[150px] h-9">
+          <SelectTrigger className="w-[150px] h-9 bg-white">
             {statusFilterLabels[statusFilter]}
           </SelectTrigger>
           <SelectContent>
@@ -347,6 +369,19 @@ export function EmployeesClientView({ employees, computers, incidents }: Employe
             <SelectItem value="dismissed">Уволенные</SelectItem>
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2 bg-white px-3 h-9 rounded-lg border border-gray-200">
+          <Building className="w-4 h-4 text-gray-400 shrink-0" />
+          <select
+            value={buildingFilter}
+            onChange={(e) => onBuildingFilterChange(e.target.value)}
+            className="text-sm bg-transparent focus:outline-none text-gray-700 max-w-[200px] truncate"
+          >
+            <option value="all">Все корпуса</option>
+            {Object.keys(BUILDING_ADDRESSES).map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+        </div>
         <span className="text-xs text-gray-500">
           {filteredEmployees.length} сотрудников
         </span>

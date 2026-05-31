@@ -145,6 +145,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           telegram: string | null
           updated_at: string
+          building: string | null
         }
         Insert: {
           created_at?: string
@@ -158,6 +159,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           telegram?: string | null
           updated_at?: string
+          building?: string | null
         }
         Update: {
           created_at?: string
@@ -171,6 +173,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           telegram?: string | null
           updated_at?: string
+          building?: string | null
         }
         Relationships: []
       }
@@ -286,6 +289,44 @@ export type Database = {
         }
         Relationships: []
       }
+      room_requests: {
+        Row: {
+          id: string
+          room: string
+          type: string
+          description: string
+          status: string
+          author_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          room: string
+          type: string
+          description: string
+          status?: string
+          author_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          room?: string
+          type?: string
+          description?: string
+          status?: string
+          author_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_requests_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -299,7 +340,7 @@ export type Database = {
       incident_status: "open" | "in_progress" | "resolved" | "cancelled"
       incident_type: "hardware" | "software" | "network" | "other"
       license_type: "perpetual" | "subscription"
-      user_role: "admin" | "employee" | "it_specialist"
+      user_role: "admin" | "employee" | "it_specialist" | "facilities"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -414,7 +455,7 @@ export const Constants = {
       incident_status: ["open", "in_progress", "resolved", "cancelled"],
       incident_type: ["hardware", "software", "network", "other"],
       license_type: ["perpetual", "subscription"],
-      user_role: ["admin", "employee", "it_specialist"],
+      user_role: ["admin", "employee", "it_specialist", "facilities"],
     },
   },
 } as const
