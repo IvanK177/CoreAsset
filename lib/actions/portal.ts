@@ -15,6 +15,9 @@ export async function createPortalIncident(formData: FormData) {
   const priority = formData.get("priority") as string;
   const createdAt = formData.get("created_at") as string | null;
 
+  const photoUrlsRaw = formData.get("photo_urls") as string | null;
+  const photoUrls = photoUrlsRaw ? JSON.parse(photoUrlsRaw) : [];
+
   const insertData = {
     title: title || null,
     description: description || title,
@@ -23,6 +26,7 @@ export async function createPortalIncident(formData: FormData) {
     incident_type: "other" as const,
     priority: priority as "low" | "medium" | "high" | "critical",
     status: "open" as const,
+    photo_urls: photoUrls,
     ...(createdAt ? { created_at: new Date(createdAt).toISOString() } : {}),
   };
 
@@ -153,4 +157,72 @@ export async function createPortalRoomRequest(formData: FormData) {
   revalidatePath("/incidents");
   revalidatePath("/facilities-portal");
   return { success: true, id: data.id };
+}
+
+/** Update employee profile from the employee portal */
+export async function updateEmployeeProfile(employeeId: string, formData: FormData) {
+  const supabase = createServiceClient();
+
+  const fullName = formData.get("full_name") as string;
+  const email = formData.get("email") as string | null;
+  const position = formData.get("position") as string | null;
+  const phone = formData.get("phone") as string | null;
+  const telegram = formData.get("telegram") as string | null;
+  const room = formData.get("room") as string | null;
+  const building = formData.get("building") as string | null;
+
+  if (!fullName || !fullName.trim()) {
+    return { error: "ФИО обязательно для заполнения" };
+  }
+
+  // If email has changed, update it in Supabase Auth too
+  if (email && email.trim()) {
+    // Check if email already exists on another employee
+    const { data: existing } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("email", email.trim())
+      .neq("id", employeeId)
+      .maybeSingle();
+
+    if (existing) {
+      return { error: "Этот email уже используется другим сотрудником" };
+    }
+
+    // Update in auth system
+    const { error: authError } = await supabase.auth.admin.updateUserById(employeeId, {
+      email: email.trim(),
+    });
+
+    if (authError) {
+      console.error("[updateEmployeeProfile] Auth update error:", authError.message);
+      return { error: "Ошибка при обновлении email в системе аутентификации: " + authError.message };
+    }
+  }
+
+  const { error } = await supabase
+    .from("employees")
+    .update({
+      full_name: fullName.trim(),
+      email: email ? email.trim() : null,
+      position: position ? position.trim() : null,
+      phone: phone ? phone.trim() : null,
+      telegram: telegram ? telegram.trim() : null,
+      room: room ? room.trim() : null,
+      building: building || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", employeeId);
+
+  if (error) {
+    console.error("[updateEmployeeProfile] Error:", error.message);
+    return { error: error.message };
+  }
+
+  revalidateTag("employees", { expire: 0 });
+  revalidatePath("/portal");
+  revalidatePath("/employees");
+  revalidatePath(`/employees/${employeeId}`);
+  revalidatePath("/dashboard");
+  return { success: true };
 }

@@ -10,6 +10,9 @@ import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { DecompressedText } from "@/components/shared/DecompressedText";
 import { takeIncidentToWork, resolveIncident } from "@/lib/actions/it-portal";
 import { ITPortalIncidentDetailsDialog } from "./ITPortalIncidentDetailsDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 /* ── Types ── */
 
@@ -37,6 +40,8 @@ interface IncidentRow {
   employee: RelatedEmployee | RelatedEmployee[] | null;
   computer: RelatedComputer | RelatedComputer[] | null;
   assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
+  photo_urls?: string[] | null;
+  resolution?: string | null;
 }
 
 interface ITPortalClientViewProps {
@@ -108,6 +113,9 @@ export default function ITPortalClientView({
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const [selectedIncident, setSelectedIncident] = useState<IncidentRow | null>(null);
+  const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
+  const [resolvingIncidentId, setResolvingIncidentId] = useState<string | null>(null);
+  const [resolutionText, setResolutionText] = useState("");
 
   const [buildingFilter, setBuildingFilter] = useState(() => {
     if (typeof window !== "undefined") {
@@ -132,11 +140,23 @@ export default function ITPortalClientView({
     });
   };
 
-  const handleResolve = (incidentId: string) => {
-    setPendingId(incidentId);
+  const handleResolveClick = (incidentId: string) => {
+    setResolvingIncidentId(incidentId);
+    setResolutionText("");
+    setResolveDialogOpen(true);
+  };
+
+  const handleResolveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resolvingIncidentId) return;
+
+    setPendingId(resolvingIncidentId);
+    setResolveDialogOpen(false);
     startTransition(async () => {
-      await resolveIncident(incidentId);
+      await resolveIncident(resolvingIncidentId, resolutionText);
       setPendingId(null);
+      setResolvingIncidentId(null);
+      setResolutionText("");
     });
   };
 
@@ -263,7 +283,7 @@ export default function ITPortalClientView({
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 text-sm cursor-pointer"
                   onClick={() => {
-                    handleResolve(selectedIncident.id);
+                    handleResolveClick(selectedIncident.id);
                     setSelectedIncident(null);
                   }}
                 >
@@ -460,7 +480,7 @@ export default function ITPortalClientView({
                             disabled={isActionPending}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleResolve(incident.id);
+                              handleResolveClick(incident.id);
                             }}
                           >
                             {isActionPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -522,6 +542,56 @@ export default function ITPortalClientView({
         onOpenChange={(open) => !open && setSelectedIncident(null)}
         incident={selectedIncident}
       />
+
+      {/* Resolve Ticket Dialog */}
+      <Dialog open={resolveDialogOpen} onOpenChange={setResolveDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">Завершение заявки</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Опишите, какие действия были предприняты для решения проблемы
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleResolveSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="resolution-text" className="text-sm font-medium">
+                Что было сделано *
+              </Label>
+              <Textarea
+                id="resolution-text"
+                placeholder="Например: переподключил кабель питания монитора, заменил неисправный патч-корд..."
+                value={resolutionText}
+                onChange={(e) => setResolutionText(e.target.value)}
+                rows={4}
+                className="rounded-lg border-gray-200 resize-none"
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-10 rounded-lg border-gray-200 text-gray-700"
+                onClick={() => {
+                  setResolveDialogOpen(false);
+                  setResolvingIncidentId(null);
+                  setResolutionText("");
+                }}
+              >
+                Отмена
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium cursor-pointer"
+              >
+                Подтвердить решение
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

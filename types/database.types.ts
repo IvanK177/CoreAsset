@@ -191,6 +191,8 @@ export type Database = {
           status: Database["public"]["Enums"]["incident_status"]
           title: string | null
           updated_at: string
+          photo_urls: string[] | null
+          resolution: string | null
         }
         Insert: {
           computer_id?: string | null
@@ -205,6 +207,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["incident_status"]
           title?: string | null
           updated_at?: string
+          photo_urls?: string[] | null
+          resolution?: string | null
         }
         Update: {
           computer_id?: string | null
@@ -219,6 +223,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["incident_status"]
           title?: string | null
           updated_at?: string
+          photo_urls?: string[] | null
+          resolution?: string | null
         }
         Relationships: [
           {

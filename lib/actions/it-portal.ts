@@ -48,7 +48,7 @@ export async function takeIncidentToWork(incidentId: string, specialistId: strin
 /**
  * Resolve an incident: set status to "resolved" and record resolved_at timestamp.
  */
-export async function resolveIncident(incidentId: string) {
+export async function resolveIncident(incidentId: string, resolution: string) {
   const supabase = createServiceClient();
 
   const { data: current } = await supabase
@@ -72,6 +72,7 @@ export async function resolveIncident(incidentId: string) {
       status: "resolved",
       description: compressedDescription,
       title: title || null,
+      resolution: resolution.trim() || null,
       resolved_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })

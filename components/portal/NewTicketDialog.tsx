@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Camera, Image as ImageIcon, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -90,7 +90,24 @@ export function NewTicketDialog({
   const [pending, setPending] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const router = useRouter();
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      setPhotos((prev) => [...prev, ...selectedFiles]);
+      const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+      setPhotoPreviews((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(photoPreviews[index]);
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +119,40 @@ export function NewTicketDialog({
     setPending(true);
     setError(null);
 
+    const photoUrls: string[] = [];
+    try {
+      if (photos.length > 0) {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        for (const file of photos) {
+          const fileExt = file.name.split(".").pop();
+          const fileName = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}.${fileExt}`;
+          const filePath = `${employeeId}/${fileName}`;
+          const { error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, file);
+
+          if (uploadError) {
+            console.error("Photo upload error:", uploadError);
+            toast.error(`Ошибка при загрузке фото ${file.name}`);
+            setPending(false);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+
+          photoUrls.push(publicUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Attachment upload exception:", err);
+      toast.error("Не удалось загрузить фотографии");
+      setPending(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.set("title", title.trim());
     formData.set("description", description.trim());
@@ -109,6 +160,7 @@ export function NewTicketDialog({
     formData.set("employee_id", employeeId);
     formData.set("priority", priority);
     formData.set("created_at", createdAt);
+    formData.set("photo_urls", JSON.stringify(photoUrls));
 
     const result = await createPortalIncident(formData);
 
@@ -134,6 +186,9 @@ export function NewTicketDialog({
     setComputerId("");
     setPriority("medium");
     setCreatedAt(getLocalDateTimeString());
+    photoPreviews.forEach((p) => URL.revokeObjectURL(p));
+    setPhotos([]);
+    setPhotoPreviews([]);
     setPending(false);
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
@@ -146,6 +201,9 @@ export function NewTicketDialog({
       setComputerId("");
       setPriority("medium");
       setCreatedAt(getLocalDateTimeString());
+      photoPreviews.forEach((p) => URL.revokeObjectURL(p));
+      setPhotos([]);
+      setPhotoPreviews([]);
       setError(null);
       onOpenChange(false);
     }
@@ -260,6 +318,49 @@ export function NewTicketDialog({
                   {opt.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Attach Photos */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-gray-500" />
+              Прикрепить фото
+            </Label>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  disabled={pending}
+                />
+                <div className="text-center space-y-1">
+                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto" />
+                  <span className="text-xs text-gray-500 block">Нажмите, чтобы выбрать изображения</span>
+                </div>
+              </label>
+
+              {photoPreviews.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {photoPreviews.map((preview, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                      <img src={preview} alt="Превью" className="object-cover w-full h-full" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 bg-black/70 hover:bg-black/90 text-white rounded-full p-1 cursor-pointer transition-colors"
+                        title="Удалить"
+                        disabled={pending}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

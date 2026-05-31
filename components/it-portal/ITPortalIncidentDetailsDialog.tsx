@@ -36,6 +36,8 @@ interface IncidentRow {
   employee: RelatedEmployee | RelatedEmployee[] | null;
   computer: RelatedComputer | RelatedComputer[] | null;
   assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
+  photo_urls?: string[] | null;
+  resolution?: string | null;
 }
 
 interface ITPortalIncidentDetailsDialogProps {
@@ -174,6 +176,47 @@ export function ITPortalIncidentDetailsDialog({
               <DecompressedText text={incident.description} className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed" />
             </div>
           </div>
+
+          {/* Attached Photos */}
+          {incident.photo_urls && incident.photo_urls.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Фотографии ({incident.photo_urls.length})
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {incident.photo_urls.map((url, idx) => (
+                  <a
+                    key={idx}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block hover:opacity-85 transition-opacity"
+                  >
+                    <img
+                      src={url}
+                      alt={`Вложение ${idx + 1}`}
+                      className="object-cover w-full h-full"
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* IT Specialist Resolution */}
+          {incident.status === "resolved" && incident.resolution && (
+            <div className="space-y-2">
+              <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                Что было сделано (Решение)
+              </span>
+              <div className="p-4 rounded-xl bg-emerald-50/40 border border-emerald-100 max-h-[220px] overflow-y-auto">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {incident.resolution}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Button */}

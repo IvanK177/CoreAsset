@@ -53,7 +53,7 @@ export async function createIncident(formData: FormData) {
   redirect(`/incidents/${data.id}`);
 }
 
-export async function updateIncidentStatus(id: string, status: "open" | "in_progress" | "resolved") {
+export async function updateIncidentStatus(id: string, status: "open" | "in_progress" | "resolved", resolution?: string) {
   const supabase = await createServiceClient();
 
   const { data: current } = await supabase
@@ -81,6 +81,7 @@ export async function updateIncidentStatus(id: string, status: "open" | "in_prog
     status,
     description,
     title: title || null,
+    resolution: resolution || null,
     resolved_at: status === "resolved" ? new Date().toISOString() : null,
     updated_at: new Date().toISOString(),
   }).eq("id", id);

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import PWARegister from "@/components/shared/PWARegister";
+import SupportWidget from "@/components/SupportWidget";
 import "./globals.css";
 
 const inter = Inter({
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <PWARegister />
         {children}
+        <SupportWidget />
         <Toaster position="top-right" richColors />
       </body>
     </html>

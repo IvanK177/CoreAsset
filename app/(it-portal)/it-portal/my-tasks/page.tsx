@@ -28,6 +28,8 @@ interface IncidentRow {
   assigned_to: string | null;
   employee: RelatedEmployee | RelatedEmployee[] | null;
   computer: RelatedComputer | RelatedComputer[] | null;
+  photo_urls?: string[] | null;
+  resolution?: string | null;
 }
 
 export default async function MyTasksPage() {
@@ -79,6 +81,8 @@ export default async function MyTasksPage() {
         created_at,
         resolved_at,
         assigned_to,
+        photo_urls,
+        resolution,
         employee:employees!incidents_employee_id_fkey(full_name, room, building),
         computer:computers!incidents_computer_id_fkey(inventory_number, computer_type),
         assignee:employees!incidents_assigned_to_fkey(full_name)

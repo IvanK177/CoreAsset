@@ -1,15 +1,30 @@
-import { MonitorIcon, LogOut } from "lucide-react";
+"use client";
+
+import { MonitorIcon, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/auth";
+import { useState } from "react";
+import { ProfileDialog } from "@/components/portal/ProfileDialog";
+
+interface EmployeeProfileData {
+  id: string;
+  full_name: string;
+  position: string | null;
+  email: string | null;
+  phone: string | null;
+  telegram: string | null;
+  room: string | null;
+  building: string | null;
+}
 
 interface PortalHeaderProps {
   employeeName: string;
   employeePosition: string;
+  employee?: EmployeeProfileData | null;
 }
 
-export default function PortalHeader({ employeeName, employeePosition }: PortalHeaderProps) {
-  // Extract first name for display
-  const firstName = employeeName.split(" ")[0] ?? employeeName;
+export default function PortalHeader({ employeeName, employeePosition, employee }: PortalHeaderProps) {
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16 flex items-center justify-between px-6 bg-white border-b border-gray-200">
@@ -26,24 +41,45 @@ export default function PortalHeader({ employeeName, employeePosition }: PortalH
         </div>
       </div>
 
-      {/* Right: Employee info + Logout */}
+      {/* Right: Employee info + Profile + Logout */}
       <div className="flex items-center gap-4">
         <div className="hidden sm:flex flex-col items-end">
           <span className="text-sm font-medium text-gray-900">{employeeName}</span>
           <span className="text-xs text-gray-500">{employeePosition}</span>
         </div>
+
+        {employee && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setProfileOpen(true)}
+            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 cursor-pointer"
+          >
+            <User className="w-4 h-4" />
+            <span className="hidden sm:inline">Профиль</span>
+          </Button>
+        )}
+
         <form action={signOut}>
           <Button
             variant="ghost"
             size="sm"
             type="submit"
-            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3"
+            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Выйти</span>
           </Button>
         </form>
       </div>
+
+      {employee && (
+        <ProfileDialog
+          open={profileOpen}
+          onOpenChange={setProfileOpen}
+          employee={employee}
+        />
+      )}
     </header>
   );
 }

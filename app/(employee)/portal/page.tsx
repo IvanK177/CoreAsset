@@ -65,6 +65,8 @@ export default async function PortalPage() {
       incident_type,
       created_at,
       computer_id,
+      photo_urls,
+      resolution,
       computer:computers!incidents_computer_id_fkey(inventory_number, computer_type),
       assignee:employees!incidents_assigned_to_fkey(full_name)
     `)

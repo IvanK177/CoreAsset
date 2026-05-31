@@ -18,7 +18,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     // Primary: match by user.id (auth.users.id → employees.id via trigger)
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, email, room")
+      .select("id, full_name, position, email, room, phone, telegram, building")
       .eq("id", user.id)
       .single();
     employeeData = data;
@@ -28,7 +28,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     // Demo mode: use demo cookie employee ID
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, email, room")
+      .select("id, full_name, position, email, room, phone, telegram, building")
       .eq("id", demoEmployeeId)
       .single();
     employeeData = data;
@@ -38,7 +38,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     // Fallback: use hardcoded demo employee
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, email, room")
+      .select("id, full_name, position, email, room, phone, telegram, building")
       .eq("id", "e0000001-0000-0000-0000-000000000001")
       .single();
     employeeData = data;
@@ -49,6 +49,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
       <PortalHeader
         employeeName={employeeData?.full_name ?? "Сотрудник"}
         employeePosition={employeeData?.position ?? ""}
+        employee={employeeData}
       />
       <main className="pt-16">
         <div className="max-w-4xl mx-auto p-6">
