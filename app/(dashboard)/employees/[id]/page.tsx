@@ -17,42 +17,58 @@ import { deleteEmployee, dismissEmployee, restoreEmployee } from "@/lib/actions/
 import { formatDate, extractJoinObject } from "@/lib/utils";
 import { Edit, Monitor, User, UserCheck, UserX, Phone, MessageCircle } from "lucide-react";
 
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
+};
+
+const deviceTypeEmojis: Record<string, string> = {
+  pc: "💻",
+  monitor: "🖥️",
+  keyboard: "⌨️",
+  mouse: "🖱️",
+  printer: "🖨️",
+  other: "🔌",
+};
+
 export default async function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createServiceClient();
 
-  const [empRes, computersRes, incidentsRes, allComputersRes, allEmployeesRes] = await Promise.all([
+  const [empRes, devicesRes, incidentsRes, allDevicesRes, allEmployeesRes] = await Promise.all([
     supabase.from("employees").select("*").eq("id", id).single(),
     supabase
-      .from("computers")
-      .select("id, inventory_number, computer_type, lifecycle_status, room")
+      .from("devices")
+      .select("id, inventory_number, computer_type, device_type, lifecycle_status, room")
       .eq("employee_id", id),
     supabase
       .from("incidents")
-      .select("id, title, description, priority, status, incident_type, created_at, computer_id, computers(id, inventory_number)")
+      .select("id, title, description, priority, status, incident_type, created_at, device_id, devices!incidents_device_id_fkey(id, inventory_number, device_type, computer_type)")
       .eq("employee_id", id)
       .order("created_at", { ascending: false }),
-    supabase.from("computers").select("id, inventory_number").order("inventory_number"),
+    supabase.from("devices").select("id, inventory_number, device_type, computer_type").order("inventory_number"),
     supabase.from("employees").select("id, full_name, room").eq("is_active", true).order("full_name"),
   ]);
 
   // Check for Supabase errors on the main entity
   if (empRes.error) {
     console.error("[EmployeeDetail] Supabase query error:", empRes.error.code, empRes.error.message);
-    // PGRST116 = ".single()" found 0 rows → genuine not-found
     if (empRes.error.code === "PGRST116") notFound();
-    // Any other error (RLS, network, etc.) → throw to trigger Error Boundary
     throw new Error(`Failed to fetch employee: ${empRes.error.message}`);
   }
 
   if (!empRes.data) notFound();
   const emp = empRes.data;
 
-  // Computers directly assigned to this employee
-  if (computersRes.error) {
-    console.error("[EmployeeDetail] Computers query error:", computersRes.error.code, computersRes.error.message);
+  // Devices directly assigned to this employee
+  if (devicesRes.error) {
+    console.error("[EmployeeDetail] Devices query error:", devicesRes.error.code, devicesRes.error.message);
   }
-  const assignedComputers = computersRes.data ?? [];
+  const assignedDevices = devicesRes.data ?? [];
 
   // Incidents created by this employee
   if (incidentsRes.error) {
@@ -60,7 +76,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
   }
   const employeeIncidents = (incidentsRes.data ?? []).map((inc) => ({
     ...inc,
-    computer: extractJoinObject(inc.computers as unknown) as { id: string; inventory_number: string } | null,
+    device: extractJoinObject(inc.devices as unknown) as { id: string; inventory_number: string; device_type: string; computer_type: string | null } | null,
   }));
 
   return (
@@ -120,28 +136,32 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
         <Row label="Добавлен" value={formatDate(emp.created_at)} />
       </div>
 
-      {/* Assigned computers section */}
+      {/* Assigned devices section */}
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Закреплённые компьютеры ({assignedComputers.length})
+            Закреплённые устройства ({assignedDevices.length})
           </p>
         </div>
         <Separator />
-        {assignedComputers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Нет закреплённых компьютеров</p>
+        {assignedDevices.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Нет закреплённых устройств</p>
         ) : (
           <div className="space-y-2">
-            {assignedComputers.map((comp) => (
-              <Link key={comp.id} href={`/computers/${comp.id}`} className="flex items-center justify-between hover:bg-muted/30 rounded-lg p-2 transition-colors">
+            {assignedDevices.map((dev) => (
+              <Link key={dev.id} href={`/devices/${dev.id}`} className="flex items-center justify-between hover:bg-muted/30 rounded-lg p-2 transition-colors">
                 <div className="flex items-center gap-3">
                   <Monitor className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium font-mono">{comp.inventory_number}</p>
-                    <p className="text-xs text-muted-foreground">{comp.computer_type}</p>
+                    <p className="text-sm font-medium font-mono">
+                      {deviceTypeEmojis[dev.device_type] || "🔌"} {dev.inventory_number}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {deviceTypeRussianLabels[dev.device_type] || "Устройство"}{dev.computer_type ? ` (${dev.computer_type})` : ""}
+                    </p>
                   </div>
                 </div>
-                <ComputerStatusBadge status={comp.lifecycle_status} />
+                <ComputerStatusBadge status={dev.lifecycle_status as any} />
               </Link>
             ))}
           </div>
@@ -155,7 +175,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
             Инциденты ({employeeIncidents.length})
           </p>
           <TicketDialogButton
-            computers={allComputersRes.data ?? []}
+            devices={allDevicesRes.data ?? []}
             employees={allEmployeesRes.data ?? []}
             defaultEmployeeId={id}
           />
@@ -171,12 +191,12 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
                   <p className="text-sm truncate">{inc.title || inc.description}</p>
                   <p className="text-xs text-muted-foreground">
                     {formatDate(inc.created_at)} · {inc.incident_type}
-                    {inc.computer && ` · ${inc.computer.inventory_number}`}
+                    {inc.device && ` · ${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`}
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <PriorityBadge priority={inc.priority} />
-                  <IncidentStatusBadge status={inc.status} />
+                  <PriorityBadge priority={inc.priority as any} />
+                  <IncidentStatusBadge status={inc.status as any} />
                 </div>
               </Link>
             ))}

@@ -4,11 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
-import { ComputersClientView, ComputerWithEmployee, ActiveEmployee, LicenseOption } from "@/components/computers/ComputersClientView";
+import { DevicesClientView, DeviceWithEmployee, ActiveEmployee, LicenseOption } from "@/components/devices/DevicesClientView";
 import dynamic from "next/dynamic";
 
-const AddComputerDialog = dynamic(
-  () => import("@/components/computers/AddComputerDialog").then((mod) => mod.AddComputerDialog),
+const AddDeviceDialog = dynamic(
+  () => import("@/components/devices/AddDeviceDialog").then((mod) => mod.AddDeviceDialog),
   { ssr: false }
 );
 
@@ -16,7 +16,7 @@ import type { Tables } from "@/types/database.types";
 
 interface InstallRow {
   id: string;
-  computer_id: string | null;
+  device_id: string | null;
   license_id: string | null;
   installed_at: string | null;
   licenses: unknown;
@@ -24,7 +24,7 @@ interface InstallRow {
 
 interface IncidentRow {
   id: string;
-  computer_id: string | null;
+  device_id: string | null;
   description: string;
   priority: string;
   status: string;
@@ -32,8 +32,8 @@ interface IncidentRow {
   created_at: string;
 }
 
-interface ComputersPageClientProps {
-  computers: ComputerWithEmployee[];
+interface DevicesPageClientProps {
+  devices: DeviceWithEmployee[];
   activeEmployees: ActiveEmployee[];
   installations: InstallRow[];
   incidents: IncidentRow[];
@@ -42,15 +42,15 @@ interface ComputersPageClientProps {
   templates: Tables<"computer_templates">[];
 }
 
-export function ComputersPageClient({
-  computers,
+export function DevicesPageClient({
+  devices,
   activeEmployees,
   installations,
   incidents,
   licenseOptions,
   initialFilter = "all",
   templates,
-}: ComputersPageClientProps) {
+}: DevicesPageClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [buildingFilter, setBuildingFilter] = useState(() => {
     if (typeof window !== "undefined") {
@@ -64,26 +64,26 @@ export function ComputersPageClient({
     localStorage.setItem("admin_building_filter", val);
   };
 
-  const filteredCount = computers.filter((c) => {
+  const filteredCount = devices.filter((d) => {
     if (buildingFilter === "all") return true;
-    const emp = Array.isArray(c.employees) ? c.employees[0] : c.employees;
+    const emp = Array.isArray(d.employees) ? d.employees[0] : d.employees;
     return emp && emp.building === buildingFilter;
   }).length;
 
   return (
     <div>
       <PageHeader
-        title="Компьютеры"
+        title="Устройства"
         description={`${filteredCount} устройств в реестре`}
         actionNode={
           <Button size="sm" className="gap-2" onClick={() => setDialogOpen(true)}>
             <Plus className="w-4 h-4" />
-            Добавить ПК
+            Добавить устройство
           </Button>
         }
       />
-      <ComputersClientView
-        computers={computers}
+      <DevicesClientView
+        devices={devices}
         activeEmployees={activeEmployees}
         installations={installations}
         incidents={incidents}
@@ -93,7 +93,7 @@ export function ComputersPageClient({
         buildingFilter={buildingFilter}
         onBuildingFilterChange={handleBuildingChange}
       />
-      <AddComputerDialog open={dialogOpen} onOpenChange={setDialogOpen} templates={templates} />
+      <AddDeviceDialog open={dialogOpen} onOpenChange={setDialogOpen} templates={templates} />
     </div>
   );
 }

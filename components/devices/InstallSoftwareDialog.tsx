@@ -37,14 +37,14 @@ interface LicenseOption {
 interface InstallSoftwareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  computerId: string;
+  deviceId: string;
   licenseOptions: LicenseOption[];
 }
 
 export function InstallSoftwareDialog({
   open,
   onOpenChange,
-  computerId,
+  deviceId,
   licenseOptions,
 }: InstallSoftwareDialogProps) {
   const [pending, setPending] = useState(false);
@@ -71,10 +71,10 @@ export function InstallSoftwareDialog({
     setPending(true);
     setError(null);
 
-    const result = await installMultipleSoftware(computerId, selectedLicenseIds, data.installed_at);
+    const result = await installMultipleSoftware(deviceId, selectedLicenseIds, data.installed_at);
     if (result.error) {
       if (result.code === "23505") {
-        toast.error("ПО уже установлено на этот компьютер");
+        toast.error("ПО уже установлено на это устройство");
       } else {
         toast.error("Ошибка при установке ПО: " + result.error);
       }
@@ -83,7 +83,7 @@ export function InstallSoftwareDialog({
       return;
     }
 
-    await clearCache(`/computers/${computerId}`);
+    await clearCache(`/devices/${deviceId}`);
     await clearCache('/licenses');
     await clearCache('/dashboard');
     toast.success("ПО успешно установлено");
@@ -109,7 +109,7 @@ export function InstallSoftwareDialog({
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Установить ПО</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Выберите лицензию для установки на этот компьютер
+            Выберите лицензию для установки на это устройство
           </DialogDescription>
         </DialogHeader>
 

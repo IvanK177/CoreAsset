@@ -38,8 +38,8 @@ interface IncidentRow {
   status: IncidentStatus;
   created_at: string;
   incident_type: string;
-  computer_id: string | null;
-  computer: { id: string; inventory_number: string } | null;
+  device_id: string | null;
+  device: { id: string; inventory_number: string; device_type: string; computer_type: string | null } | null;
   employee: { id: string; full_name: string; position: string | null; room: string | null; building: string | null } | null;
   assignee?: { id: string; full_name: string | null } | null;
 }
@@ -67,6 +67,24 @@ const PRIORITY_ITEMS: Record<string, React.ReactNode> = {
   medium: "Средний",
   high: "Высокий",
   critical: "Критический",
+};
+
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
+};
+
+const deviceTypeEmojis: Record<string, string> = {
+  pc: "💻",
+  monitor: "🖥️",
+  keyboard: "⌨️",
+  mouse: "🖱️",
+  printer: "🖨️",
+  other: "🔌",
 };
 
 export function IncidentsClientView({
@@ -132,7 +150,7 @@ export function IncidentsClientView({
           <th>Приоритет</th>
           <th>Статус</th>
           <th>Тип инцидента</th>
-          <th>Компьютер (Инв. номер)</th>
+          <th>Устройство (Инв. номер)</th>
           <th>Дата создания</th>
         </tr>
       </thead>
@@ -154,7 +172,9 @@ export function IncidentsClientView({
         inc.incident_type === "software" ? "Программная проблема" :
         inc.incident_type === "network" ? "Сетевая проблема" : "Другое";
 
-      const compNumber = inc.computer?.inventory_number || "—";
+      const deviceText = inc.device
+        ? `[${deviceTypeRussianLabels[inc.device.device_type] || "Устройство"}] ${inc.device.computer_type || ""} (${inc.device.inventory_number})`
+        : "—";
       const dateText = new Date(inc.created_at).toLocaleString("ru-RU");
 
       html += `<tr>
@@ -163,7 +183,7 @@ export function IncidentsClientView({
         <td>${priorityText}</td>
         <td>${statusText}</td>
         <td>${typeText}</td>
-        <td>${compNumber}</td>
+        <td>${deviceText}</td>
         <td>${dateText}</td>
       </tr>`;
     });
@@ -289,7 +309,11 @@ export function IncidentsClientView({
                   <DecompressedText text={inc.title || inc.description} truncate={80} />
                 </p>
                 <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mt-0.5">
-                  <span>{inc.computer?.inventory_number ?? "—"}</span>
+                  <span>
+                    {inc.device
+                      ? `${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`
+                      : "—"}
+                  </span>
                   {inc.status === "resolved" && (
                     <>
                       <span>·</span>
@@ -335,10 +359,17 @@ export function IncidentsClientView({
               <div className="bg-gray-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Monitor className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-500">Компьютер</span>
+                  <span className="text-xs text-gray-500">Устройство</span>
                 </div>
                 <p className="text-sm font-medium text-gray-900">
-                  {selectedIncident.computer?.inventory_number ?? "—"}
+                  {selectedIncident.device ? (
+                    <>
+                      {deviceTypeEmojis[selectedIncident.device.device_type] || "🔌"}{" "}
+                      {deviceTypeRussianLabels[selectedIncident.device.device_type] || "Устройство"}{" "}
+                      {selectedIncident.device.computer_type && `${selectedIncident.device.computer_type} `}
+                      ({selectedIncident.device.inventory_number})
+                    </>
+                  ) : "—"}
                 </p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
@@ -523,7 +554,11 @@ export function IncidentsClientView({
                   <DecompressedText text={inc.title || inc.description} truncate={100} />
                 </p>
                 <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
-                  <span>{inc.computer?.inventory_number ?? "—"}</span>
+                  <span>
+                    {inc.device
+                      ? `${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`
+                      : "—"}
+                  </span>
                   <span>·</span>
                   <span>{formatDateTime(inc.created_at)}</span>
                   {inc.status === "resolved" && (

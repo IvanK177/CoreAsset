@@ -40,18 +40,11 @@ export default async function PortalPage() {
     .eq("id", employeeId)
     .single();
 
-  // Fetch computers assigned to this employee (for "My Workplaces" section)
-  const { data: computers } = await dataClient
-    .from("computers")
-    .select("id, inventory_number, computer_type, lifecycle_status, room, hardware, employee_id")
+  // Fetch devices assigned to this employee
+  const { data: devices } = await dataClient
+    .from("devices")
+    .select("id, inventory_number, computer_type, lifecycle_status, room, hardware, employee_id, device_type")
     .eq("employee_id", employeeId);
-
-  // Fetch all active computers (for the incident ticket dropdown)
-  const { data: allComputers } = await dataClient
-    .from("computers")
-    .select("id, inventory_number, computer_type")
-    .eq("lifecycle_status", "active")
-    .order("inventory_number");
 
   // Fetch incidents created by this employee
   const { data: incidents } = await dataClient
@@ -64,10 +57,10 @@ export default async function PortalPage() {
       status,
       incident_type,
       created_at,
-      computer_id,
+      device_id,
       photo_urls,
       resolution,
-      computer:computers!incidents_computer_id_fkey(inventory_number, computer_type),
+      device:devices!incidents_device_id_fkey(inventory_number, computer_type, device_type),
       assignee:employees!incidents_assigned_to_fkey(full_name)
     `)
     .eq("employee_id", employeeId)
@@ -104,17 +97,31 @@ export default async function PortalPage() {
   ).length;
   const resolvedIncidents = resolvedIT + resolvedAHO;
 
+  const normalizedDevices = (devices ?? []).map((d) => ({
+    ...d,
+    lifecycle_status: d.lifecycle_status || "storage",
+  }));
+
+  const normalizedIncidents = (incidents ?? []).map((inc) => ({
+    ...inc,
+    title: inc.title || "",
+    description: inc.description || "",
+    priority: inc.priority || "medium",
+    status: inc.status || "open",
+    incident_type: inc.incident_type || "other",
+    created_at: inc.created_at || new Date().toISOString(),
+  }));
+
   return (
     <PortalClientView
       employeeId={employeeId}
       employeeName={employee?.full_name ?? "Сотрудник"}
       employeePosition={employee?.position ?? ""}
-      computers={computers ?? []}
-      allComputers={allComputers ?? []}
-      incidents={incidents ?? []}
+      devices={normalizedDevices}
+      incidents={normalizedIncidents}
       roomRequests={roomRequests ?? []}
       openIncidents={openIncidents}
       resolvedIncidents={resolvedIncidents}
     />
   );
-}
+}

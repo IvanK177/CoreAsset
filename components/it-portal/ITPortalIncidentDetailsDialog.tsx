@@ -18,9 +18,10 @@ interface RelatedEmployee {
   room: string | null;
 }
 
-interface RelatedComputer {
+interface RelatedDevice {
   inventory_number: string | null;
-  computer_type: string | null;
+  computer_type: string | null; // DB column name used as Subtype/Model name
+  device_type: string | null;
 }
 
 interface IncidentRow {
@@ -34,7 +35,7 @@ interface IncidentRow {
   resolved_at: string | null;
   assigned_to: string | null;
   employee: RelatedEmployee | RelatedEmployee[] | null;
-  computer: RelatedComputer | RelatedComputer[] | null;
+  device: RelatedDevice | RelatedDevice[] | null;
   assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
   photo_urls?: string[] | null;
   resolution?: string | null;
@@ -53,11 +54,13 @@ const incidentTypeLabels: Record<string, string> = {
   other: "Другое",
 };
 
-const computerTypeLabels: Record<string, string> = {
-  desktop: "PC",
-  laptop: "Laptop",
-  monoblock: "Monoblock",
-  server: "Server",
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
 };
 
 export function ITPortalIncidentDetailsDialog({
@@ -73,14 +76,15 @@ export function ITPortalIncidentDetailsDialog({
 
   // Safe extract relations
   const emp = extractJoinObject(incident.employee) as RelatedEmployee | null;
-  const comp = extractJoinObject(incident.computer) as RelatedComputer | null;
+  const device = extractJoinObject(incident.device) as RelatedDevice | null;
   const assignee = extractJoinObject(incident.assignee) as { full_name: string | null } | null;
 
   const employeeName = emp?.full_name ?? "Не указан";
   const employeeRoom = emp?.room ? `Каб. ${emp.room}` : null;
 
-  const computerInfo = comp?.inventory_number
-    ? `${comp.inventory_number} (${computerTypeLabels[comp.computer_type ?? ""] ?? comp.computer_type ?? "—"})`
+  const deviceTypeDisplay = device?.device_type ? deviceTypeRussianLabels[device.device_type] || "Устройство" : "Устройство";
+  const deviceInfo = device?.inventory_number
+    ? `[${deviceTypeDisplay}] ${device.computer_type ?? "—"} (${device.inventory_number})`
     : null;
 
   const resolvedBy = assignee?.full_name ?? "—";
@@ -159,8 +163,8 @@ export function ITPortalIncidentDetailsDialog({
               <span className="text-xs font-medium text-gray-400 block">Устройство / Оборудование</span>
               <div className="flex items-center gap-1.5 font-medium text-gray-700">
                 <Monitor className="w-4 h-4 text-indigo-500 shrink-0" />
-                <span className={computerInfo ? "font-mono" : "text-gray-400"}>
-                  {computerInfo ?? "Устройство не привязано"}
+                <span className={deviceInfo ? "font-medium" : "text-gray-400"}>
+                  {deviceInfo ?? "Устройство не привязано"}
                 </span>
               </div>
             </div>

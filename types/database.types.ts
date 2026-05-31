@@ -7,40 +7,69 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
-      computer_licenses: {
+      computer_templates: {
         Row: {
+          computer_type: string | null
+          created_at: string | null
+          description: string | null
+          hardware: Json | null
           id: string
-          computer_id: string
-          license_id: string
-          installed_at: string
+          name: string
         }
         Insert: {
+          computer_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          hardware?: Json | null
           id?: string
-          computer_id: string
-          license_id: string
-          installed_at?: string
+          name: string
         }
         Update: {
+          computer_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          hardware?: Json | null
           id?: string
-          computer_id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      device_licenses: {
+        Row: {
+          device_id: string
+          id: string
+          installed_at: string | null
+          license_id: string
+        }
+        Insert: {
+          device_id: string
+          id?: string
+          installed_at?: string | null
+          license_id: string
+        }
+        Update: {
+          device_id?: string
+          id?: string
+          installed_at?: string | null
           license_id?: string
-          installed_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "computer_licenses_computer_id_fkey"
-            columns: ["computer_id"]
+            foreignKeyName: "device_licenses_device_id_fkey"
+            columns: ["device_id"]
             isOneToOne: false
-            referencedRelation: "computers"
+            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "computer_licenses_license_id_fkey"
+            foreignKeyName: "device_licenses_license_id_fkey"
             columns: ["license_id"]
             isOneToOne: false
             referencedRelation: "licenses"
@@ -48,83 +77,65 @@ export type Database = {
           },
         ]
       }
-      computer_templates: {
-        Row: {
-          id: string
-          name: string
-          description: string | null
-          computer_type: string | null
-          hardware: Json | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          computer_type?: string | null
-          hardware?: Json | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          computer_type?: string | null
-          hardware?: Json | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      computers: {
+      devices: {
         Row: {
           computer_type: string | null
-          created_at: string
+          created_at: string | null
+          device_type: Database["public"]["Enums"]["device_type"]
           employee_id: string | null
           hardware: Json | null
           id: string
           inventory_number: string
-          lifecycle_status: Database["public"]["Enums"]["computer_status"]
+          lifecycle_status:
+            | Database["public"]["Enums"]["computer_status"]
+            | null
           room: string | null
           serial_number: string | null
           template_id: string | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           computer_type?: string | null
-          created_at?: string
+          created_at?: string | null
+          device_type?: Database["public"]["Enums"]["device_type"]
           employee_id?: string | null
           hardware?: Json | null
           id?: string
           inventory_number: string
-          lifecycle_status?: Database["public"]["Enums"]["computer_status"]
+          lifecycle_status?:
+            | Database["public"]["Enums"]["computer_status"]
+            | null
           room?: string | null
           serial_number?: string | null
           template_id?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           computer_type?: string | null
-          created_at?: string
+          created_at?: string | null
+          device_type?: Database["public"]["Enums"]["device_type"]
           employee_id?: string | null
           hardware?: Json | null
           id?: string
           inventory_number?: string
-          lifecycle_status?: Database["public"]["Enums"]["computer_status"]
+          lifecycle_status?:
+            | Database["public"]["Enums"]["computer_status"]
+            | null
           room?: string | null
           serial_number?: string | null
           template_id?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "computers_employee_id_fkey"
+            foreignKeyName: "devices_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "computers_template_id_fkey"
+            foreignKeyName: "devices_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "computer_templates"
@@ -134,104 +145,111 @@ export type Database = {
       }
       employees: {
         Row: {
-          created_at: string
-          email: string | null
+          building: string | null
+          created_at: string | null
+          email: string
           full_name: string
           id: string
-          is_active: boolean
+          is_active: boolean | null
           phone: string | null
-          position: string | null
-          room: string | null
+          position: string
           role: Database["public"]["Enums"]["user_role"]
+          room: string | null
           telegram: string | null
-          updated_at: string
-          building: string | null
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          email?: string | null
-          full_name: string
-          id?: string
-          is_active?: boolean
-          phone?: string | null
-          position?: string | null
-          room?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          telegram?: string | null
-          updated_at?: string
           building?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active?: boolean | null
+          phone?: string | null
+          position: string
+          role?: Database["public"]["Enums"]["user_role"]
+          room?: string | null
+          telegram?: string | null
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          email?: string | null
+          building?: string | null
+          created_at?: string | null
+          email?: string
           full_name?: string
           id?: string
-          is_active?: boolean
+          is_active?: boolean | null
           phone?: string | null
-          position?: string | null
-          room?: string | null
+          position?: string
           role?: Database["public"]["Enums"]["user_role"]
+          room?: string | null
           telegram?: string | null
-          updated_at?: string
-          building?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
       incidents: {
         Row: {
-          computer_id: string | null
-          created_at: string
-          description: string
-          employee_id: string | null
           assigned_to: string | null
+          created_at: string | null
+          description: string
+          device_id: string | null
+          employee_id: string | null
           id: string
-          incident_type: Database["public"]["Enums"]["incident_type"]
-          priority: Database["public"]["Enums"]["incident_priority"]
-          resolved_at: string | null
-          status: Database["public"]["Enums"]["incident_status"]
-          title: string | null
-          updated_at: string
+          incident_type: Database["public"]["Enums"]["incident_type"] | null
           photo_urls: string[] | null
+          priority: Database["public"]["Enums"]["incident_priority"] | null
           resolution: string | null
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["incident_status"] | null
+          title: string
+          updated_at: string | null
         }
         Insert: {
-          computer_id?: string | null
-          created_at?: string
-          description: string
-          employee_id?: string | null
           assigned_to?: string | null
+          created_at?: string | null
+          description: string
+          device_id?: string | null
+          employee_id?: string | null
           id?: string
-          incident_type?: Database["public"]["Enums"]["incident_type"]
-          priority?: Database["public"]["Enums"]["incident_priority"]
-          resolved_at?: string | null
-          status?: Database["public"]["Enums"]["incident_status"]
-          title?: string | null
-          updated_at?: string
+          incident_type?: Database["public"]["Enums"]["incident_type"] | null
           photo_urls?: string[] | null
+          priority?: Database["public"]["Enums"]["incident_priority"] | null
           resolution?: string | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["incident_status"] | null
+          title: string
+          updated_at?: string | null
         }
         Update: {
-          computer_id?: string | null
-          created_at?: string
-          description?: string
-          employee_id?: string | null
           assigned_to?: string | null
+          created_at?: string | null
+          description?: string
+          device_id?: string | null
+          employee_id?: string | null
           id?: string
-          incident_type?: Database["public"]["Enums"]["incident_type"]
-          priority?: Database["public"]["Enums"]["incident_priority"]
-          resolved_at?: string | null
-          status?: Database["public"]["Enums"]["incident_status"]
-          title?: string | null
-          updated_at?: string
+          incident_type?: Database["public"]["Enums"]["incident_type"] | null
           photo_urls?: string[] | null
+          priority?: Database["public"]["Enums"]["incident_priority"] | null
           resolution?: string | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["incident_status"] | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "incidents_computer_id_fkey"
-            columns: ["computer_id"]
+            foreignKeyName: "incidents_assigned_to_fkey"
+            columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "computers"
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
           {
@@ -241,22 +259,15 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "incidents_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
         ]
       }
       licenses: {
         Row: {
-          created_at: string
+          created_at: string | null
           expires_at: string | null
           id: string
           license_key: string | null
-          license_type: Database["public"]["Enums"]["license_type"]
+          license_type: Database["public"]["Enums"]["license_type"] | null
           notes: string | null
           price_per_unit: number | null
           software_name: string
@@ -266,11 +277,11 @@ export type Database = {
           version: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           expires_at?: string | null
           id?: string
           license_key?: string | null
-          license_type?: Database["public"]["Enums"]["license_type"]
+          license_type?: Database["public"]["Enums"]["license_type"] | null
           notes?: string | null
           price_per_unit?: number | null
           software_name: string
@@ -280,11 +291,11 @@ export type Database = {
           version?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           expires_at?: string | null
           id?: string
           license_key?: string | null
-          license_type?: Database["public"]["Enums"]["license_type"]
+          license_type?: Database["public"]["Enums"]["license_type"] | null
           notes?: string | null
           price_per_unit?: number | null
           software_name?: string
@@ -297,31 +308,31 @@ export type Database = {
       }
       room_requests: {
         Row: {
-          id: string
-          room: string
-          type: string
-          description: string
-          status: string
           author_id: string
           created_at: string
+          description: string
+          id: string
+          room: string
+          status: string
+          type: string
         }
         Insert: {
-          id?: string
-          room: string
-          type: string
-          description: string
-          status?: string
           author_id: string
           created_at?: string
+          description: string
+          id?: string
+          room: string
+          status?: string
+          type: string
         }
         Update: {
-          id?: string
-          room?: string
-          type?: string
-          description?: string
-          status?: string
           author_id?: string
           created_at?: string
+          description?: string
+          id?: string
+          room?: string
+          status?: string
+          type?: string
         }
         Relationships: [
           {
@@ -330,7 +341,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
     }
@@ -338,10 +349,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_role_security_definer: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_user_role: { Args: never; Returns: string }
+      is_it_specialist: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
       computer_status: "active" | "repair" | "decommissioned" | "storage"
+      device_type: "pc" | "monitor" | "keyboard" | "mouse" | "printer" | "other"
       incident_priority: "low" | "medium" | "high" | "critical"
       incident_status: "open" | "in_progress" | "resolved" | "cancelled"
       incident_type: "hardware" | "software" | "network" | "other"
@@ -355,6 +372,7 @@ export type Database = {
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
@@ -453,10 +471,28 @@ export type Enums<
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
 export const Constants = {
   public: {
     Enums: {
       computer_status: ["active", "repair", "decommissioned", "storage"],
+      device_type: ["pc", "monitor", "keyboard", "mouse", "printer", "other"],
       incident_priority: ["low", "medium", "high", "critical"],
       incident_status: ["open", "in_progress", "resolved", "cancelled"],
       incident_type: ["hardware", "software", "network", "other"],

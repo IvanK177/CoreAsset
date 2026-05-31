@@ -71,7 +71,7 @@ export async function resolveIncident(incidentId: string, resolution: string) {
     .update({
       status: "resolved",
       description: compressedDescription,
-      title: title || null,
+      title: title || "",
       resolution: resolution.trim() || null,
       resolved_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

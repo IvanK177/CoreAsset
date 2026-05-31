@@ -27,10 +27,10 @@ interface LicenseRow {
 
 interface InstallationRow {
   id: string;
-  computer_id: string;
+  device_id: string;
   license_id: string;
   installed_at: string;
-  computers: unknown;
+  devices: unknown;
 }
 
 interface LicensesClientViewProps {
@@ -82,11 +82,11 @@ export function LicensesClientView({
     const rawInst = installations.filter((i) => i.license_id === licenseId);
     if (buildingFilter === "all") return rawInst;
     return rawInst.filter((inst) => {
-      const comp = extractJoinObject(inst.computers) as {
+      const dev = extractJoinObject(inst.devices) as {
         inventory_number: string | null;
         employees: { building: string | null } | { building: string | null }[] | null;
       } | null;
-      const emp = comp ? extractJoinObject(comp.employees) : null;
+      const emp = dev ? extractJoinObject(dev.employees) : null;
       return emp && emp.building === buildingFilter;
     });
   };
@@ -94,11 +94,11 @@ export function LicensesClientView({
   const filteredExpiring = expiringLicenses.filter((lic) => {
     if (buildingFilter === "all") return true;
     const licInstalls = installations.filter(i => i.license_id === lic.id).filter((inst) => {
-      const comp = extractJoinObject(inst.computers) as {
+      const dev = extractJoinObject(inst.devices) as {
         inventory_number: string | null;
         employees: { building: string | null } | { building: string | null }[] | null;
       } | null;
-      const emp = comp ? extractJoinObject(comp.employees) : null;
+      const emp = dev ? extractJoinObject(dev.employees) : null;
       return emp && emp.building === buildingFilter;
     });
     return licInstalls.length > 0;
@@ -273,10 +273,10 @@ export function LicensesClientView({
                               {licInstalls.length > 0 ? (
                                 <div className="flex items-center gap-2 flex-wrap">
                                   {licInstalls.map((inst) => {
-                                    const computer = (Array.isArray(inst.computers) ? inst.computers[0] : inst.computers) as { inventory_number: string } | null;
+                                    const device = (Array.isArray(inst.devices) ? inst.devices[0] : inst.devices) as { inventory_number: string } | null;
                                     return (
                                       <Badge key={inst.id} variant="outline" className="text-xs bg-white border-gray-200 text-gray-700">
-                                        {computer?.inventory_number ?? "—"} с {formatDate(inst.installed_at)}
+                                        {device?.inventory_number ?? "—"} с {formatDate(inst.installed_at)}
                                       </Badge>
                                     );
                                   })}

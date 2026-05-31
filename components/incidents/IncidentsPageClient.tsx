@@ -15,7 +15,7 @@ const AddIncidentDialog = dynamic(
 );
 import type { Tables } from "@/types/database.types";
 
-type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
+type Device = Pick<Tables<"devices">, "id" | "inventory_number" | "device_type" | "computer_type">;
 type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
 type IncidentStatus = "open" | "in_progress" | "resolved" | "cancelled";
@@ -29,8 +29,8 @@ interface IncidentRow {
   status: IncidentStatus;
   created_at: string;
   incident_type: string;
-  computer_id: string | null;
-  computer: { id: string; inventory_number: string } | null;
+  device_id: string | null;
+  device: { id: string; inventory_number: string; device_type: string; computer_type: string | null } | null;
   employee: { id: string; full_name: string; position: string | null; room: string | null; building: string | null } | null;
   assignee?: { id: string; full_name: string | null } | null;
 }
@@ -53,7 +53,7 @@ interface IncidentsPageClientProps {
   inProgressCount: number;
   resolvedCount: number;
   cancelledCount: number;
-  computers: Computer[];
+  devices: Device[];
   employees: Employee[];
   initialSelectedId?: string | null;
 }
@@ -65,7 +65,7 @@ export function IncidentsPageClient({
   inProgressCount,
   resolvedCount,
   cancelledCount,
-  computers,
+  devices,
   employees,
   initialSelectedId,
 }: IncidentsPageClientProps) {
@@ -129,7 +129,7 @@ export function IncidentsPageClient({
       <AddIncidentDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        computers={computers}
+        devices={devices}
         employees={employees}
       />
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
 import { cn, extractJoinObject, BUILDING_ADDRESSES } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,10 @@ interface RelatedEmployee {
   building: string | null;
 }
 
-interface RelatedComputer {
+interface RelatedDevice {
   inventory_number: string | null;
-  computer_type: string | null;
+  computer_type: string | null; // DB column name used as Subtype/Model name
+  device_type: string | null;
 }
 
 interface IncidentRow {
@@ -38,7 +39,7 @@ interface IncidentRow {
   resolved_at: string | null;
   assigned_to: string | null;
   employee: RelatedEmployee | RelatedEmployee[] | null;
-  computer: RelatedComputer | RelatedComputer[] | null;
+  device: RelatedDevice | RelatedDevice[] | null;
   assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
   photo_urls?: string[] | null;
   resolution?: string | null;
@@ -59,11 +60,31 @@ const incidentTypeLabels: Record<string, string> = {
   other: "Другое",
 };
 
-const computerTypeLabels: Record<string, string> = {
-  desktop: "PC",
-  laptop: "Laptop",
-  monoblock: "Monoblock",
-  server: "Server",
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
+};
+
+const deviceTypeEmojis: Record<string, string> = {
+  pc: "💻",
+  monitor: "🖥️",
+  keyboard: "⌨️",
+  mouse: "🖱️",
+  printer: "🖨️",
+  other: "🔌",
+};
+
+const deviceIconMap: Record<string, any> = {
+  pc: Cpu,
+  monitor: Monitor,
+  keyboard: Keyboard,
+  mouse: Mouse,
+  printer: Printer,
+  other: HelpCircle,
 };
 
 function formatDate(dateStr: string): string {
@@ -95,12 +116,12 @@ function getEmployeeName(incident: IncidentRow): string {
   return `${emp.full_name}${emp.room ? ` (Каб. ${emp.room})` : ""}`;
 }
 
-function getComputerInfo(incident: IncidentRow): string {
-  if (!incident.computer) return "";
-  const comp = Array.isArray(incident.computer) ? incident.computer[0] : incident.computer;
-  if (!comp?.inventory_number) return "";
-  const typeLabel = computerTypeLabels[comp.computer_type ?? ""] ?? comp.computer_type ?? "";
-  return `${comp.inventory_number}${typeLabel ? ` (${typeLabel})` : ""}`;
+function getDeviceInfo(incident: IncidentRow): string {
+  if (!incident.device) return "";
+  const dev = Array.isArray(incident.device) ? incident.device[0] : incident.device;
+  if (!dev?.inventory_number) return "";
+  const typeLabel = deviceTypeRussianLabels[dev.device_type ?? ""] || "Устройство";
+  return `${dev.inventory_number} [${typeLabel}] (${dev.computer_type ?? "—"})`;
 }
 
 /* ── Component ── */
@@ -150,8 +171,9 @@ export default function ITPortalClientView({
     e.preventDefault();
     if (!resolvingIncidentId) return;
 
-    setPendingId(resolvingIncidentId);
     setResolveDialogOpen(false);
+    setPendingId(resolvingIncidentId);
+
     startTransition(async () => {
       await resolveIncident(resolvingIncidentId, resolutionText);
       setPendingId(null);
@@ -160,41 +182,48 @@ export default function ITPortalClientView({
     });
   };
 
-  const filteredByBuilding = incidents.filter((i) => {
-    if (buildingFilter === "all") return true;
-    const emp = Array.isArray(i.employee) ? i.employee[0] : i.employee;
-    return emp && emp.building === buildingFilter;
-  });
-
-  const openCountVal = isMyTasks ? 0 : isArchive ? 0 : filteredByBuilding.filter(i => i.status === "open").length;
-  const inProgressCountVal = isArchive ? 0 : filteredByBuilding.filter(i => i.status === "in_progress").length;
-  const resolvedCountVal = isMyTasks
-    ? filteredByBuilding.filter(i => i.status === "resolved").length
-    : isArchive
-      ? filteredByBuilding.length
-      : filteredByBuilding.filter(i => i.status === "resolved").length;
-
-  const displayIncidents = filteredByBuilding.filter((i) => {
-    if (isArchive) {
-      return i.status === "resolved";
+  // Filter display list
+  const displayIncidents = incidents.filter((inc) => {
+    // 1. Path filters
+    if (isMyTasks) {
+      if (inc.status !== "in_progress" || inc.assigned_to !== specialistId) return false;
+    } else if (isArchive) {
+      if (inc.status !== "resolved" && inc.status !== "cancelled") return false;
+    } else {
+      // Default (All open/in_progress)
+      if (inc.status !== "open" && inc.status !== "in_progress") return false;
     }
-    return i.status !== "resolved";
+
+    // 2. Building filter
+    if (buildingFilter !== "all") {
+      const emp = Array.isArray(inc.employee) ? inc.employee[0] : inc.employee;
+      if (emp?.building !== buildingFilter) return false;
+    }
+
+    return true;
   });
+
+  // Calculate stats values
+  const openCountVal = incidents.filter((i) => i.status === "open").length;
+  const inProgressCountVal = incidents.filter((i) => i.status === "in_progress").length;
+  const resolvedCountVal = incidents.filter((i) => i.status === "resolved").length;
 
   if (selectedIncident) {
-    // Master-Detail mode
     return (
-      <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Left: Compact list */}
-          <div className="hidden lg:block lg:w-1/3 space-y-2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] pr-1 custom-scrollbar">
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left: Quick navigation list */}
+          <div className="w-full lg:w-1/3 space-y-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100/50 max-h-[600px] overflow-y-auto">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">Заявки в списке</h3>
             {displayIncidents.map((inc) => (
               <button
                 key={inc.id}
                 onClick={() => setSelectedIncident(inc)}
                 className={cn(
-                  "w-full p-3 rounded-lg text-left transition-colors cursor-pointer",
-                  inc.id === selectedIncident.id ? "bg-white shadow-sm" : "bg-gray-105 hover:bg-gray-200"
+                  "w-full text-left p-3 rounded-xl border transition-all duration-150 flex flex-col gap-1 cursor-pointer bg-white",
+                  selectedIncident.id === inc.id
+                    ? "border-blue-400 bg-blue-50/10 shadow-sm"
+                    : "border-gray-100 hover:border-gray-300"
                 )}
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -203,8 +232,8 @@ export default function ITPortalClientView({
                   <IncidentStatusBadge status={inc.status as "open" | "in_progress" | "resolved" | "cancelled"} />
                 </div>
                 <p className="text-sm font-medium text-gray-900 truncate">{getIncidentTitle(inc)}</p>
-                <p className="text-xs text-gray-505 flex items-center gap-1.5 flex-wrap mt-0.5">
-                  <span>{getComputerInfo(inc) || "—"}</span>
+                <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mt-0.5">
+                  <span>{getDeviceInfo(inc) || "—"}</span>
                 </p>
               </button>
             ))}
@@ -215,6 +244,17 @@ export default function ITPortalClientView({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">{getIncidentNumber(selectedIncident)}</span>
+                {(() => {
+                  const dev = Array.isArray(selectedIncident.device) ? selectedIncident.device[0] : selectedIncident.device;
+                  if (!dev?.device_type) return null;
+                  const typeLabel = deviceTypeRussianLabels[dev.device_type] || "Устройство";
+                  const emoji = deviceTypeEmojis[dev.device_type] || "🔌";
+                  return (
+                    <Badge variant="outline" className="text-xs font-semibold bg-slate-50 text-slate-700 border-slate-200">
+                      {emoji} {typeLabel}
+                    </Badge>
+                  );
+                })()}
                 <PriorityBadge priority={selectedIncident.priority as "low" | "medium" | "high" | "critical"} />
                 <IncidentStatusBadge status={selectedIncident.status as "open" | "in_progress" | "resolved" | "cancelled"} />
               </div>
@@ -254,7 +294,7 @@ export default function ITPortalClientView({
                 <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Устройство</h4>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-gray-800">{getComputerInfo(selectedIncident) || "Нет привязанного устройства"}</p>
+                    <p className="text-sm font-semibold text-gray-800">{getDeviceInfo(selectedIncident) || "Нет привязанного устройства"}</p>
                   </div>
                 </div>
               </div>
@@ -407,25 +447,25 @@ export default function ITPortalClientView({
 
                         {/* Title + meta */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
                             <span className="text-xs font-medium text-gray-400">
                               {getIncidentNumber(incident)}
                             </span>
-                            <span className="font-medium text-sm text-gray-900 truncate">
+                            <span className="font-semibold text-sm text-gray-900 truncate">
                               {getIncidentTitle(incident)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <div className="flex items-center gap-3 text-xs text-gray-550 flex-wrap">
                             {/* Author */}
                             <span className="flex items-center gap-1">
                               <User className="w-3 h-3 text-gray-400" />
                               {getEmployeeName(incident)}
                             </span>
-                            {/* Computer */}
-                            {getComputerInfo(incident) && (
-                              <span className="flex items-center gap-1">
+                            {/* Device */}
+                            {getDeviceInfo(incident) && (
+                              <span className="flex items-center gap-1 font-mono">
                                 <Monitor className="w-3 h-3 text-gray-400" />
-                                {getComputerInfo(incident)}
+                                {getDeviceInfo(incident)}
                               </span>
                             )}
                             {/* Type */}
@@ -440,6 +480,17 @@ export default function ITPortalClientView({
 
                         {/* Badges */}
                         <div className="flex items-center gap-2 shrink-0">
+                          {(() => {
+                            const dev = Array.isArray(incident.device) ? incident.device[0] : incident.device;
+                            if (!dev?.device_type) return null;
+                            const typeLabel = deviceTypeRussianLabels[dev.device_type] || "Устройство";
+                            const emoji = deviceTypeEmojis[dev.device_type] || "🔌";
+                            return (
+                              <Badge variant="outline" className="text-xs font-semibold bg-slate-50 text-slate-700 border-slate-200">
+                                {emoji} {typeLabel}
+                              </Badge>
+                            );
+                          })()}
                           <PriorityBadge priority={incident.priority as "low" | "medium" | "high" | "critical"} />
                           <IncidentStatusBadge status={incident.status as "open" | "in_progress" | "resolved" | "cancelled"} />
                           {isInProgress && incident.assigned_to && (
@@ -513,7 +564,7 @@ export default function ITPortalClientView({
                 <Clock className="w-4 h-4 text-blue-600" />
                 Сроки решения
               </h3>
-              <p className="text-xs text-gray-505 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
+              <p className="text-xs text-gray-550 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
             </div>
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-red-50/70 border border-red-100/50">
@@ -549,44 +600,27 @@ export default function ITPortalClientView({
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">Завершение заявки</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Опишите, какие действия были предприняты для решения проблемы
+              Укажите, какие действия были предприняты для решения проблемы
             </DialogDescription>
           </DialogHeader>
-
           <form onSubmit={handleResolveSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="resolution-text" className="text-sm font-medium">
-                Что было сделано *
-              </Label>
+              <Label htmlFor="resolution-text">Описание решения *</Label>
               <Textarea
                 id="resolution-text"
-                placeholder="Например: переподключил кабель питания монитора, заменил неисправный патч-корд..."
+                placeholder="Например: Заменили кабель питания монитора, проверили работоспособность."
                 value={resolutionText}
                 onChange={(e) => setResolutionText(e.target.value)}
-                rows={4}
-                className="rounded-lg border-gray-200 resize-none"
                 required
+                rows={4}
               />
             </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 h-10 rounded-lg border-gray-200 text-gray-700"
-                onClick={() => {
-                  setResolveDialogOpen(false);
-                  setResolvingIncidentId(null);
-                  setResolutionText("");
-                }}
-              >
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="outline" onClick={() => setResolveDialogOpen(false)}>
                 Отмена
               </Button>
-              <Button
-                type="submit"
-                className="flex-1 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium cursor-pointer"
-              >
-                Подтвердить решение
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                Завершить
               </Button>
             </div>
           </form>

@@ -8,14 +8,14 @@ import NewIncidentClient from "./NewIncidentClient";
 export default async function NewIncidentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ computer_id?: string }>;
+  searchParams: Promise<{ device_id?: string }>;
 }) {
-  const { computer_id } = await searchParams;
+  const { device_id } = await searchParams;
   const supabase = createServiceClient();
-  const [{ data: computers }, { data: employees }] = await Promise.all([
+  const [{ data: devices }, { data: employees }] = await Promise.all([
     supabase
-      .from("computers")
-      .select("id, inventory_number")
+      .from("devices")
+      .select("id, inventory_number, device_type, computer_type")
       .order("inventory_number"),
     supabase
       .from("employees")
@@ -27,7 +27,7 @@ export default async function NewIncidentPage({
   return (
     <div>
       <PageHeader title="Создать тикет" />
-      <NewIncidentClient computers={computers ?? []} employees={employees ?? []} defaultComputerId={computer_id} />
+      <NewIncidentClient devices={devices ?? []} employees={employees ?? []} defaultDeviceId={device_id} />
     </div>
   );
 }

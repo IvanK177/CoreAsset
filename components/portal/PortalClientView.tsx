@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Monitor, Plus, AlertTriangle, CheckCircle2, Cpu, HardDrive, MemoryStick, Laptop, Wrench } from "lucide-react";
+import { Monitor, Plus, AlertTriangle, CheckCircle2, Cpu, HardDrive, MemoryStick, Laptop, Wrench, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
 import { cn, extractJoinObject } from "@/lib/utils";
-import { ComputerStatusBadge, IncidentStatusBadge } from "@/components/shared/StatusBadge";
+import { ComputerStatusBadge as DeviceStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { Badge } from "@/components/ui/badge";
 import { NewTicketDialog } from "@/components/portal/NewTicketDialog";
@@ -18,20 +18,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-interface ComputerData {
+interface DeviceData {
   id: string;
   inventory_number: string;
-  computer_type: string | null;
+  computer_type: string | null; // DB column name used as Subtype/Model name
   lifecycle_status: string;
   room: string | null;
   hardware: unknown;
   employee_id: string | null;
-}
-
-interface ComputerOption {
-  id: string;
-  inventory_number: string;
-  computer_type: string | null;
+  device_type: string;
 }
 
 interface IncidentData {
@@ -42,19 +37,23 @@ interface IncidentData {
   status: string;
   incident_type: string;
   created_at: string;
-  computer_id: string | null;
-  computer?: {
+  device_id: string | null;
+  device?: {
     inventory_number: string | null;
     computer_type: string | null;
+    device_type: string | null;
   } | {
     inventory_number: string | null;
     computer_type: string | null;
+    device_type: string | null;
   }[] | null;
   assignee?: {
     full_name: string | null;
   } | {
     full_name: string | null;
   }[] | null;
+  photo_urls?: string[] | null;
+  resolution?: string | null;
 }
 
 interface RoomRequestData {
@@ -70,19 +69,29 @@ interface PortalClientViewProps {
   employeeId: string;
   employeeName: string;
   employeePosition: string;
-  computers: ComputerData[];
-  allComputers: ComputerOption[];
+  devices: DeviceData[];
   incidents: IncidentData[];
   roomRequests: RoomRequestData[];
   openIncidents: number;
   resolvedIncidents: number;
 }
 
-const computerTypeLabels: Record<string, string> = {
-  desktop: "PC",
-  laptop: "Laptop",
-  monoblock: "Monoblock",
-  server: "Server",
+const deviceIconMap: Record<string, any> = {
+  pc: Cpu,
+  monitor: Monitor,
+  keyboard: Keyboard,
+  mouse: Mouse,
+  printer: Printer,
+  other: HelpCircle,
+};
+
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
 };
 
 const statusLabels: Record<string, string> = {
@@ -126,8 +135,7 @@ function getIncidentNumber(incident: IncidentData): string {
 export default function PortalClientView({
   employeeId,
   employeeName,
-  computers,
-  allComputers,
+  devices,
   incidents,
   roomRequests,
   openIncidents,
@@ -162,7 +170,7 @@ export default function PortalClientView({
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-2">Привет, {firstName}!</h1>
             <p className="text-blue-100 text-sm mb-4">
-              Есть проблема с компьютером или кабинетом? Создайте заявку и мы разберёмся.
+              Есть проблема с устройством или кабинетом? Создайте заявку и мы разберёмся.
             </p>
             <button
               onClick={() => setTypeChoiceOpen(true)}
@@ -184,20 +192,22 @@ export default function PortalClientView({
         </div>
       </div>
 
-      {/* ===== Block 2: My Workplaces ===== */}
+      {/* ===== Block 2: My Devices ===== */}
       <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Мои рабочие места ({computers.length})
+          Мои устройства ({devices.length})
         </h2>
 
-        {computers.length === 0 ? (
+        {devices.length === 0 ? (
           <p className="text-sm text-gray-500 py-4 text-center">
-            Нет привязанных компьютеров
+            Нет привязанных устройств
           </p>
         ) : (
           <div className="max-h-[220px] overflow-y-auto pr-1 custom-scrollbar space-y-3">
-            {computers.map((comp) => {
+            {devices.map((comp) => {
               const hw = (comp.hardware as Record<string, string> | null) ?? null;
+              const IconComponent = deviceIconMap[comp.device_type] || Laptop;
+              const typeLabel = deviceTypeRussianLabels[comp.device_type] || "Устройство";
               return (
                 <div
                   key={comp.id}
@@ -205,23 +215,24 @@ export default function PortalClientView({
                 >
                   {/* Icon */}
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100 shrink-0">
-                    <Monitor className="w-5 h-5 text-blue-600" />
+                    <IconComponent className="w-5 h-5 text-blue-600" />
                   </div>
 
                   {/* Main info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-semibold text-gray-900 text-sm">
                         {comp.inventory_number}
                       </span>
-                      <ComputerStatusBadge status={comp.lifecycle_status as "active" | "repair" | "decommissioned" | "storage"} />
+                      <DeviceStatusBadge status={comp.lifecycle_status as any} />
                       <span className="text-xs text-gray-500">
-                        {computerTypeLabels[comp.computer_type ?? ""] ?? comp.computer_type ?? "—"}
+                        [{typeLabel}] {comp.computer_type ?? "—"}
                         {comp.room && ` · каб. ${comp.room}`}
                       </span>
                     </div>
-                    {/* Hardware specs */}
-                    {hw && (
+
+                    {/* Specifications */}
+                    {comp.device_type === "pc" && hw && (
                       <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
                         {hw.cpu && (
                           <span className="flex items-center gap-1">
@@ -239,6 +250,22 @@ export default function PortalClientView({
                           <span className="flex items-center gap-1">
                             <HardDrive className="w-3 h-3" />
                             {hw.storage}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {comp.device_type === "monitor" && hw && (
+                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                        {hw.diagonal && (
+                          <span className="flex items-center gap-1">
+                            <Monitor className="w-3 h-3" />
+                            {hw.diagonal}
+                          </span>
+                        )}
+                        {hw.resolution && (
+                          <span className="flex items-center gap-1 font-mono">
+                            {hw.resolution}
                           </span>
                         )}
                       </div>
@@ -263,7 +290,7 @@ export default function PortalClientView({
               onClick={() => setPortalTab("active")}
               className={cn(
                 "px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
-                portalTab === "active" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-750"
+                portalTab === "active" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
               )}
             >
               Активные ({activeItems.length})
@@ -272,7 +299,7 @@ export default function PortalClientView({
               onClick={() => setPortalTab("archive")}
               className={cn(
                 "px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
-                portalTab === "archive" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-750"
+                portalTab === "archive" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
               )}
             >
               Архив ({archivedItems.length})
@@ -319,13 +346,33 @@ export default function PortalClientView({
 
                   {/* Request info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-mono text-gray-400">
                         {isIT ? getIncidentNumber(item as IncidentData) : `#R${item.id.substring(0, 4).toUpperCase()}`}
                       </span>
                       <span className="font-semibold text-sm text-gray-900 truncate">
                         {isIT ? getIncidentTitle(item as IncidentData) : `Заявка АХО: каб. ${item.room}`}
                       </span>
+                      {isIT && (() => {
+                        const deviceObj = extractJoinObject((item as IncidentData).device) as { device_type: string | null } | null;
+                        const deviceType = deviceObj?.device_type;
+                        if (!deviceType) return null;
+                        const emojiMap: Record<string, string> = {
+                          pc: "💻",
+                          monitor: "🖥️",
+                          keyboard: "⌨️",
+                          mouse: "🖱️",
+                          printer: "🖨️",
+                          other: "🔌",
+                        };
+                        const typeLabel = deviceTypeRussianLabels[deviceType] || "Устройство";
+                        return (
+                          <span className="text-[11px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded flex items-center gap-1 font-medium select-none border border-blue-100 shrink-0">
+                            <span>{emojiMap[deviceType] || "🔌"}</span>
+                            <span>{typeLabel}</span>
+                          </span>
+                        );
+                      })()}
                     </div>
                     <div className="text-xs text-gray-400 mt-1 flex items-center gap-1.5 flex-wrap">
                       <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
@@ -371,7 +418,7 @@ export default function PortalClientView({
         open={ticketDialogOpen}
         onOpenChange={setTicketDialogOpen}
         employeeId={employeeId}
-        computers={allComputers}
+        devices={devices}
       />
 
       {/* ===== New Room Request Dialog ===== */}
@@ -379,7 +426,7 @@ export default function PortalClientView({
         open={roomRequestDialogOpen}
         onOpenChange={setRoomRequestDialogOpen}
         employeeId={employeeId}
-        defaultRoom={computers[0]?.room ?? ""}
+        defaultRoom={devices[0]?.room ?? ""}
       />
 
       {/* ===== Request Type Choice Dialog ===== */}

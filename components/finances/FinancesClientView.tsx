@@ -19,10 +19,10 @@ interface LicenseRow {
 
 interface InstallationRow {
   id: string;
-  computer_id: string;
+  device_id: string;
   license_id: string;
   installed_at: string;
-  computers: unknown;
+  devices: unknown;
 }
 
 interface FinancesClientViewProps {
@@ -87,11 +87,11 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
     const licInstalls = installations.filter((inst) => {
       if (inst.license_id !== l.id) return false;
       if (buildingFilter === "all") return true;
-      const comp = extractJoinObject(inst.computers) as {
+      const dev = extractJoinObject(inst.devices) as {
         inventory_number: string | null;
         employees: { building: string | null } | { building: string | null }[] | null;
       } | null;
-      const emp = comp ? extractJoinObject(comp.employees) : null;
+      const emp = dev ? extractJoinObject(dev.employees) : null;
       return emp && emp.building === buildingFilter;
     });
 

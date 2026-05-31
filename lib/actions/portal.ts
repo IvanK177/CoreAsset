@@ -10,7 +10,7 @@ export async function createPortalIncident(formData: FormData) {
 
   const title = formData.get("title") as string;
   const description = formData.get("description") as string | null;
-  const computerId = formData.get("computer_id") as string | null;
+  const deviceId = formData.get("device_id") as string | null;
   const employeeId = formData.get("employee_id") as string;
   const priority = formData.get("priority") as string;
   const createdAt = formData.get("created_at") as string | null;
@@ -19,9 +19,9 @@ export async function createPortalIncident(formData: FormData) {
   const photoUrls = photoUrlsRaw ? JSON.parse(photoUrlsRaw) : [];
 
   const insertData = {
-    title: title || null,
+    title: title || "",
     description: description || title,
-    computer_id: computerId || null,
+    device_id: deviceId || null,
     employee_id: employeeId,
     incident_type: "other" as const,
     priority: priority as "low" | "medium" | "high" | "critical",
@@ -106,7 +106,7 @@ export async function cancelPortalIncident(id: string) {
     .update({
       status: "cancelled",
       description: compressedDescription,
-      title: title || null,
+      title: title,
       updated_at: new Date().toISOString()
     })
     .eq("id", id);
@@ -204,8 +204,8 @@ export async function updateEmployeeProfile(employeeId: string, formData: FormDa
     .from("employees")
     .update({
       full_name: fullName.trim(),
-      email: email ? email.trim() : null,
-      position: position ? position.trim() : null,
+      email: email ? email.trim() : undefined,
+      position: position ? position.trim() : undefined,
       phone: phone ? phone.trim() : null,
       telegram: telegram ? telegram.trim() : null,
       room: room ? room.trim() : null,

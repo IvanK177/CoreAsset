@@ -29,7 +29,7 @@ import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
 import type { Tables } from "@/types/database.types";
 
-type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
+type Device = Pick<Tables<"devices">, "id" | "inventory_number">;
 type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
 const getLocalDateTimeString = (date: Date = new Date()) => {
@@ -41,7 +41,7 @@ const incidentDialogSchema = z.object({
   title: z.string().min(1, "Обязательное поле"),
   description: z.string().optional().or(z.literal("")),
   priority: z.enum(["low", "medium", "high", "critical"]),
-  computer_id: z.string().optional().or(z.literal("")),
+  device_id: z.string().optional().or(z.literal("")),
   employee_id: z.string().optional().or(z.literal("")),
   created_at: z.string().optional().or(z.literal("")),
 });
@@ -58,13 +58,13 @@ const PRIORITY_ITEMS: Record<string, React.ReactNode> = {
 interface AddIncidentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  computers: Computer[];
+  devices: Device[];
   employees: Employee[];
-  defaultComputerId?: string;
+  defaultDeviceId?: string;
   defaultEmployeeId?: string;
 }
 
-export function AddIncidentDialog({ open, onOpenChange, computers, employees, defaultComputerId, defaultEmployeeId }: AddIncidentDialogProps) {
+export function AddIncidentDialog({ open, onOpenChange, devices, employees, defaultDeviceId, defaultEmployeeId }: AddIncidentDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -76,7 +76,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
       title: "",
       description: "",
       priority: "medium",
-      computer_id: defaultComputerId ?? "",
+      device_id: defaultDeviceId ?? "",
       employee_id: defaultEmployeeId ?? "",
       created_at: getLocalDateTimeString(),
     },
@@ -95,7 +95,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
     formData.set("description", data.description || data.title);
     formData.set("priority", data.priority);
     formData.set("incident_type", "other");
-    if (data.computer_id) formData.set("computer_id", data.computer_id);
+    if (data.device_id) formData.set("device_id", data.device_id);
     if (data.employee_id) formData.set("employee_id", data.employee_id);
     if (data.created_at) formData.set("created_at", data.created_at);
 
@@ -120,7 +120,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
       title: "",
       description: "",
       priority: "medium",
-      computer_id: defaultComputerId ?? "",
+      device_id: defaultDeviceId ?? "",
       employee_id: defaultEmployeeId ?? "",
       created_at: getLocalDateTimeString(),
     });
@@ -136,7 +136,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
         title: "",
         description: "",
         priority: "medium",
-        computer_id: defaultComputerId ?? "",
+        device_id: defaultDeviceId ?? "",
         employee_id: defaultEmployeeId ?? "",
         created_at: getLocalDateTimeString(),
       });
@@ -185,7 +185,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
             />
           </div>
 
-          {/* Priority, Computer, Employee — 2 columns */}
+          {/* Priority, Device, Employee — 2 columns */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Приоритет</Label>
@@ -206,22 +206,22 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Компьютер</Label>
+              <Label>Устройство</Label>
               <Select
-                value={form.watch("computer_id")}
-                onValueChange={(v) => form.setValue("computer_id", v ?? "")}
+                value={form.watch("device_id")}
+                onValueChange={(v) => form.setValue("device_id", v ?? "")}
                 items={Object.fromEntries([
-                  ["", "-- Не указан --"],
-                  ...computers.map((c) => [c.id, c.inventory_number]),
+                  ["", "-- Не указано --"],
+                  ...devices.map((d) => [d.id, d.inventory_number]),
                 ])}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="-- Не указан --" />
+                  <SelectValue placeholder="-- Не указано --" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">-- Не указан --</SelectItem>
-                  {computers.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.inventory_number}</SelectItem>
+                  <SelectItem value="">-- Не указано --</SelectItem>
+                  {devices.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.inventory_number}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -268,7 +268,7 @@ export function AddIncidentDialog({ open, onOpenChange, computers, employees, de
             <Button
               type="button"
               variant="outline"
-              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", computer_id: defaultComputerId ?? "", employee_id: defaultEmployeeId ?? "", created_at: getLocalDateTimeString() }); }}
+              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", device_id: defaultDeviceId ?? "", employee_id: defaultEmployeeId ?? "", created_at: getLocalDateTimeString() }); }}
               disabled={pending}
             >
               Отмена

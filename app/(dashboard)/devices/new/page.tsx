@@ -1,12 +1,12 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import ComputerForm from "@/components/computers/ComputerForm";
+import DeviceForm from "@/components/devices/DeviceForm";
 import PageHeader from "@/components/layout/PageHeader";
-import { createComputer } from "@/lib/actions/computers";
+import { createDevice } from "@/lib/actions/devices";
 import { createServiceClient } from "@/lib/supabase/server";
 
-export default async function NewComputerPage() {
+export default async function NewDevicePage() {
   const supabase = createServiceClient();
   const { data: templates } = await supabase
     .from("computer_templates")
@@ -15,8 +15,8 @@ export default async function NewComputerPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Добавить компьютер" />
-      <ComputerForm action={createComputer} templates={templates ?? []} />
+      <PageHeader title="Добавить устройство" />
+      <DeviceForm action={createDevice} templates={templates ?? []} />
     </div>
   );
 }

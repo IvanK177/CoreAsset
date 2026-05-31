@@ -9,7 +9,7 @@ import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { cn, formatDateTime, BUILDING_ADDRESSES } from "@/lib/utils";
 import { restoreEmployeeDialog, dismissEmployeeDialog, deleteEmployeeDialog } from "@/lib/actions/employees";
 import { clearCache } from "@/lib/actions/revalidate";
-import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Loader2, Edit, Building } from "lucide-react";
+import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Loader2, Edit, Building, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,19 +30,20 @@ const statusFilterLabels: Record<EmployeeStatusFilter, string> = {
   dismissed: "Уволенные",
 };
 
-interface ComputerRow {
+interface DeviceRow {
   id: string;
   inventory_number: string;
-  computer_type: string | null;
+  computer_type: string | null; // DB column name used as Subtype/Model name
   lifecycle_status: string;
   employee_id: string | null;
   room: string | null;
+  device_type: string;
 }
 
 interface IncidentRow {
   id: string;
   title: string | null;
-  computer_id: string | null;
+  device_id: string | null;
   employee_id: string | null;
   description: string;
   priority: string;
@@ -52,15 +53,33 @@ interface IncidentRow {
 
 interface EmployeesClientViewProps {
   employees: Employee[];
-  computers: ComputerRow[];
+  devices: DeviceRow[];
   incidents: IncidentRow[];
   buildingFilter: string;
   onBuildingFilterChange: (val: string) => void;
 }
 
+const deviceIconMap: Record<string, any> = {
+  pc: Cpu,
+  monitor: Monitor,
+  keyboard: Keyboard,
+  mouse: Mouse,
+  printer: Printer,
+  other: HelpCircle,
+};
+
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
+};
+
 export function EmployeesClientView({
   employees,
-  computers,
+  devices,
   incidents,
   buildingFilter,
   onBuildingFilterChange,
@@ -84,19 +103,17 @@ export function EmployeesClientView({
 
   const selectedEmployee = selectedId ? employees.find((e) => e.id === selectedId) : null;
 
-  // Computers directly assigned to this employee (via computers.employee_id)
-  const selectedComputers = selectedId
-    ? computers.filter((c) => c.employee_id === selectedId)
+  // Devices directly assigned to this employee
+  const selectedDevices = selectedId
+    ? devices.filter((d) => d.employee_id === selectedId)
     : [];
 
-  // Incidents linked to this employee directly (via incidents.employee_id)
-  // or indirectly through their assigned computer (via incidents.computer_id)
-  const assignedComputerIds = selectedComputers.map((c) => c.id);
+  const assignedDeviceIds = selectedDevices.map((d) => d.id);
 
   const selectedIncidents = selectedId
     ? incidents.filter((i) =>
         i.employee_id === selectedId ||
-        (i.computer_id && assignedComputerIds.includes(i.computer_id))
+        (i.device_id && assignedDeviceIds.includes(i.device_id))
       )
     : [];
 
@@ -216,7 +233,7 @@ export function EmployeesClientView({
                     startTransition(async () => {
                       await dismissEmployeeDialog(selectedId!);
                       await clearCache('/employees');
-                      await clearCache('/computers');
+                      await clearCache('/devices');
                       await clearCache('/dashboard');
                       router.refresh();
                     });
@@ -236,7 +253,7 @@ export function EmployeesClientView({
                       startTransition(async () => {
                         await restoreEmployeeDialog(selectedId!);
                         await clearCache('/employees');
-                        await clearCache('/computers');
+                        await clearCache('/devices');
                         await clearCache('/dashboard');
                         router.refresh();
                         setSelectedId(null);
@@ -272,32 +289,35 @@ export function EmployeesClientView({
             </div>
           </div>
 
-
-          {/* Block 2: Assigned Computers */}
+          {/* Block 2: Assigned Devices */}
           <div className="rounded-xl border border-gray-200 p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплённые ПК</h3>
-            {selectedComputers.length === 0 ? (
-              <p className="text-sm text-gray-500 py-2">Нет привязанных ПК</p>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплённые устройства</h3>
+            {selectedDevices.length === 0 ? (
+              <p className="text-sm text-gray-500 py-2">Нет привязанных устройств</p>
             ) : (
               <div className="space-y-2">
-                {selectedComputers.map((comp) => (
-                  <Link
-                    key={comp.id}
-                    href={`/computers/${comp.id}`}
-                    className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <Monitor className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-900">
-                      {comp.inventory_number}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {comp.computer_type ?? "—"}
-                    </span>
-                    {comp.room && (
-                      <span className="text-xs text-gray-400">· Каб. {comp.room}</span>
-                    )}
-                  </Link>
-                ))}
+                {selectedDevices.map((dev) => {
+                  const DeviceIcon = deviceIconMap[dev.device_type] || HelpCircle;
+                  const typeLabel = deviceTypeRussianLabels[dev.device_type] || "Устройство";
+                  return (
+                    <Link
+                      key={dev.id}
+                      href={`/devices/${dev.id}`}
+                      className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors font-mono"
+                    >
+                      <DeviceIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span className="text-sm font-medium text-gray-900">
+                        {dev.inventory_number}
+                      </span>
+                      <span className="text-xs text-gray-500 font-sans">
+                        [{typeLabel}] {dev.computer_type ?? "—"}
+                      </span>
+                      {dev.room && (
+                        <span className="text-xs text-gray-400 font-sans">· Каб. {dev.room}</span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -374,7 +394,7 @@ export function EmployeesClientView({
           <select
             value={buildingFilter}
             onChange={(e) => onBuildingFilterChange(e.target.value)}
-            className="text-sm bg-transparent focus:outline-none text-gray-700 max-w-[200px] truncate"
+            className="text-sm bg-transparent focus:outline-none text-gray-700 max-w-[200px] truncate cursor-pointer"
           >
             <option value="all">Все корпуса</option>
             {Object.keys(BUILDING_ADDRESSES).map((b) => (
@@ -397,11 +417,11 @@ export function EmployeesClientView({
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Сотрудник</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Должность / Отдел</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Кабинет</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Статус</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Сотрудник</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Должность / Отдел</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Кабинет</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Статус</th>
                 <th className="px-4 py-3 w-8" />
               </tr>
             </thead>
@@ -447,7 +467,7 @@ function ContactRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ 
     <div className="flex items-center gap-2">
       <Icon className="w-4 h-4 text-gray-400 shrink-0" />
       <div>
-        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-xs text-gray-505">{label}</p>
         <p className="text-sm font-medium text-gray-900">{value ?? "—"}</p>
       </div>
     </div>

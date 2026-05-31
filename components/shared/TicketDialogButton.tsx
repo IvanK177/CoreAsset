@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { AddIncidentDialog } from "@/components/incidents/AddIncidentDialog";
 import type { Tables } from "@/types/database.types";
 
-type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
+type Device = Pick<Tables<"devices">, "id" | "inventory_number">;
 type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
 interface TicketDialogButtonProps {
-  computers: Computer[];
+  devices: Device[];
   employees: Employee[];
-  defaultComputerId?: string;
+  defaultDeviceId?: string;
   defaultEmployeeId?: string;
   label?: string;
   variant?: "outline" | "default" | "ghost" | "link";
@@ -20,9 +20,9 @@ interface TicketDialogButtonProps {
 }
 
 export function TicketDialogButton({
-  computers,
+  devices,
   employees,
-  defaultComputerId,
+  defaultDeviceId,
   defaultEmployeeId,
   label = "+ Создать тикет",
   variant = "outline",
@@ -44,9 +44,9 @@ export function TicketDialogButton({
       <AddIncidentDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        computers={computers}
+        devices={devices}
         employees={employees}
-        defaultComputerId={defaultComputerId}
+        defaultDeviceId={defaultDeviceId}
         defaultEmployeeId={defaultEmployeeId}
       />
     </>

@@ -43,13 +43,15 @@ const incidentColors: Record<IncidentStatus, string> = {
   cancelled: "bg-gray-100 text-gray-600 border-gray-200",
 };
 
-export function ComputerStatusBadge({ status }: { status: ComputerStatus }) {
+export function DeviceStatusBadge({ status }: { status: ComputerStatus }) {
   return (
     <Badge variant="outline" className={cn("text-xs font-medium", computerColors[status])}>
       {computerLabels[status]}
     </Badge>
   );
 }
+
+export { DeviceStatusBadge as ComputerStatusBadge };
 
 export function EmployeeStatusBadge({ status }: { status: EmployeeStatus }) {
   return (

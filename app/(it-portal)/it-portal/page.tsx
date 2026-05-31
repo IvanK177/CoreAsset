@@ -11,9 +11,10 @@ interface RelatedEmployee {
   building: string | null;
 }
 
-interface RelatedComputer {
+interface RelatedDevice {
   inventory_number: string | null;
-  computer_type: string | null;
+  computer_type: string | null; // DB column name used as Subtype/Model name
+  device_type: string | null;
 }
 
 interface IncidentRow {
@@ -27,7 +28,7 @@ interface IncidentRow {
   resolved_at: string | null;
   assigned_to: string | null;
   employee: RelatedEmployee | RelatedEmployee[] | null;
-  computer: RelatedComputer | RelatedComputer[] | null;
+  device: RelatedDevice | RelatedDevice[] | null;
   photo_urls?: string[] | null;
   resolution?: string | null;
 }
@@ -66,7 +67,7 @@ export default async function ITPortalPage() {
     specialistId = data?.id;
   }
 
-  // Fetch ALL incidents with related data (author name + computer info)
+  // Fetch ALL incidents with related data (author name + device info)
   const { data: incidents, error: incidentsError } = await dataClient
     .from("incidents")
     .select(`
@@ -82,7 +83,7 @@ export default async function ITPortalPage() {
       photo_urls,
       resolution,
       employee:employees!incidents_employee_id_fkey(full_name, room, building),
-      computer:computers!incidents_computer_id_fkey(inventory_number, computer_type),
+      device:devices!incidents_device_id_fkey(inventory_number, computer_type, device_type),
       assignee:employees!incidents_assigned_to_fkey(full_name)
     `)
     .order("created_at", { ascending: false });

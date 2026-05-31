@@ -15,7 +15,7 @@ function emptyToUndefined(value: FormDataEntryValue | null): string | undefined 
 export async function createIncident(formData: FormData) {
   const supabase = await createServiceClient();
   const parsed = incidentSchema.safeParse({
-    computer_id: emptyToUndefined(formData.get("computer_id")),
+    device_id: emptyToUndefined(formData.get("device_id")),
     employee_id: emptyToUndefined(formData.get("employee_id")),
     incident_type: emptyToUndefined(formData.get("incident_type")),
     title: emptyToUndefined(formData.get("title")),
@@ -32,12 +32,12 @@ export async function createIncident(formData: FormData) {
 
   const insertData = {
     ...parsed.data,
-    title: parsed.data.title || null,
-    computer_id: parsed.data.computer_id || null,
+    title: parsed.data.title || "",
+    device_id: parsed.data.device_id || null,
     employee_id: parsed.data.employee_id || null,
     ...(createdAt ? { created_at: new Date(createdAt).toISOString() } : {}),
   };
-  console.log("[createIncident] Inserting incident with computer_id:", insertData.computer_id);
+  console.log("[createIncident] Inserting incident with device_id:", insertData.device_id);
 
   const { data, error } = await supabase.from("incidents").insert(insertData).select("id").single();
 
@@ -80,7 +80,7 @@ export async function updateIncidentStatus(id: string, status: "open" | "in_prog
   await supabase.from("incidents").update({
     status,
     description,
-    title: title || null,
+    title: title || "",
     resolution: resolution || null,
     resolved_at: status === "resolved" ? new Date().toISOString() : null,
     updated_at: new Date().toISOString(),
@@ -98,7 +98,7 @@ export async function updateIncidentStatus(id: string, status: "open" | "in_prog
 export async function createIncidentDialog(formData: FormData) {
   const supabase = await createServiceClient();
   const parsed = incidentSchema.safeParse({
-    computer_id: emptyToUndefined(formData.get("computer_id")),
+    device_id: emptyToUndefined(formData.get("device_id")),
     employee_id: emptyToUndefined(formData.get("employee_id")),
     incident_type: emptyToUndefined(formData.get("incident_type")) || "other",
     title: emptyToUndefined(formData.get("title")),
@@ -112,8 +112,8 @@ export async function createIncidentDialog(formData: FormData) {
 
   const insertData = {
     ...parsed.data,
-    title: parsed.data.title || null,
-    computer_id: parsed.data.computer_id || null,
+    title: parsed.data.title || "",
+    device_id: parsed.data.device_id || null,
     employee_id: parsed.data.employee_id || null,
     ...(createdAt ? { created_at: new Date(createdAt).toISOString() } : {}),
   };
@@ -129,9 +129,9 @@ export async function createIncidentDialog(formData: FormData) {
   return { success: true, id: data.id };
 }
 
-/** Non-redirecting variant for creating incident from computer card context — auto-passes computer_id and employee_id */
-export async function createIncidentFromComputer(
-  computerId: string,
+/** Non-redirecting variant for creating incident from device card context — auto-passes device_id and employee_id */
+export async function createIncidentFromDevice(
+  deviceId: string,
   employeeId: string | null,
   title: string,
   description: string | undefined,
@@ -140,7 +140,7 @@ export async function createIncidentFromComputer(
   const supabase = await createServiceClient();
 
   const parsed = incidentSchema.safeParse({
-    computer_id: computerId,
+    device_id: deviceId,
     employee_id: employeeId ?? undefined,
     incident_type: "other",
     title: title,
@@ -152,8 +152,8 @@ export async function createIncidentFromComputer(
 
   const insertData = {
     ...parsed.data,
-    title: parsed.data.title || null,
-    computer_id: parsed.data.computer_id || null,
+    title: parsed.data.title || "",
+    device_id: parsed.data.device_id || null,
     employee_id: parsed.data.employee_id || null,
   };
 
@@ -162,8 +162,8 @@ export async function createIncidentFromComputer(
 
   revalidateTag("incidents", { expire: 0 });
   revalidatePath("/incidents");
-  revalidatePath(`/computers/${computerId}`);
-  revalidatePath("/computers");
+  revalidatePath(`/devices/${deviceId}`);
+  revalidatePath("/devices");
   revalidatePath("/dashboard");
   revalidatePath("/it-portal");
   revalidatePath("/it-portal/my-tasks");

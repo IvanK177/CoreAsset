@@ -7,19 +7,20 @@ import type { Tables } from "@/types/database.types";
 
 type Employee = Tables<"employees">;
 
-interface ComputerRow {
+interface DeviceRow {
   id: string;
   inventory_number: string;
-  computer_type: string | null;
+  computer_type: string | null; // DB column name used as Subtype/Model name
   lifecycle_status: string;
   employee_id: string | null;
   room: string | null;
+  device_type: string;
 }
 
 interface IncidentRow {
   id: string;
   title: string | null;
-  computer_id: string | null;
+  device_id: string | null;
   employee_id: string | null;
   description: string;
   priority: string;
@@ -29,13 +30,13 @@ interface IncidentRow {
 
 interface EmployeesPageClientProps {
   employees: Employee[];
-  computers: ComputerRow[];
+  devices: DeviceRow[];
   incidents: IncidentRow[];
 }
 
 export function EmployeesPageClient({
   employees,
-  computers,
+  devices,
   incidents,
 }: EmployeesPageClientProps) {
   const [buildingFilter, setBuildingFilter] = useState(() => {
@@ -65,7 +66,7 @@ export function EmployeesPageClient({
       />
       <EmployeesClientView
         employees={employees}
-        computers={computers}
+        devices={devices}
         incidents={incidents}
         buildingFilter={buildingFilter}
         onBuildingFilterChange={handleBuildingChange}

@@ -27,7 +27,7 @@ interface SidebarProps {
 
 const nav = [
   { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
-  { href: "/computers", label: "Компьютеры", icon: Monitor },
+  { href: "/devices", label: "Устройства", icon: Monitor },
   { href: "/templates", label: "Шаблоны ПК", icon: ClipboardList },
   { href: "/employees", label: "Сотрудники", icon: Users },
   { href: "/licenses", label: "Лицензии", icon: Key },

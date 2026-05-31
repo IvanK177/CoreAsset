@@ -6,59 +6,79 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { TicketDialogButton } from "@/components/shared/TicketDialogButton";
-import { ComputerStatusBadge } from "@/components/shared/StatusBadge";
+import { ComputerStatusBadge as DeviceStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
-import { deleteComputer } from "@/lib/actions/computers";
+import { deleteDevice } from "@/lib/actions/devices";
 import { formatDate, extractJoinObject, safeHardware } from "@/lib/utils";
-import { Edit, Monitor, User } from "lucide-react";
+import { Edit, Monitor, Cpu, Keyboard, Mouse, Printer, HelpCircle, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 
-export default async function ComputerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+const DEVICE_TYPE_LABELS: Record<string, string> = {
+  pc: "Компьютер / Ноутбук",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Оргтехника (Принтер)",
+  other: "Другое",
+};
+
+function getDeviceIcon(type: string) {
+  switch (type) {
+    case "pc": return <Cpu className="w-5 h-5 text-primary" />;
+    case "monitor": return <Monitor className="w-5 h-5 text-primary" />;
+    case "keyboard": return <Keyboard className="w-5 h-5 text-primary" />;
+    case "mouse": return <Mouse className="w-5 h-5 text-primary" />;
+    case "printer": return <Printer className="w-5 h-5 text-primary" />;
+    default: return <HelpCircle className="w-5 h-5 text-primary" />;
+  }
+}
+
+export default async function DeviceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createServiceClient();
 
-  const [computerRes, incidentsRes, installsRes, allComputersRes, allEmployeesRes] = await Promise.all([
-    supabase.from("computers").select("*, employees(id, full_name, position, email, room)").eq("id", id).single(),
+  const [deviceRes, incidentsRes, installsRes, allDevicesRes, allEmployeesRes] = await Promise.all([
+    supabase.from("devices").select("*, employees(id, full_name, position, email, room)").eq("id", id).single(),
     supabase
       .from("incidents")
       .select("id, incident_type, description, priority, status, created_at")
-      .eq("computer_id", id)
+      .eq("device_id", id)
       .order("created_at", { ascending: false }),
     supabase
-      .from("computer_licenses")
+      .from("device_licenses")
       .select("id, installed_at, licenses(id, software_name, version)")
-      .eq("computer_id", id),
-    supabase.from("computers").select("id, inventory_number").order("inventory_number"),
+      .eq("device_id", id),
+    supabase.from("devices").select("id, inventory_number").order("inventory_number"),
     supabase.from("employees").select("id, full_name, room").eq("is_active", true).order("full_name"),
   ]);
 
   // Check for Supabase errors on the main entity
-  if (computerRes.error) {
-    console.error("[ComputerDetail] Supabase query error:", computerRes.error.code, computerRes.error.message);
-    if (computerRes.error.code === "PGRST116") notFound();
-    throw new Error(`Failed to fetch computer: ${computerRes.error.message}`);
+  if (deviceRes.error) {
+    console.error("[DeviceDetail] Supabase query error:", deviceRes.error.code, deviceRes.error.message);
+    if (deviceRes.error.code === "PGRST116") notFound();
+    throw new Error(`Failed to fetch device: ${deviceRes.error.message}`);
   }
 
-  if (!computerRes.data) notFound();
-  const computer = computerRes.data;
+  if (!deviceRes.data) notFound();
+  const device = deviceRes.data;
 
   // Extract joined employee — Supabase may return as array or object
-  const employee = extractJoinObject(computer.employees as unknown) as { id: string; full_name: string; position: string | null; email: string | null; room: string | null } | null;
+  const employee = extractJoinObject(device.employees as unknown) as { id: string; full_name: string; position: string | null; email: string | null; room: string | null } | null;
 
   // Safely parse hardware JSON
-  const hw = safeHardware(computer.hardware);
+  const hw = safeHardware(device.hardware) as Record<string, string>;
 
   // Incidents are supplementary — log errors but don't crash
   if (incidentsRes.error) {
-    console.error("[ComputerDetail] Incidents query error:", incidentsRes.error.code, incidentsRes.error.message);
+    console.error("[DeviceDetail] Incidents query error:", incidentsRes.error.code, incidentsRes.error.message);
   }
   const incidents = incidentsRes.data ?? [];
 
   // Software installations are supplementary
   if (installsRes.error) {
-    console.error("[ComputerDetail] Installations query error:", installsRes.error.code, installsRes.error.message);
+    console.error("[DeviceDetail] Installations query error:", installsRes.error.code, installsRes.error.message);
   }
   const rawInstalls = installsRes.data ?? [];
   // Normalize license join
@@ -73,41 +93,56 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10">
-            <Monitor className="w-5 h-5 text-primary" />
+            {getDeviceIcon(device.device_type)}
           </div>
           <div>
-            <h1 className="text-2xl font-bold">{computer.inventory_number}</h1>
-            <p className="text-sm text-muted-foreground">{computer.computer_type}</p>
+            <h1 className="text-2xl font-bold">{device.inventory_number}</h1>
+            <p className="text-sm text-muted-foreground">
+              {DEVICE_TYPE_LABELS[device.device_type]} {device.computer_type ? `(${device.computer_type})` : ""}
+            </p>
           </div>
-          <ComputerStatusBadge status={computer.lifecycle_status} />
+          <DeviceStatusBadge status={device.lifecycle_status as any} />
         </div>
         <div className="flex gap-2">
-          <Link href={`/computers/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" }) + " gap-2"}>
+          <Link href={`/devices/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" }) + " gap-2"}>
             <Edit className="w-4 h-4" /> Изменить
           </Link>
-            <DeleteConfirmDialog
-              onConfirm={async () => { "use server"; await deleteComputer(id); }}
-              description="Будут удалены все связанные тикеты инцидентов."
-            />
+          <DeleteConfirmDialog
+            onConfirm={async () => { "use server"; await deleteDevice(id); }}
+            description="Будут удалены все связанные тикеты инцидентов и установки ПО."
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Основная информация</p>
-          <Row label="Серийный номер" value={computer.serial_number} />
-          <Row label="Кабинет" value={computer.room} />
-          <Row label="Добавлен" value={formatDate(computer.created_at)} />
+          <Row label="Серийный номер" value={device.serial_number} />
+          <Row label="Кабинет" value={device.room} />
+          <Row label="Добавлен" value={formatDate(device.created_at)} />
         </div>
-        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Характеристики</p>
-          <Row label="CPU" value={hw.cpu} />
-          <Row label="RAM" value={hw.ram} />
-          <Row label="Диск" value={hw.storage} />
-        </div>
+
+        {device.device_type === "pc" && (
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
+            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Характеристики ПК</p>
+            <Row label="CPU" value={hw.cpu} />
+            <Row label="RAM" value={hw.ram} />
+            <Row label="Диск" value={hw.storage} />
+            <Row label="GPU" value={hw.gpu} />
+            <Row label="MAC-адрес" value={hw.mac_address} />
+          </div>
+        )}
+
+        {device.device_type === "monitor" && (
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
+            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Характеристики Монитора</p>
+            <Row label="Диагональ" value={hw.diagonal} />
+            <Row label="Разрешение" value={hw.resolution} />
+          </div>
+        )}
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
         <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Закреплённый сотрудник</p>
         {employee ? (
           <div className="flex items-center gap-3">
@@ -128,7 +163,7 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Установленное ПО ({installs.length})
@@ -151,16 +186,16 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             История инцидентов ({incidents.length})
           </p>
           <TicketDialogButton
-            computers={allComputersRes.data ?? []}
+            devices={allDevicesRes.data ?? []}
             employees={allEmployeesRes.data ?? []}
-            defaultComputerId={id}
-            defaultEmployeeId={computer.employee_id ?? undefined}
+            defaultDeviceId={id}
+            defaultEmployeeId={device.employee_id ?? undefined}
           />
         </div>
         <Separator />
@@ -175,8 +210,8 @@ export default async function ComputerDetailPage({ params }: { params: Promise<{
                   <p className="text-xs text-muted-foreground">{formatDate(inc.created_at)} · {inc.incident_type}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <PriorityBadge priority={inc.priority} />
-                  <IncidentStatusBadge status={inc.status} />
+                  <PriorityBadge priority={inc.priority as any} />
+                  <IncidentStatusBadge status={inc.status as any} />
                 </div>
               </Link>
             ))}

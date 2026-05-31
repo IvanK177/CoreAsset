@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-type ComputerStatus = "active" | "repair" | "decommissioned" | "storage";
+type DeviceStatus = "active" | "repair" | "decommissioned" | "storage";
 
 interface FilterOption {
-  value: ComputerStatus | "all";
+  value: DeviceStatus | "all";
   label: string;
   dotColor: string;
 }
@@ -20,23 +20,23 @@ const filterOptions: FilterOption[] = [
   { value: "decommissioned", label: "Списан", dotColor: "bg-gray-400" },
 ];
 
-interface ComputerFilterBarProps {
-  activeFilter: ComputerStatus | "all";
-  onFilterChange: (filter: ComputerStatus | "all") => void;
+interface DeviceFilterBarProps {
+  activeFilter: DeviceStatus | "all";
+  onFilterChange: (filter: DeviceStatus | "all") => void;
   resultCount: number;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
   compact?: boolean;
 }
 
-export function ComputerFilterBar({
+export function DeviceFilterBar({
   activeFilter,
   onFilterChange,
   resultCount,
   searchQuery = "",
   onSearchChange,
   compact = false,
-}: ComputerFilterBarProps) {
+}: DeviceFilterBarProps) {
   return (
     <div className={cn("flex items-center gap-3 flex-wrap", compact && "gap-2")}>
       {/* Search */}

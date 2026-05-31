@@ -13,7 +13,7 @@ import {
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { formatDateTime, extractJoinObject } from "@/lib/utils";
-import { Calendar, Monitor, Wrench, FileText, XCircle, Loader2, User, CheckCircle } from "lucide-react";
+import { Calendar, Monitor, Wrench, FileText, XCircle, Loader2, User, CheckCircle, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
 import { cancelPortalIncident } from "@/lib/actions/portal";
 import { DecompressedText } from "@/components/shared/DecompressedText";
 
@@ -25,13 +25,15 @@ interface IncidentData {
   status: string;
   incident_type: string;
   created_at: string;
-  computer_id: string | null;
-  computer?: {
+  device_id: string | null;
+  device?: {
     inventory_number: string | null;
-    computer_type: string | null;
+    computer_type: string | null; // DB column name used as Subtype/Model name
+    device_type: string | null;
   } | {
     inventory_number: string | null;
     computer_type: string | null;
+    device_type: string | null;
   }[] | null;
   assignee?: {
     full_name: string | null;
@@ -55,11 +57,13 @@ const incidentTypeLabels: Record<string, string> = {
   other: "Другое",
 };
 
-const computerTypeLabels: Record<string, string> = {
-  desktop: "PC",
-  laptop: "Laptop",
-  monoblock: "Monoblock",
-  server: "Server",
+const deviceTypeLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
 };
 
 export function IncidentDetailsDialog({
@@ -76,14 +80,16 @@ export function IncidentDetailsDialog({
   const shortId = incident.id.substring(0, 8);
   const typeLabel = incidentTypeLabels[incident.incident_type] ?? incident.incident_type;
 
-  // Safe extract computer join object
-  const computer = extractJoinObject(incident.computer) as {
+  // Safe extract device join object
+  const device = extractJoinObject(incident.device) as {
     inventory_number: string | null;
     computer_type: string | null;
+    device_type: string | null;
   } | null;
 
-  const computerInfo = computer?.inventory_number
-    ? `${computer.inventory_number} (${computerTypeLabels[computer.computer_type ?? ""] ?? computer.computer_type ?? "—"})`
+  const deviceTypeDisplay = device?.device_type ? deviceTypeLabels[device.device_type] || "Устройство" : "Устройство";
+  const deviceInfo = device?.inventory_number
+    ? `[${deviceTypeDisplay}] ${device.computer_type ?? "—"} (${device.inventory_number})`
     : null;
 
   const assignee = extractJoinObject(incident.assignee) as { full_name: string | null } | null;
@@ -106,7 +112,7 @@ export function IncidentDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg bg-white rounded-2xl p-6 border-none shadow-2xl">
+      <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6 border-none shadow-2xl">
         <DialogHeader className="space-y-1.5">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
@@ -156,8 +162,8 @@ export function IncidentDetailsDialog({
               <span className="text-xs font-medium text-gray-400 block">Устройство / Оборудование</span>
               <div className="flex items-center gap-1.5 font-medium text-gray-700">
                 <Monitor className="w-4 h-4 text-indigo-500 shrink-0" />
-                <span className={computerInfo ? "font-mono" : "text-gray-400"}>
-                  {computerInfo ?? "Устройство не привязано"}
+                <span className={deviceInfo ? "font-medium" : "text-gray-400"}>
+                  {deviceInfo ?? "Устройство не привязано"}
                 </span>
               </div>
             </div>

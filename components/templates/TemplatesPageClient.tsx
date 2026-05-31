@@ -123,11 +123,11 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
                         alert("Ошибка при удалении: " + res.error);
                       } else {
                         await clearCache("/templates");
-                        await clearCache("/computers");
+                        await clearCache("/devices");
                         startTransition(() => { router.refresh(); });
                       }
                     }}
-                    description="Этот шаблон сборки будет удален безвозвратно. Привязанные компьютеры сохранят свои характеристики."
+                    description="Этот шаблон сборки будет удален безвозвратно. Привязанные устройства сохранят свои характеристики."
                   />
                 </div>
               </div>

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default function ComputerDetailError({
+export default function DeviceDetailError({
   error,
   reset,
 }: {
@@ -16,18 +16,18 @@ export default function ComputerDetailError({
       <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-destructive/10">
         <AlertTriangle className="w-7 h-7 text-destructive" />
       </div>
-      <h2 className="text-xl font-bold">Ошибка загрузки компьютера</h2>
+      <h2 className="text-xl font-bold">Ошибка загрузки устройства</h2>
       <p className="text-sm text-muted-foreground max-w-md text-center">
-        Не удалось получить данные компьютера. Возможна проблема с подключением к серверу или запись была изменена.
+        Не удалось получить данные устройства. Возможна проблема с подключением к серверу или запись была изменена.
       </p>
       {error.digest && (
         <p className="text-xs text-muted-foreground/60 font-mono">Код: {error.digest}</p>
       )}
       <div className="flex gap-3 mt-2">
         <Button variant="outline" onClick={() => reset()}>Попробовать снова</Button>
-        <Link href="/computers">
+        <Link href="/devices">
           <Button variant="outline" className="gap-2">
-            <ArrowLeft className="w-4 h-4" /> К списку компьютеров
+            <ArrowLeft className="w-4 h-4" /> К списку устройств
           </Button>
         </Link>
       </div>

@@ -124,9 +124,9 @@ export async function restoreEmployee(id: string) {
   try {
     const supabase = await createServiceClient();
 
-    // Find computers assigned to this employee via computers.employee_id
-    const { data: computers } = await supabase
-      .from("computers")
+    // Find devices assigned to this employee via devices.employee_id
+    const { data: devices } = await supabase
+      .from("devices")
       .select("id, lifecycle_status")
       .eq("employee_id", id);
 
@@ -140,17 +140,17 @@ export async function restoreEmployee(id: string) {
       actionError = updateError.message;
     }
 
-    // If employee had a computer moved to "storage" during dismissal, restore it to "active"
-    if (!actionError && computers) {
-      for (const comp of computers) {
-        if (comp.lifecycle_status === "storage") {
+    // If employee had a device moved to "storage" during dismissal, restore it to "active"
+    if (!actionError && devices) {
+      for (const device of devices) {
+        if (device.lifecycle_status === "storage") {
           const { error: compError } = await supabase
-            .from("computers")
+            .from("devices")
             .update({ lifecycle_status: "active" })
-            .eq("id", comp.id);
+            .eq("id", device.id);
 
           if (compError) {
-            console.error("[restoreEmployee] Computer update error:", compError.message);
+            console.error("[restoreEmployee] Device update error:", compError.message);
           }
         }
       }
@@ -163,10 +163,10 @@ export async function restoreEmployee(id: string) {
   if (actionError) return { error: actionError };
 
   revalidateTag("employees", { expire: 0 });
-  revalidateTag("computers", { expire: 0 });
+  revalidateTag("devices", { expire: 0 });
   revalidatePath("/employees");
   revalidatePath(`/employees/${id}`);
-  revalidatePath("/computers");
+  revalidatePath("/devices");
   redirect("/employees");
 }
 
@@ -176,9 +176,9 @@ export async function dismissEmployee(id: string) {
   try {
     const supabase = await createServiceClient();
 
-    // Find computers assigned to this employee via computers.employee_id
-    const { data: computers } = await supabase
-      .from("computers")
+    // Find devices assigned to this employee via devices.employee_id
+    const { data: devices } = await supabase
+      .from("devices")
       .select("id")
       .eq("employee_id", id);
 
@@ -192,17 +192,17 @@ export async function dismissEmployee(id: string) {
       actionError = updateError.message;
     }
 
-    // Move assigned computers to "storage" (ON DELETE SET NULL on employee_id will clear it)
+    // Move assigned devices to "storage" (ON DELETE SET NULL on employee_id will clear it)
     // But we explicitly set lifecycle_status to "storage" and clear employee_id
-    if (!actionError && computers) {
-      for (const comp of computers) {
+    if (!actionError && devices) {
+      for (const device of devices) {
         const { error: compError } = await supabase
-          .from("computers")
+          .from("devices")
           .update({ lifecycle_status: "storage", employee_id: null })
-          .eq("id", comp.id);
+          .eq("id", device.id);
 
         if (compError) {
-          console.error("[dismissEmployee] Computer update error:", compError.message);
+          console.error("[dismissEmployee] Device update error:", compError.message);
         }
       }
     }
@@ -214,9 +214,9 @@ export async function dismissEmployee(id: string) {
   if (actionError) return { error: actionError };
 
   revalidateTag("employees", { expire: 0 });
-  revalidateTag("computers", { expire: 0 });
+  revalidateTag("devices", { expire: 0 });
   revalidatePath("/employees");
-  revalidatePath("/computers");
+  revalidatePath("/devices");
   redirect("/employees");
 }
 
@@ -227,8 +227,8 @@ export async function dismissEmployeeDialog(id: string) {
   try {
     const supabase = await createServiceClient();
 
-    const { data: computers } = await supabase
-      .from("computers")
+    const { data: devices } = await supabase
+      .from("devices")
       .select("id")
       .eq("employee_id", id);
 
@@ -242,15 +242,15 @@ export async function dismissEmployeeDialog(id: string) {
       actionError = updateError.message;
     }
 
-    if (!actionError && computers) {
-      for (const comp of computers) {
+    if (!actionError && devices) {
+      for (const device of devices) {
         const { error: compError } = await supabase
-          .from("computers")
+          .from("devices")
           .update({ lifecycle_status: "storage", employee_id: null })
-          .eq("id", comp.id);
+          .eq("id", device.id);
 
         if (compError) {
-          console.error("[dismissEmployeeDialog] Computer update error:", compError.message);
+          console.error("[dismissEmployeeDialog] Device update error:", compError.message);
         }
       }
     }
@@ -262,9 +262,9 @@ export async function dismissEmployeeDialog(id: string) {
   if (actionError) return { error: actionError };
 
   revalidateTag("employees", { expire: 0 });
-  revalidateTag("computers", { expire: 0 });
+  revalidateTag("devices", { expire: 0 });
   revalidatePath("/employees");
-  revalidatePath("/computers");
+  revalidatePath("/devices");
   return { success: true };
 }
 
@@ -295,7 +295,7 @@ export async function restoreEmployeeDialog(id: string) {
 
   revalidateTag("employees", { expire: 0 });
   revalidatePath("/employees");
-  revalidatePath("/computers");
+  revalidatePath("/devices");
   return { success: true };
 }
 

@@ -5,7 +5,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { createServiceClient } from "@/lib/supabase/server";
 import { FinancesClientView } from "@/components/finances/FinancesClientView";
 import PageHeader from "@/components/layout/PageHeader";
-import { getCachedComputerLicensesWithComputers } from "@/lib/supabase/cached";
+import { getCachedDeviceLicensesWithDevices } from "@/lib/supabase/cached";
 
 export default async function FinancesPage() {
   noStore();
@@ -16,7 +16,7 @@ export default async function FinancesPage() {
     supabase
       .from("licenses")
       .select("id, software_name, vendor, license_type, total_seats, used_seats, price_per_unit, expires_at, created_at"),
-    getCachedComputerLicensesWithComputers()
+    getCachedDeviceLicensesWithDevices()
   ]);
 
   const licenses = licensesRes.data ?? [];

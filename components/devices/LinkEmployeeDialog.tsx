@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { linkEmployeeToComputer } from "@/lib/actions/computers";
+import { linkEmployeeToDevice } from "@/lib/actions/devices";
 import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
 
@@ -41,7 +41,7 @@ interface ActiveEmployee {
 interface LinkEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  computerId: string;
+  deviceId: string;
   currentEmployeeId: string | null;
   activeEmployees: ActiveEmployee[];
 }
@@ -49,7 +49,7 @@ interface LinkEmployeeDialogProps {
 export function LinkEmployeeDialog({
   open,
   onOpenChange,
-  computerId,
+  deviceId,
   currentEmployeeId,
   activeEmployees,
 }: LinkEmployeeDialogProps) {
@@ -70,7 +70,7 @@ export function LinkEmployeeDialog({
     setError(null);
 
     const employeeId = data.employee_id === "" ? null : data.employee_id;
-    const result = await linkEmployeeToComputer(computerId, employeeId);
+    const result = await linkEmployeeToDevice(deviceId, employeeId);
     if (result.error) {
       toast.error("Ошибка при привязке сотрудника: " + result.error);
       setError(result.error);
@@ -78,11 +78,11 @@ export function LinkEmployeeDialog({
       return;
     }
 
-    await clearCache('/computers');
-    await clearCache(`/computers/${computerId}`);
+    await clearCache('/devices');
+    await clearCache(`/devices/${deviceId}`);
     await clearCache('/employees');
     await clearCache('/dashboard');
-    toast.success("Сотрудник успешно привязан к компьютеру");
+    toast.success("Сотрудник успешно привязан к устройству");
     form.reset();
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
@@ -95,7 +95,7 @@ export function LinkEmployeeDialog({
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Привязать к сотруднику</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Выберите активного сотрудника для закрепления компьютера
+            Выберите активного сотрудника для закрепления устройства
           </DialogDescription>
         </DialogHeader>
 

@@ -66,8 +66,8 @@ export async function deleteLicenseDialog(id: string) {
   return { success: true };
 }
 
-/** Install a license on a computer — inserts into computer_licenses (used_seats incremented by DB trigger) */
-export async function installSoftwareDialog(computerId: string, licenseId: string, installedAt?: string) {
+/** Install a license on a device — inserts into device_licenses (used_seats incremented by DB trigger) */
+export async function installSoftwareDialog(deviceId: string, licenseId: string, installedAt?: string) {
   const supabase = await createServiceClient();
 
   // Fetch the license to check seat availability
@@ -80,36 +80,36 @@ export async function installSoftwareDialog(computerId: string, licenseId: strin
   if (licenseError || !license) return { error: "Лицензия не найдена", code: undefined };
   if (license.used_seats >= license.total_seats) return { error: "Лицензии исчерпаны", code: undefined };
 
-  // Insert into computer_licenses
-  const { error: insertError } = await supabase.from("computer_licenses").insert({
-    computer_id: computerId,
+  // Insert into device_licenses
+  const { error: insertError } = await supabase.from("device_licenses").insert({
+    device_id: deviceId,
     license_id: licenseId,
     installed_at: installedAt || new Date().toISOString(),
   });
   if (insertError) {
     if (insertError.code === "23505") {
-      return { error: "ПО уже установлено на этот компьютер", code: insertError.code };
+      return { error: "ПО уже установлено на это устройство", code: insertError.code };
     }
     return { error: insertError.message, code: insertError.code };
   }
 
   revalidateTag("licenses", { expire: 0 });
-  revalidatePath("/computers");
-  revalidatePath(`/computers/${computerId}`);
+  revalidatePath("/devices");
+  revalidatePath(`/devices/${deviceId}`);
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
   return { success: true };
 }
 
-/** Remove a license installation from a computer — deletes from computer_licenses (used_seats decremented by DB trigger) */
-export async function removeSoftware(installationId: string, computerId: string) {
+/** Remove a license installation from a device — deletes from device_licenses (used_seats decremented by DB trigger) */
+export async function removeSoftware(installationId: string, deviceId: string) {
   const supabase = await createServiceClient();
 
   // Delete the installation
-  await supabase.from("computer_licenses").delete().eq("id", installationId);
+  await supabase.from("device_licenses").delete().eq("id", installationId);
 
   revalidateTag("licenses", { expire: 0 });
-  revalidatePath(`/computers/${computerId}`);
+  revalidatePath(`/devices/${deviceId}`);
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
 }
@@ -143,19 +143,19 @@ export async function createLicenseDialog(formData: FormData) {
   return { success: true };
 }
 
-export async function installMultipleSoftware(computerId: string, licenseIds: string[], installedAt?: string) {
+export async function installMultipleSoftware(deviceId: string, licenseIds: string[], installedAt?: string) {
   const supabase = await createServiceClient();
 
   const installDate = installedAt || new Date().toISOString();
 
   // Create array of inserts
   const inserts = licenseIds.map((licenseId) => ({
-    computer_id: computerId,
+    device_id: deviceId,
     license_id: licenseId,
     installed_at: installDate,
   }));
 
-  const { error } = await supabase.from("computer_licenses").insert(inserts);
+  const { error } = await supabase.from("device_licenses").insert(inserts);
 
   if (error) {
     console.error("[installMultipleSoftware] DB Error:", error.message);
@@ -163,8 +163,8 @@ export async function installMultipleSoftware(computerId: string, licenseIds: st
   }
 
   revalidateTag("licenses", { expire: 0 });
-  revalidatePath("/computers");
-  revalidatePath(`/computers/${computerId}`);
+  revalidatePath("/devices");
+  revalidatePath(`/devices/${deviceId}`);
   revalidatePath("/licenses");
   revalidatePath("/dashboard");
   return { success: true };

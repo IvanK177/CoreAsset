@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ComputerFilterBar } from "@/components/computers/ComputerFilterBar";
-import { ComputerStatusBadge } from "@/components/shared/StatusBadge";
+import { DeviceFilterBar } from "@/components/devices/DeviceFilterBar";
+import { ComputerStatusBadge as DeviceStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
@@ -10,30 +10,30 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import dynamic from "next/dynamic";
 
 const LinkEmployeeDialog = dynamic(
-  () => import("@/components/computers/LinkEmployeeDialog").then((mod) => mod.LinkEmployeeDialog),
+  () => import("@/components/devices/LinkEmployeeDialog").then((mod) => mod.LinkEmployeeDialog),
   { ssr: false }
 );
-const EditComputerDialog = dynamic(
-  () => import("@/components/computers/EditComputerDialog").then((mod) => mod.EditComputerDialog),
+const EditDeviceDialog = dynamic(
+  () => import("@/components/devices/EditDeviceDialog").then((mod) => mod.EditDeviceDialog),
   { ssr: false }
 );
 const InstallSoftwareDialog = dynamic(
-  () => import("@/components/computers/InstallSoftwareDialog").then((mod) => mod.InstallSoftwareDialog),
+  () => import("@/components/devices/InstallSoftwareDialog").then((mod) => mod.InstallSoftwareDialog),
   { ssr: false }
 );
 const AddIncidentDialog = dynamic(
   () => import("@/components/incidents/AddIncidentDialog").then((mod) => mod.AddIncidentDialog),
   { ssr: false }
 );
-import { deleteComputer, linkEmployeeToComputer } from "@/lib/actions/computers";
+import { deleteDevice, linkEmployeeToDevice } from "@/lib/actions/devices";
 import { removeSoftware } from "@/lib/actions/licenses";
 import { cn, formatDate, safeHardware, BUILDING_ADDRESSES } from "@/lib/utils";
-import { ArrowLeft, Edit, Monitor, X, Plus, Key, AlertTriangle, Building } from "lucide-react";
+import { ArrowLeft, Edit, Monitor, X, Plus, Key, AlertTriangle, Building, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Tables } from "@/types/database.types";
 
-type Computer = Tables<"computers">;
-type ComputerStatus = "active" | "repair" | "decommissioned" | "storage";
+type Device = Tables<"devices">;
+type DeviceStatus = "active" | "repair" | "decommissioned" | "storage";
 
 interface EmployeeJoin {
   id: string;
@@ -44,8 +44,8 @@ interface EmployeeJoin {
   building: string | null;
 }
 
-/** Computer row with joined employees relation from Supabase query */
-export interface ComputerWithEmployee extends Computer {
+/** Device row with joined employees relation from Supabase query */
+export interface DeviceWithEmployee extends Device {
   employees: EmployeeJoin | EmployeeJoin[] | null;
 }
 
@@ -58,7 +58,7 @@ export interface ActiveEmployee {
 
 interface InstallRow {
   id: string;
-  computer_id: string | null;
+  device_id: string | null;
   license_id: string | null;
   installed_at: string | null;
   licenses: unknown;
@@ -66,7 +66,7 @@ interface InstallRow {
 
 interface IncidentRow {
   id: string;
-  computer_id: string | null;
+  device_id: string | null;
   description: string;
   priority: string;
   status: string;
@@ -81,8 +81,8 @@ export interface LicenseOption {
   total_seats: number;
 }
 
-interface ComputersClientViewProps {
-  computers: ComputerWithEmployee[];
+interface DevicesClientViewProps {
+  devices: DeviceWithEmployee[];
   activeEmployees: ActiveEmployee[];
   installations: InstallRow[];
   incidents: IncidentRow[];
@@ -93,8 +93,51 @@ interface ComputersClientViewProps {
   onBuildingFilterChange: (val: string) => void;
 }
 
-export function ComputersClientView({
-  computers,
+const typeFilterOptions = [
+  { value: "all", label: "Все устройства" },
+  { value: "pc", label: "Компьютеры" },
+  { value: "monitor", label: "Мониторы" },
+  { value: "peripherals", label: "Периферия" },
+  { value: "printer", label: "Оргтехника" },
+  { value: "other", label: "Другое" },
+];
+
+export function getDeviceIcon(type: string) {
+  switch (type) {
+    case "pc":
+      return Cpu;
+    case "monitor":
+      return Monitor;
+    case "keyboard":
+      return Keyboard;
+    case "mouse":
+      return Mouse;
+    case "printer":
+      return Printer;
+    default:
+      return HelpCircle;
+  }
+}
+
+export function getDeviceTypeLabel(type: string) {
+  switch (type) {
+    case "pc":
+      return "Компьютер";
+    case "monitor":
+      return "Монитор";
+    case "keyboard":
+      return "Клавиатура";
+    case "mouse":
+      return "Мышь";
+    case "printer":
+      return "Оргтехника / Принтер";
+    default:
+      return "Другое";
+  }
+}
+
+export function DevicesClientView({
+  devices,
   activeEmployees,
   installations,
   incidents,
@@ -103,9 +146,10 @@ export function ComputersClientView({
   templates,
   buildingFilter,
   onBuildingFilterChange,
-}: ComputersClientViewProps) {
+}: DevicesClientViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<ComputerStatus | "all">(initialFilter as ComputerStatus | "all");
+  const [activeFilter, setActiveFilter] = useState<DeviceStatus | "all">(initialFilter as DeviceStatus | "all");
+  const [activeTypeFilter, setActiveTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -115,28 +159,42 @@ export function ComputersClientView({
   const [removeLicenseInstallId, setRemoveLicenseInstallId] = useState<string | null>(null);
   const [removeEmployeeDialogOpen, setRemoveEmployeeDialogOpen] = useState(false);
 
-  const filteredComputers = computers.filter((c) => {
-    const matchesFilter = activeFilter === "all" || c.lifecycle_status === activeFilter;
-    const matchesSearch = !searchQuery || c.inventory_number.toLowerCase().includes(searchQuery.toLowerCase());
-    const emp = Array.isArray(c.employees) ? c.employees[0] : c.employees;
+  const filteredDevices = devices.filter((d) => {
+    const matchesFilter = activeFilter === "all" || d.lifecycle_status === activeFilter;
+    const matchesSearch = !searchQuery || d.inventory_number.toLowerCase().includes(searchQuery.toLowerCase());
+    const emp = Array.isArray(d.employees) ? d.employees[0] : d.employees;
     const matchesBuilding = buildingFilter === "all" || (emp && emp.building === buildingFilter);
-    return matchesFilter && matchesSearch && matchesBuilding;
+    
+    let matchesType = true;
+    if (activeTypeFilter === "pc") {
+      matchesType = d.device_type === "pc";
+    } else if (activeTypeFilter === "monitor") {
+      matchesType = d.device_type === "monitor";
+    } else if (activeTypeFilter === "peripherals") {
+      matchesType = d.device_type === "keyboard" || d.device_type === "mouse";
+    } else if (activeTypeFilter === "printer") {
+      matchesType = d.device_type === "printer";
+    } else if (activeTypeFilter === "other") {
+      matchesType = d.device_type === "other";
+    }
+
+    return matchesFilter && matchesSearch && matchesBuilding && matchesType;
   });
 
-  const selectedComputer = selectedId ? computers.find((c) => c.id === selectedId) : null;
+  const selectedDevice = selectedId ? devices.find((d) => d.id === selectedId) : null;
 
-  const selectedEmployee = selectedComputer
-    ? (Array.isArray(selectedComputer.employees) ? selectedComputer.employees[0] : selectedComputer.employees) as EmployeeJoin | null
+  const selectedEmployee = selectedDevice
+    ? (Array.isArray(selectedDevice.employees) ? selectedDevice.employees[0] : selectedDevice.employees) as EmployeeJoin | null
     : null;
 
   const selectedInstalls = selectedId
-    ? installations.filter((i) => i.computer_id === selectedId)
+    ? installations.filter((i) => i.device_id === selectedId)
     : [];
   const selectedIncidents = selectedId
-    ? incidents.filter((i) => i.computer_id === selectedId)
+    ? incidents.filter((i) => i.device_id === selectedId)
     : [];
 
-  const hw = selectedComputer ? safeHardware(selectedComputer.hardware) : {};
+  const hw = selectedDevice ? safeHardware(selectedDevice.hardware) as any : {};
 
   const normalizedInstalls = selectedInstalls.map((inst) => {
     const lic = (Array.isArray(inst.licenses) ? inst.licenses[0] : inst.licenses) as { id: string; software_name: string; version: string | null; license_type: string; total_seats: number; used_seats: number; price_per_unit: number | null; expires_at: string | null } | null;
@@ -147,7 +205,9 @@ export function ComputersClientView({
     };
   });
 
-  if (selectedComputer) {
+  const DeviceIcon = selectedDevice ? getDeviceIcon(selectedDevice.device_type) : HelpCircle;
+
+  if (selectedDevice) {
     return (
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="hidden lg:block lg:w-1/3 space-y-3">
@@ -164,29 +224,49 @@ export function ComputersClientView({
               ))}
             </select>
           </div>
-          <ComputerFilterBar
+          {/* Main type filter inside sidebar listing */}
+          <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm space-y-1">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1">Тип устройства</p>
+            <div className="grid grid-cols-2 gap-1">
+              {typeFilterOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setActiveTypeFilter(opt.value)}
+                  className={cn(
+                    "px-2 py-1.5 rounded-lg text-left text-xs font-medium transition-colors",
+                    activeTypeFilter === opt.value
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-500 hover:bg-gray-50"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <DeviceFilterBar
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
-            resultCount={filteredComputers.length}
+            resultCount={filteredDevices.length}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             compact
           />
-          <div className="rounded-xl bg-white shadow-sm overflow-hidden">
-            {filteredComputers.map((c) => (
+          <div className="rounded-xl bg-white shadow-sm overflow-hidden max-h-[400px] overflow-y-auto custom-scrollbar">
+            {filteredDevices.map((d) => (
               <button
-                key={c.id}
-                onClick={() => setSelectedId(c.id)}
+                key={d.id}
+                onClick={() => setSelectedId(d.id)}
                 className={cn(
                   "w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-gray-100 last:border-b-0",
-                  c.id === selectedId ? "bg-blue-50" : "hover:bg-gray-50"
+                  d.id === selectedId ? "bg-blue-50" : "hover:bg-gray-50"
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="font-mono text-sm font-medium text-gray-900 truncate">{c.inventory_number}</span>
-                  <span className="text-xs text-gray-500">{c.room ?? "—"}</span>
+                  <span className="font-mono text-sm font-medium text-gray-900 truncate">{d.inventory_number}</span>
+                  <span className="text-xs text-gray-500">{d.room ?? "—"}</span>
                 </div>
-                <ComputerStatusBadge status={c.lifecycle_status} />
+                <DeviceStatusBadge status={d.lifecycle_status as any} />
               </button>
             ))}
           </div>
@@ -199,14 +279,16 @@ export function ComputersClientView({
                 <ArrowLeft className="w-5 h-5 text-gray-500" />
               </button>
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#dbeafe] shrink-0">
-                <Monitor className="w-5 h-5 text-[#2563eb]" />
+                <DeviceIcon className="w-5 h-5 text-[#2563eb]" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-gray-900 truncate">{selectedComputer.inventory_number}</h2>
-                  <ComputerStatusBadge status={selectedComputer.lifecycle_status} />
+                  <h2 className="text-xl font-bold text-gray-900 truncate">{selectedDevice.inventory_number}</h2>
+                  <DeviceStatusBadge status={selectedDevice.lifecycle_status as any} />
                 </div>
-                <p className="text-sm text-gray-500 truncate">{selectedComputer.computer_type}</p>
+                <p className="text-sm text-gray-500 truncate">
+                  {getDeviceTypeLabel(selectedDevice.device_type)} · {selectedDevice.computer_type}
+                </p>
               </div>
             </div>
             <div className="flex gap-2 justify-end sm:justify-start">
@@ -219,23 +301,38 @@ export function ComputersClientView({
                 <Edit className="w-4 h-4" /> Редактировать
               </Button>
               <DeleteConfirmDialog
-                onConfirm={async () => { await deleteComputer(selectedId!); }}
+                onConfirm={async () => { await deleteDevice(selectedId!); setSelectedId(null); }}
                 description="Будут удалены все связанные тикеты инцидентов."
               />
             </div>
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Основные данные / Железо</h3>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Основные данные / Характеристики</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <InfoRow label="Серийный номер" value={selectedComputer.serial_number} />
-              <InfoRow label="Кабинет" value={selectedComputer.room} />
-              <InfoRow label="MAC-адрес" value={hw.mac_address} />
-              <InfoRow label="Тип" value={selectedComputer.computer_type} />
-              <InfoRow label="CPU" value={hw.cpu} />
-              <InfoRow label="RAM" value={hw.ram} />
-              <InfoRow label="Накопитель" value={hw.storage} />
-              <InfoRow label="GPU" value={hw.gpu} />
+              <InfoRow label="Серийный номер" value={selectedDevice.serial_number} />
+              <InfoRow label="Кабинет" value={selectedDevice.room} />
+              <InfoRow label="Тип устройства" value={getDeviceTypeLabel(selectedDevice.device_type)} />
+              <InfoRow label="Название / Модель" value={selectedDevice.computer_type} />
+              
+              {/* PC specific hardware fields */}
+              {selectedDevice.device_type === "pc" && (
+                <>
+                  <InfoRow label="MAC-адрес" value={hw.mac_address} />
+                  <InfoRow label="CPU" value={hw.cpu} />
+                  <InfoRow label="RAM" value={hw.ram} />
+                  <InfoRow label="Накопитель" value={hw.storage} />
+                  <InfoRow label="GPU" value={hw.gpu} />
+                </>
+              )}
+
+              {/* Monitor specific hardware fields */}
+              {selectedDevice.device_type === "monitor" && (
+                <>
+                  <InfoRow label="Диагональ" value={hw.diagonal} />
+                  <InfoRow label="Разрешение" value={hw.resolution} />
+                </>
+              )}
             </div>
           </div>
 
@@ -258,7 +355,7 @@ export function ComputersClientView({
                   <div>
                     <p className="text-sm font-medium text-gray-900">{selectedEmployee.full_name}</p>
                     <p className="text-xs text-gray-500">
-                      {selectedEmployee.position ?? "—"} · Каб. {selectedEmployee.room ?? selectedComputer.room ?? "—"}
+                      {selectedEmployee.position ?? "—"} · Каб. {selectedEmployee.room ?? selectedDevice.room ?? "—"}
                     </p>
                   </div>
                 </div>
@@ -354,44 +451,44 @@ export function ComputersClientView({
         <LinkEmployeeDialog
           open={linkDialogOpen}
           onOpenChange={setLinkDialogOpen}
-          computerId={selectedComputer.id}
-          currentEmployeeId={selectedComputer.employee_id ?? null}
+          deviceId={selectedDevice.id}
+          currentEmployeeId={selectedDevice.employee_id ?? null}
           activeEmployees={activeEmployees}
         />
-        <EditComputerDialog
+        <EditDeviceDialog
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
-          computer={selectedComputer}
+          device={selectedDevice}
           templates={templates}
         />
         <InstallSoftwareDialog
           open={installDialogOpen}
           onOpenChange={setInstallDialogOpen}
-          computerId={selectedComputer.id}
+          deviceId={selectedDevice.id}
           licenseOptions={licenseOptions}
         />
         <AddIncidentDialog
           open={ticketDialogOpen}
           onOpenChange={setTicketDialogOpen}
-          computers={computers.map((c) => ({ id: c.id, inventory_number: c.inventory_number }))}
+          devices={devices.map((d) => ({ id: d.id, inventory_number: d.inventory_number }))}
           employees={activeEmployees.map((e) => ({ id: e.id, full_name: e.full_name, room: e.room ?? null }))}
-          defaultComputerId={selectedComputer.id}
-          defaultEmployeeId={selectedComputer.employee_id ?? undefined}
+          defaultDeviceId={selectedDevice.id}
+          defaultEmployeeId={selectedDevice.employee_id ?? undefined}
         />
         <ConfirmActionDialog
           open={removeLicenseDialogOpen}
           onOpenChange={setRemoveLicenseDialogOpen}
-          onConfirm={async () => { await removeSoftware(removeLicenseInstallId!, selectedComputer.id); }}
+          onConfirm={async () => { await removeSoftware(removeLicenseInstallId!, selectedDevice.id); }}
           title="Удаление лицензии"
-          description="Вы уверены, что хотите удалить эту лицензию с компьютера? Это действие освободит одно место в лицензии."
+          description="Вы уверены, что хотите удалить эту лицензию с устройства? Это действие освободит одно место в лицензии."
           confirmLabel="Удалить"
         />
         <ConfirmActionDialog
           open={removeEmployeeDialogOpen}
           onOpenChange={setRemoveEmployeeDialogOpen}
-          onConfirm={async () => { await linkEmployeeToComputer(selectedComputer.id, null); }}
+          onConfirm={async () => { await linkEmployeeToDevice(selectedDevice.id, null); }}
           title="Открепление сотрудника"
-          description="Вы уверены, что хотите открепить сотрудника от этого компьютера?"
+          description="Вы уверены, что хотите открепить сотрудника от этого устройства?"
           confirmLabel="Открепить"
         />
       </div>
@@ -400,57 +497,81 @@ export function ComputersClientView({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <ComputerFilterBar
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          resultCount={filteredComputers.length}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
-        <div className="flex items-center gap-2 shrink-0">
-          <Building className="w-4 h-4 text-gray-400 shrink-0" />
-          <select
-            value={buildingFilter}
-            onChange={(e) => onBuildingFilterChange(e.target.value)}
-            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
-          >
-            <option value="all">Все корпуса</option>
-            {Object.keys(BUILDING_ADDRESSES).map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
+      {/* Top Filter Bar with Main Types Filter */}
+      <div className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+        {/* Main Category type filter tabs */}
+        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 p-1 rounded-xl self-start overflow-x-auto max-w-full">
+          {typeFilterOptions.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setActiveTypeFilter(opt.value)}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all",
+                activeTypeFilter === opt.value
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <DeviceFilterBar
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            resultCount={filteredDevices.length}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+          <div className="flex items-center gap-2 shrink-0">
+            <Building className="w-4 h-4 text-gray-400 shrink-0" />
+            <select
+              value={buildingFilter}
+              onChange={(e) => onBuildingFilterChange(e.target.value)}
+              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
+            >
+              <option value="all">Все корпуса</option>
+              {Object.keys(BUILDING_ADDRESSES).map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
+
       <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
-        {filteredComputers.length === 0 ? (
+        {filteredDevices.length === 0 ? (
           <div className="py-16 text-center text-gray-500">
             <Monitor className="w-10 h-10 mx-auto opacity-40 mb-3" />
-            <p className="text-sm">Компьютеры не найдены</p>
+            <p className="text-sm">Устройства не найдены</p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Инв. номер</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Тип</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Тип устройства</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Название / Модель</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Кабинет</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Статус</th>
                 <th className="px-4 py-3 w-8" />
               </tr>
             </thead>
             <tbody>
-              {filteredComputers.map((c) => (
+              {filteredDevices.map((d) => (
                 <tr
-                  key={c.id}
-                  onClick={() => setSelectedId(c.id)}
+                  key={d.id}
+                  onClick={() => setSelectedId(d.id)}
                   className="hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-b-0"
                 >
-                  <td className="px-4 py-3 font-mono text-sm font-medium text-gray-900">{c.inventory_number}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{c.computer_type}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{c.room ?? "—"}</td>
+                  <td className="px-4 py-3 font-mono text-sm font-medium text-gray-900">{d.inventory_number}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{getDeviceTypeLabel(d.device_type)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 font-medium">{d.computer_type}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{d.room ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <ComputerStatusBadge status={c.lifecycle_status} />
+                    <DeviceStatusBadge status={d.lifecycle_status as any} />
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-gray-400">›</span>

@@ -34,7 +34,7 @@ export async function createTemplate(formData: FormData) {
 
   revalidateTag("templates", { expire: 0 });
   revalidatePath("/templates");
-  revalidatePath("/computers");
+  revalidatePath("/devices");
   redirect("/templates");
 }
 
@@ -70,7 +70,7 @@ export async function updateTemplate(id: string, formData: FormData) {
 
   revalidateTag("templates", { expire: 0 });
   revalidatePath("/templates");
-  revalidatePath("/computers");
+  revalidatePath("/devices");
   redirect("/templates");
 }
 
@@ -81,7 +81,7 @@ export async function deleteTemplate(id: string) {
 
   revalidateTag("templates", { expire: 0 });
   revalidatePath("/templates");
-  revalidatePath("/computers");
+  revalidatePath("/devices");
   redirect("/templates");
 }
 
@@ -92,6 +92,6 @@ export async function deleteTemplateDialog(id: string) {
 
   revalidateTag("templates", { expire: 0 });
   revalidatePath("/templates");
-  revalidatePath("/computers");
+  revalidatePath("/devices");
   return { success: true };
 }

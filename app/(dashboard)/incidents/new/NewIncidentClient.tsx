@@ -11,8 +11,18 @@ import {
 import { createIncident } from "@/lib/actions/incidents";
 import type { Tables } from "@/types/database.types";
 
-type Computer = Pick<Tables<"computers">, "id" | "inventory_number">;
+type Device = Pick<Tables<"devices">, "id" | "inventory_number" | "device_type" | "computer_type">;
 type Employee = Pick<Tables<"employees">, "id" | "full_name">;
+
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
+};
+
 const INCIDENT_TYPE_ITEMS: Record<string, React.ReactNode> = {
   hardware: "Железо",
   software: "ПО",
@@ -32,16 +42,20 @@ const getLocalDateTimeString = (date: Date = new Date()) => {
   return new Date(date.getTime() - tzoffset).toISOString().slice(0, 16);
 };
 
-export default function NewIncidentClient({ computers, employees, defaultComputerId }: { computers: Computer[]; employees: Employee[]; defaultComputerId?: string }) {
-  // Controlled state for computer_id and employee_id — guarantees the hidden input value
+export default function NewIncidentClient({ devices, employees, defaultDeviceId }: { devices: Device[]; employees: Employee[]; defaultDeviceId?: string }) {
+  // Controlled state for device_id and employee_id — guarantees the hidden input value
   // always matches the current selection, bypassing @base-ui/react Select's
   // internal hidden-input sync issues with UUID-length values.
-  const [computerId, setComputerId] = useState(defaultComputerId ?? "");
+  const [deviceId, setDeviceId] = useState(defaultDeviceId ?? "");
   const [employeeId, setEmployeeId] = useState("");
 
-  const computerItems: Record<string, React.ReactNode> = Object.fromEntries([
-    ["", "— Не выбран —"],
-    ...computers.map((c) => [c.id, c.inventory_number]),
+  const deviceItems: Record<string, React.ReactNode> = Object.fromEntries([
+    ["", "— Не выбрано —"],
+    ...devices.map((d) => {
+      const typeLabel = deviceTypeRussianLabels[d.device_type] || "Устройство";
+      const modelLabel = d.computer_type || "—";
+      return [d.id, `[${typeLabel}] ${modelLabel} (${d.inventory_number})` as React.ReactNode];
+    }),
   ]);
   const employeeItems: Record<string, React.ReactNode> = Object.fromEntries([
     ["", "— Не указан —"],
@@ -57,10 +71,10 @@ export default function NewIncidentClient({ computers, employees, defaultCompute
 
   return (
     <form action={formAction} className="space-y-5 max-w-lg">
-      {/* Only include computer_id/employee_id in form data when actually
+      {/* Only include device_id/employee_id in form data when actually
           selected. When empty, omitting the field ensures formData.get()
           returns null → undefined via emptyToUndefined(), avoiding "Invalid UUID". */}
-      {computerId && <input type="hidden" name="computer_id" value={computerId} />}
+      {deviceId && <input type="hidden" name="device_id" value={deviceId} />}
       {employeeId && <input type="hidden" name="employee_id" value={employeeId} />}
 
       <div className="space-y-2">
@@ -80,14 +94,20 @@ export default function NewIncidentClient({ computers, employees, defaultCompute
       </div>
 
       <div className="space-y-2">
-        <Label>Компьютер</Label>
-        <Select value={computerId} onValueChange={(v) => setComputerId(v ?? "")} items={computerItems}>
-          <SelectTrigger><SelectValue placeholder="Не привязан" /></SelectTrigger>
+        <Label>Устройство</Label>
+        <Select value={deviceId} onValueChange={(v) => setDeviceId(v ?? "")} items={deviceItems}>
+          <SelectTrigger><SelectValue placeholder="Не привязано" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">— Не выбран —</SelectItem>
-            {computers.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.inventory_number}</SelectItem>
-            ))}
+            <SelectItem value="">— Не выбрано —</SelectItem>
+            {devices.map((d) => {
+              const typeLabel = deviceTypeRussianLabels[d.device_type] || "Устройство";
+              const modelLabel = d.computer_type || "—";
+              return (
+                <SelectItem key={d.id} value={d.id}>
+                  {`[${typeLabel}] ${modelLabel} (${d.inventory_number})`}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

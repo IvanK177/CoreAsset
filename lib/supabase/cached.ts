@@ -29,32 +29,32 @@ export const getCachedLicenses = unstable_cache(
   { tags: ["licenses"] }
 );
 
-export const getCachedComputerLicenses = unstable_cache(
+export const getCachedDeviceLicenses = unstable_cache(
   async () => {
     const supabase = createServiceClient();
     const { data, error } = await supabase
-      .from("computer_licenses")
-      .select("id, computer_id, license_id, installed_at, licenses(id, software_name, version, license_type, total_seats, used_seats, price_per_unit, expires_at)")
+      .from("device_licenses")
+      .select("id, device_id, license_id, installed_at, licenses(id, software_name, version, license_type, total_seats, used_seats, price_per_unit, expires_at)")
       .order("installed_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
   },
-  ["computer-licenses-list"],
-  { tags: ["computer_licenses", "licenses"] }
+  ["device-licenses-list"],
+  { tags: ["device_licenses", "licenses"] }
 );
 
-export const getCachedComputers = unstable_cache(
+export const getCachedDevices = unstable_cache(
   async () => {
     const supabase = createServiceClient();
     const { data, error } = await supabase
-      .from("computers")
+      .from("devices")
       .select("*")
       .order("inventory_number");
     if (error) throw new Error(error.message);
     return data ?? [];
   },
-  ["computers-list"],
-  { tags: ["computers"] }
+  ["devices-list"],
+  { tags: ["devices"] }
 );
 
 export const getCachedEmployees = unstable_cache(
@@ -100,18 +100,18 @@ export const getCachedIncidents = unstable_cache(
   { tags: ["incidents"] }
 );
 
-export const getCachedComputerLicensesWithComputers = unstable_cache(
+export const getCachedDeviceLicensesWithDevices = unstable_cache(
   async () => {
     const supabase = createServiceClient();
     const { data, error } = await supabase
-      .from("computer_licenses")
-      .select("id, computer_id, license_id, installed_at, computers(inventory_number, employees!computers_employee_id_fkey(building))")
+      .from("device_licenses")
+      .select("id, device_id, license_id, installed_at, devices(inventory_number, employees!devices_employee_id_fkey(building))")
       .order("installed_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
   },
-  ["computer-licenses-with-computers-list"],
-  { tags: ["computer_licenses", "computers"] }
+  ["device-licenses-with-devices-list"],
+  { tags: ["device_licenses", "devices"] }
 );
 
 export const getCachedIncidentsWithRelations = unstable_cache(
@@ -119,13 +119,13 @@ export const getCachedIncidentsWithRelations = unstable_cache(
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("incidents")
-      .select("id, title, description, priority, status, created_at, incident_type, computer_id, employee_id, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position, room), assignee:employees!incidents_assigned_to_fkey(id, full_name)")
+      .select("id, title, description, priority, status, created_at, incident_type, device_id, employee_id, devices!incidents_device_id_fkey(id, inventory_number, device_type, computer_type), employees!incidents_employee_id_fkey(id, full_name, position, room), assignee:employees!incidents_assigned_to_fkey(id, full_name)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
   },
   ["incidents-with-relations-list"],
-  { tags: ["incidents", "computers", "employees"] }
+  { tags: ["incidents", "devices", "employees"] }
 );
 
 export const getCachedRoomRequests = unstable_cache(

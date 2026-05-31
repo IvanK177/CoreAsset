@@ -28,17 +28,18 @@ import { cn } from "@/lib/utils";
 
 type PriorityLevel = "low" | "medium" | "high" | "critical";
 
-interface ComputerOption {
+interface DeviceOption {
   id: string;
   inventory_number: string;
-  computer_type: string | null;
+  computer_type: string | null; // DB column name used as Subtype/Model name
+  device_type: string;
 }
 
 interface NewTicketDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   employeeId: string;
-  computers: ComputerOption[];
+  devices: DeviceOption[];
 }
 
 const priorityOptions: { value: PriorityLevel; label: string; activeClassName: string }[] = [
@@ -64,11 +65,13 @@ const priorityOptions: { value: PriorityLevel; label: string; activeClassName: s
   },
 ];
 
-const computerTypeLabels: Record<string, string> = {
-  desktop: "PC",
-  laptop: "Laptop",
-  monoblock: "Monoblock",
-  server: "Server",
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
 };
 
 const getLocalDateTimeString = (date: Date = new Date()) => {
@@ -80,11 +83,11 @@ export function NewTicketDialog({
   open,
   onOpenChange,
   employeeId,
-  computers,
+  devices,
 }: NewTicketDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [computerId, setComputerId] = useState("");
+  const [deviceId, setDeviceId] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>("medium");
   const [createdAt, setCreatedAt] = useState(getLocalDateTimeString());
   const [pending, setPending] = useState(false);
@@ -156,7 +159,7 @@ export function NewTicketDialog({
     const formData = new FormData();
     formData.set("title", title.trim());
     formData.set("description", description.trim());
-    formData.set("computer_id", computerId);
+    formData.set("device_id", deviceId);
     formData.set("employee_id", employeeId);
     formData.set("priority", priority);
     formData.set("created_at", createdAt);
@@ -183,7 +186,7 @@ export function NewTicketDialog({
     toast.success("Заявка успешно отправлена");
     setTitle("");
     setDescription("");
-    setComputerId("");
+    setDeviceId("");
     setPriority("medium");
     setCreatedAt(getLocalDateTimeString());
     photoPreviews.forEach((p) => URL.revokeObjectURL(p));
@@ -198,7 +201,7 @@ export function NewTicketDialog({
     if (!pending) {
       setTitle("");
       setDescription("");
-      setComputerId("");
+      setDeviceId("");
       setPriority("medium");
       setCreatedAt(getLocalDateTimeString());
       photoPreviews.forEach((p) => URL.revokeObjectURL(p));
@@ -209,12 +212,16 @@ export function NewTicketDialog({
     }
   };
 
-  // Build items map for Select
-  const computerItems = Object.fromEntries(
-    computers.map((c) => [
-      c.id,
-      `${c.inventory_number} (${computerTypeLabels[c.computer_type ?? ""] ?? c.computer_type ?? "—"})`,
-    ])
+  // Build items map for Select with format: [Тип] Название (Инв. номер)
+  const deviceItems = Object.fromEntries(
+    devices.map((d) => {
+      const typeLabel = deviceTypeRussianLabels[d.device_type] || "Устройство";
+      const modelLabel = d.computer_type || "—";
+      return [
+        d.id,
+        `[${typeLabel}] ${modelLabel} (${d.inventory_number})`,
+      ];
+    })
   );
 
   return (
@@ -272,28 +279,32 @@ export function NewTicketDialog({
             />
           </div>
 
-          {/* Computer select */}
+          {/* Device select */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">
               С каким устройством проблема?
             </Label>
             <Select
-              value={computerId}
-              onValueChange={(v) => setComputerId(v ?? "")}
-              items={computerItems}
+              value={deviceId}
+              onValueChange={(v) => setDeviceId(v ?? "")}
+              items={deviceItems}
             >
               <SelectTrigger className="h-11 rounded-lg border-gray-200 w-full">
-                <SelectValue placeholder={computers.length > 0 ? "Выберите устройство" : "Нет доступных устройств"} />
+                <SelectValue placeholder={devices.length > 0 ? "Выберите устройство" : "Нет доступных устройств"} />
               </SelectTrigger>
               <SelectContent>
-                {computers.length === 0 ? (
+                {devices.length === 0 ? (
                   <SelectItem value="" disabled>Нет доступных устройств</SelectItem>
                 ) : (
-                  computers.map((comp) => (
-                    <SelectItem key={comp.id} value={comp.id}>
-                      {comp.inventory_number} ({computerTypeLabels[comp.computer_type ?? ""] ?? comp.computer_type ?? "—"})
-                    </SelectItem>
-                  ))
+                  devices.map((d) => {
+                    const typeLabel = deviceTypeRussianLabels[d.device_type] || "Устройство";
+                    const modelLabel = d.computer_type || "—";
+                    return (
+                      <SelectItem key={d.id} value={d.id}>
+                        {`[${typeLabel}] ${modelLabel} (${d.inventory_number})`}
+                      </SelectItem>
+                    );
+                  })
                 )}
               </SelectContent>
             </Select>

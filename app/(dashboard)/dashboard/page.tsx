@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import { unstable_noStore as noStore } from 'next/cache';
 import {
-  getCachedComputers,
+  getCachedDevices,
   getCachedIncidentsWithRelations,
   getCachedLicenses,
   getCachedEmployees,
@@ -18,8 +18,8 @@ import Link from "next/link";
 export default async function DashboardPage() {
   noStore();
 
-  const [computers, rawIncidents, rawLicenses, employees] = await Promise.all([
-    getCachedComputers(),
+  const [devices, rawIncidents, rawLicenses, employees] = await Promise.all([
+    getCachedDevices(),
     getCachedIncidentsWithRelations(),
     getCachedLicenses(),
     getCachedEmployees(),
@@ -31,24 +31,24 @@ export default async function DashboardPage() {
     priority: "low" | "medium" | "high" | "critical";
     status: "open" | "in_progress" | "resolved" | "cancelled";
     created_at: string;
-    computers: unknown;
-    "computers!incidents_computer_id_fkey": unknown;
+    devices: unknown;
+    "devices!incidents_device_id_fkey": unknown;
   }[])
     .filter((inc) => inc.status !== "resolved")
     .slice(0, 10)
     .map((inc) => ({
       ...inc,
-      computers: inc.computers || inc["computers!incidents_computer_id_fkey"],
+      devices: inc.devices || inc["devices!incidents_device_id_fkey"],
     }));
 
   const allLicenses = rawLicenses.filter((l) => l.license_type === "subscription");
   const allIncidents = rawIncidents;
 
   // Metrics
-  const total = computers.filter((c) => c.lifecycle_status !== "decommissioned").length;
-  const occupied = computers.filter((c) => c.lifecycle_status === "active").length;
-  const warehouse = computers.filter((c) => c.lifecycle_status === "storage").length;
-  const repair = computers.filter((c) => c.lifecycle_status === "repair").length;
+  const total = devices.filter((d) => d.lifecycle_status !== "decommissioned").length;
+  const occupied = devices.filter((d) => d.lifecycle_status === "active").length;
+  const warehouse = devices.filter((d) => d.lifecycle_status === "storage").length;
+  const repair = devices.filter((d) => d.lifecycle_status === "repair").length;
   const openTicketsCount = allIncidents.filter((i) => i.status !== "resolved").length;
   const criticalHighCount = openIncidents.filter((i) => i.priority === "critical" || i.priority === "high").length;
 
@@ -96,13 +96,13 @@ export default async function DashboardPage() {
       {/* 5 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard
-          label="Занятые ПК"
+          label="Занятые устройства"
           value={occupied}
           subtitle={`из ${total} всего`}
           icon={Monitor}
           iconBgColor="bg-emerald-100"
           iconTextColor="text-emerald-600"
-          href="/computers?filter=active"
+          href="/devices?filter=active"
         />
         <StatCard
           label="На складе"
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
           icon={Package}
           iconBgColor="bg-blue-100"
           iconTextColor="text-blue-600"
-          href="/computers?filter=storage"
+          href="/devices?filter=storage"
         />
         <StatCard
           label="В ремонте"
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
           icon={Wrench}
           iconBgColor="bg-orange-100"
           iconTextColor="text-orange-600"
-          href="/computers?filter=repair"
+          href="/devices?filter=repair"
         />
         <StatCard
           label="Открытые тикеты"
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {openIncidents.map((inc) => {
-                const computer = extractJoinObject(inc.computers as unknown) as { inventory_number: string } | null;
+                const device = extractJoinObject(inc.devices as unknown) as { inventory_number: string } | null;
                 return (
                   <Link
                     key={inc.id}
@@ -170,8 +170,8 @@ export default async function DashboardPage() {
                         <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
                         <span className="text-sm font-semibold text-gray-900 truncate">{inc.description}</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {computer?.inventory_number ?? "—"}
+                      <p className="text-xs text-gray-505 mt-1">
+                        {device?.inventory_number ?? "—"}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-4">

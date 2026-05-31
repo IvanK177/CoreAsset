@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 /** Admin-only routes that employees should not access */
 const ADMIN_ROUTES = [
   "/dashboard",
-  "/computers",
+  "/devices",
   "/employees",
   "/licenses",
   "/incidents",

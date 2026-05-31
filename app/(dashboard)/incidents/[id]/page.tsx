@@ -12,19 +12,37 @@ import { AlertTriangle } from "lucide-react";
 import { SubmitButton } from "@/components/shared/SubmitButton";
 import Link from "next/link";
 
+const deviceTypeRussianLabels: Record<string, string> = {
+  pc: "Компьютер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Устройство",
+};
+
+const deviceTypeEmojis: Record<string, string> = {
+  pc: "💻",
+  monitor: "🖥️",
+  keyboard: "⌨️",
+  mouse: "🖱️",
+  printer: "🖨️",
+  other: "🔌",
+};
+
 export default async function IncidentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createServiceClient();
 
   const { data: inc } = await supabase
     .from("incidents")
-    .select("*, computers!incidents_computer_id_fkey(id, inventory_number), employees!incidents_employee_id_fkey(id, full_name, position, room), assignee:employees!incidents_assigned_to_fkey(full_name)")
+    .select("*, devices!incidents_device_id_fkey(id, inventory_number, device_type, computer_type), employees!incidents_employee_id_fkey(id, full_name, position, room), assignee:employees!incidents_assigned_to_fkey(full_name)")
     .eq("id", id)
     .single();
 
   if (!inc) notFound();
 
-  const computer = extractJoinObject(inc.computers as unknown) as { id: string; inventory_number: string } | null;
+  const device = extractJoinObject(inc.devices as unknown) as { id: string; inventory_number: string; device_type: string; computer_type: string | null } | null;
   const employee = extractJoinObject(inc.employees as unknown) as { id: string; full_name: string; position: string | null; room: string | null } | null;
   const assignee = extractJoinObject(inc.assignee as unknown) as { full_name: string | null } | null;
   const isResolved = inc.status === "resolved";
@@ -42,8 +60,8 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
             <p className="text-sm text-muted-foreground capitalize">{inc.incident_type}</p>
           </div>
           <div className="flex gap-2">
-            <PriorityBadge priority={inc.priority} />
-            <IncidentStatusBadge status={inc.status} />
+            <PriorityBadge priority={inc.priority as any} />
+            <IncidentStatusBadge status={inc.status as any} />
           </div>
         </div>
         <DeleteConfirmDialog
@@ -54,10 +72,11 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
 
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Детали</p>
-        <Row label="Компьютер" value={
-          computer ? (
-            <Link href={`/computers/${computer.id}`} className="text-primary hover:underline font-mono">
-              {computer.inventory_number}
+        <Row label="Устройство" value={
+          device ? (
+            <Link href={`/devices/${device.id}`} className="text-primary hover:underline">
+              {deviceTypeEmojis[device.device_type] || "🔌"} {deviceTypeRussianLabels[device.device_type] || "Устройство"}{" "}
+              {device.computer_type && `${device.computer_type} `}({device.inventory_number})
             </Link>
           ) : "—"
         } />

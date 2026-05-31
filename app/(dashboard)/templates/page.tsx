@@ -6,5 +6,9 @@ import { getCachedTemplates } from "@/lib/supabase/cached";
 
 export default async function TemplatesPage() {
   const templates = await getCachedTemplates();
-  return <TemplatesPageClient templates={templates} />;
+  const normalizedTemplates = templates.map((tpl) => ({
+    ...tpl,
+    created_at: tpl.created_at || new Date().toISOString(),
+  }));
+  return <TemplatesPageClient templates={normalizedTemplates} />;
 }
