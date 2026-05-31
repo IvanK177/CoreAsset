@@ -11,7 +11,7 @@ import {
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
-import { cn, formatDate, daysUntilExpiry, extractJoinObject } from "@/lib/utils";
+import { cn, formatDate, daysUntilExpiry, extractJoinObject, formatDateTimeRu } from "@/lib/utils";
 import { Monitor, Package, Wrench, AlertTriangle, DollarSign, Clock, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -72,6 +72,7 @@ export default async function DashboardPage() {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Moscow",
   }).format(new Date());
 
   // License usage data
@@ -177,7 +178,7 @@ export default async function DashboardPage() {
                     <div className="flex items-center gap-2 shrink-0 ml-4">
                       <PriorityBadge priority={inc.priority} />
                       <IncidentStatusBadge status={inc.status} />
-                      <span className="text-xs text-gray-400">{formatDate(inc.created_at)}</span>
+                      <span className="text-xs text-gray-400">{formatDateTimeRu(inc.created_at)}</span>
                     </div>
                   </Link>
                 );

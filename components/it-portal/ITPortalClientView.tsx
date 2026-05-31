@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
-import { cn, extractJoinObject, BUILDING_ADDRESSES } from "@/lib/utils";
+import { cn, extractJoinObject, BUILDING_ADDRESSES, formatDateTimeRu } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
@@ -88,15 +88,7 @@ const deviceIconMap: Record<string, any> = {
 };
 
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("ru-RU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Moscow",
-  });
+  return formatDateTimeRu(dateStr);
 }
 
 function getIncidentTitle(incident: IncidentRow): string {

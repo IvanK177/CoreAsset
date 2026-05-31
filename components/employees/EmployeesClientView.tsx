@@ -6,7 +6,7 @@ import { EmployeeStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
-import { cn, formatDateTime, BUILDING_ADDRESSES } from "@/lib/utils";
+import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
 import { restoreEmployeeDialog, dismissEmployeeDialog, deleteEmployeeDialog } from "@/lib/actions/employees";
 import { clearCache } from "@/lib/actions/revalidate";
 import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Loader2, Edit, Building, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
@@ -342,7 +342,7 @@ export function EmployeesClientView({
                     <div className="flex items-center gap-2 shrink-0">
                       <PriorityBadge priority={inc.priority as "low" | "medium" | "high" | "critical"} />
                       <IncidentStatusBadge status={inc.status as "open" | "in_progress" | "resolved"} />
-                      <span className="text-xs text-gray-400">{formatDateTime(inc.created_at)}</span>
+                      <span className="text-xs text-gray-400">{formatDateTimeRu(inc.created_at)}</span>
                     </div>
                   </Link>
                 ))}

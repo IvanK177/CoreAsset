@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Monitor, Plus, AlertTriangle, CheckCircle2, Cpu, HardDrive, MemoryStick, Laptop, Wrench, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
-import { cn, extractJoinObject } from "@/lib/utils";
+import { cn, extractJoinObject, formatDateTimeRu } from "@/lib/utils";
 import { ComputerStatusBadge as DeviceStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { Badge } from "@/components/ui/badge";
@@ -109,15 +109,7 @@ const statusColors: Record<string, string> = {
 };
 
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("ru-RU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Moscow",
-  });
+  return formatDateTimeRu(dateStr);
 }
 
 function getIncidentTitle(incident: IncidentData): string {

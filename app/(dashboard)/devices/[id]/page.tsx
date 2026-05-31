@@ -9,7 +9,7 @@ import { TicketDialogButton } from "@/components/shared/TicketDialogButton";
 import { ComputerStatusBadge as DeviceStatusBadge } from "@/components/shared/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { deleteDevice } from "@/lib/actions/devices";
-import { formatDate, extractJoinObject, safeHardware } from "@/lib/utils";
+import { formatDate, extractJoinObject, safeHardware, formatDateTimeRu } from "@/lib/utils";
 import { Edit, Monitor, Cpu, Keyboard, Mouse, Printer, HelpCircle, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
@@ -207,7 +207,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
               <Link key={inc.id} href={`/incidents?selectedId=${inc.id}`} className="flex items-start gap-3 hover:bg-muted/30 rounded-lg p-2 transition-colors">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate">{inc.description}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(inc.created_at)} · {inc.incident_type}</p>
+                  <p className="text-xs text-muted-foreground">{formatDateTimeRu(inc.created_at)} · {inc.incident_type}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <PriorityBadge priority={inc.priority as any} />

@@ -20,6 +20,19 @@ export const formatDateTime = (date: string | null | undefined): string => {
   }).format(new Date(date));
 };
 
+export function formatDateTimeRu(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = new Date(date);
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Moscow",
+  }).format(d);
+}
+
 /**
  * Parses a date string, treating it as Moscow time (+03:00) if no timezone is specified.
  */

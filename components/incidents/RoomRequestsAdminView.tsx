@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn, formatDateTime, BUILDING_ADDRESSES } from "@/lib/utils";
+import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
 import { AlertTriangle, Clock, CheckCircle2, User, Building, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DecompressedText } from "@/components/shared/DecompressedText";
@@ -188,7 +188,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                       {req.employee?.building ?? "—"}
                     </span>
                     <span>·</span>
-                    <span>{formatDateTime(req.created_at)}</span>
+                    <span>{formatDateTimeRu(req.created_at)}</span>
                   </p>
                 </div>
                 <span className="text-gray-400 ml-4 shrink-0">›</span>
@@ -219,7 +219,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                   Заявка АХО: Кабинет {selectedRequest.room}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-gray-400">
-                  Создана: {formatDateTime(selectedRequest.created_at)}
+                  Создана: {formatDateTimeRu(selectedRequest.created_at)}
                 </DialogDescription>
               </DialogHeader>
 

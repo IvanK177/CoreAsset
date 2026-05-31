@@ -14,7 +14,7 @@ import { ComputerStatusBadge } from "@/components/shared/StatusBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { deleteEmployee, dismissEmployee, restoreEmployee } from "@/lib/actions/employees";
-import { formatDate, extractJoinObject } from "@/lib/utils";
+import { formatDate, extractJoinObject, formatDateTimeRu } from "@/lib/utils";
 import { Edit, Monitor, User, UserCheck, UserX, Phone, MessageCircle } from "lucide-react";
 
 const deviceTypeRussianLabels: Record<string, string> = {
@@ -190,7 +190,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate">{inc.title || inc.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatDate(inc.created_at)} · {inc.incident_type}
+                    {formatDateTimeRu(inc.created_at)} · {inc.incident_type}
                     {inc.device && ` · ${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`}
                   </p>
                 </div>

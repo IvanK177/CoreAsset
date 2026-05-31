@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cn, formatDateTime, BUILDING_ADDRESSES } from "@/lib/utils";
+import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
 import { AlertTriangle, Clock, CheckCircle2, User, Building, Wrench, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -260,7 +260,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                         {typeLabels[req.type] || req.type}
                       </span>
                       <span>·</span>
-                      <span>{formatDateTime(req.created_at)}</span>
+                      <span>{formatDateTimeRu(req.created_at)}</span>
                     </div>
                   </div>
 
@@ -346,7 +346,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                   Заявка АХО: Кабинет {selectedRequest.room}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-gray-400">
-                  Создана: {formatDateTime(selectedRequest.created_at)}
+                  Создана: {formatDateTimeRu(selectedRequest.created_at)}
                 </DialogDescription>
               </DialogHeader>
 

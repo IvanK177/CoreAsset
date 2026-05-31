@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cn, formatDateTime, BUILDING_ADDRESSES } from "@/lib/utils";
+import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { updateIncidentStatus } from "@/lib/actions/incidents";
@@ -175,7 +175,7 @@ export function IncidentsClientView({
       const deviceText = inc.device
         ? `[${deviceTypeRussianLabels[inc.device.device_type] || "Устройство"}] ${inc.device.computer_type || ""} (${inc.device.inventory_number})`
         : "—";
-      const dateText = new Date(inc.created_at).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
+      const dateText = formatDateTimeRu(inc.created_at);
 
       html += `<tr>
         <td>#T${inc.id.slice(0, 4)}</td>
@@ -387,7 +387,7 @@ export function IncidentsClientView({
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <span className="text-xs text-gray-500">Создан</span>
                 </div>
-                <p className="text-sm font-medium text-gray-900">{formatDateTime(selectedIncident.created_at)}</p>
+                <p className="text-sm font-medium text-gray-900">{formatDateTimeRu(selectedIncident.created_at)}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
@@ -560,7 +560,7 @@ export function IncidentsClientView({
                       : "—"}
                   </span>
                   <span>·</span>
-                  <span>{formatDateTime(inc.created_at)}</span>
+                  <span>{formatDateTimeRu(inc.created_at)}</span>
                   {inc.status === "resolved" && (
                     <>
                       <span>·</span>
