@@ -34,8 +34,7 @@ type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
 const getMoscowDateTimeString = (date: Date = new Date()) => {
   // Moscow timezone is UTC+3 (3 hours in ms is 3 * 3600000)
-  const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
-  const moscowTime = new Date(utcTime + 3 * 3600 * 1000);
+  const moscowTime = new Date(date.getTime() + 3 * 3600 * 1000);
   return moscowTime.toISOString().slice(0, 16);
 };
 
