@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -92,6 +92,12 @@ export function NewTicketDialog({
   const [priority, setPriority] = useState<PriorityLevel>("medium");
   const [createdAt, setCreatedAt] = useState(getMoscowDateTimeString());
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setCreatedAt(getMoscowDateTimeString());
+    }
+  }, [open]);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);

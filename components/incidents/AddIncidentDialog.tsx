@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -82,6 +82,19 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
       created_at: getMoscowDateTimeString(),
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        title: "",
+        description: "",
+        priority: "medium",
+        device_id: defaultDeviceId ?? "",
+        employee_id: defaultEmployeeId ?? "",
+        created_at: getMoscowDateTimeString(),
+      });
+    }
+  }, [open, defaultDeviceId, defaultEmployeeId, form]);
 
   const selectedEmployeeId = form.watch("employee_id");
   const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
