@@ -37,11 +37,7 @@ const PRIORITY_ITEMS: Record<string, React.ReactNode> = {
 };
 const initialState = { error: "" };
 
-const getMoscowDateTimeString = (date: Date = new Date()) => {
-  // Moscow timezone is UTC+3 (3 hours in ms is 3 * 3600000)
-  const moscowTime = new Date(date.getTime() + 3 * 3600 * 1000);
-  return moscowTime.toISOString().slice(0, 16);
-};
+
 
 export default function NewIncidentClient({ devices, employees, defaultDeviceId }: { devices: Device[]; employees: Employee[]; defaultDeviceId?: string }) {
   // Controlled state for device_id and employee_id — guarantees the hidden input value
@@ -83,16 +79,7 @@ export default function NewIncidentClient({ devices, employees, defaultDeviceId 
         <Input id="title" name="title" placeholder="Опишите проблему кратко" required />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="created_at">Время инцидента *</Label>
-        <Input
-          id="created_at"
-          name="created_at"
-          type="datetime-local"
-          defaultValue={getMoscowDateTimeString()}
-          required
-        />
-      </div>
+
 
       <div className="space-y-2">
         <Label>Устройство</Label>

@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { incidentSchema } from "@/lib/schemas/incident.schema";
 import { compressText, decompressText } from "@/lib/compression";
-import { parseMoscowDateTime } from "@/lib/utils";
 
 /** Convert FormData entry values: null → undefined, empty string → undefined */
 function emptyToUndefined(value: FormDataEntryValue | null): string | undefined {
@@ -29,14 +28,11 @@ export async function createIncident(formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const createdAt = formData.get("created_at") as string | null;
-
   const insertData = {
     ...parsed.data,
     title: parsed.data.title || "",
     device_id: parsed.data.device_id || null,
     employee_id: parsed.data.employee_id || null,
-    ...(createdAt ? { created_at: parseMoscowDateTime(createdAt)?.toISOString() } : {}),
   };
   console.log("[createIncident] Inserting incident with device_id:", insertData.device_id);
 
@@ -109,14 +105,11 @@ export async function createIncidentDialog(formData: FormData) {
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message, code: undefined };
 
-  const createdAt = formData.get("created_at") as string | null;
-
   const insertData = {
     ...parsed.data,
     title: parsed.data.title || "",
     device_id: parsed.data.device_id || null,
     employee_id: parsed.data.employee_id || null,
-    ...(createdAt ? { created_at: parseMoscowDateTime(createdAt)?.toISOString() } : {}),
   };
 
   const { data, error } = await supabase.from("incidents").insert(insertData).select("id").single();

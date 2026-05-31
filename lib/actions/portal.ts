@@ -3,7 +3,6 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { compressText, decompressText } from "@/lib/compression";
-import { parseMoscowDateTime } from "@/lib/utils";
 
 /** Create an incident from the employee portal (non-redirecting) */
 export async function createPortalIncident(formData: FormData) {
@@ -14,7 +13,6 @@ export async function createPortalIncident(formData: FormData) {
   const deviceId = formData.get("device_id") as string | null;
   const employeeId = formData.get("employee_id") as string;
   const priority = formData.get("priority") as string;
-  const createdAt = formData.get("created_at") as string | null;
 
   const photoUrlsRaw = formData.get("photo_urls") as string | null;
   const photoUrls = photoUrlsRaw ? JSON.parse(photoUrlsRaw) : [];
@@ -28,7 +26,6 @@ export async function createPortalIncident(formData: FormData) {
     priority: priority as "low" | "medium" | "high" | "critical",
     status: "open" as const,
     photo_urls: photoUrls,
-    ...(createdAt ? { created_at: parseMoscowDateTime(createdAt)?.toISOString() } : {}),
   };
 
   const { data, error } = await supabase

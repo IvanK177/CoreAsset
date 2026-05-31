@@ -32,11 +32,7 @@ import type { Tables } from "@/types/database.types";
 type Device = Pick<Tables<"devices">, "id" | "inventory_number">;
 type Employee = Pick<Tables<"employees">, "id" | "full_name" | "room">;
 
-const getMoscowDateTimeString = (date: Date = new Date()) => {
-  // Moscow timezone is UTC+3 (3 hours in ms is 3 * 3600000)
-  const moscowTime = new Date(date.getTime() + 3 * 3600 * 1000);
-  return moscowTime.toISOString().slice(0, 16);
-};
+
 
 const incidentDialogSchema = z.object({
   title: z.string().min(1, "Обязательное поле"),
@@ -44,7 +40,6 @@ const incidentDialogSchema = z.object({
   priority: z.enum(["low", "medium", "high", "critical"]),
   device_id: z.string().optional().or(z.literal("")),
   employee_id: z.string().optional().or(z.literal("")),
-  created_at: z.string().optional().or(z.literal("")),
 });
 
 type IncidentDialogValues = z.infer<typeof incidentDialogSchema>;
@@ -79,7 +74,6 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
       priority: "medium",
       device_id: defaultDeviceId ?? "",
       employee_id: defaultEmployeeId ?? "",
-      created_at: getMoscowDateTimeString(),
     },
   });
 
@@ -91,7 +85,6 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
         priority: "medium",
         device_id: defaultDeviceId ?? "",
         employee_id: defaultEmployeeId ?? "",
-        created_at: getMoscowDateTimeString(),
       });
     }
   }, [open, defaultDeviceId, defaultEmployeeId, form]);
@@ -111,7 +104,6 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
     formData.set("incident_type", "other");
     if (data.device_id) formData.set("device_id", data.device_id);
     if (data.employee_id) formData.set("employee_id", data.employee_id);
-    if (data.created_at) formData.set("created_at", data.created_at);
 
     const result = await createIncidentDialog(formData);
     if (result.error) {
@@ -136,7 +128,6 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
       priority: "medium",
       device_id: defaultDeviceId ?? "",
       employee_id: defaultEmployeeId ?? "",
-      created_at: getMoscowDateTimeString(),
     });
     onOpenChange(false);
     startTransition(() => { router.refresh(); });
@@ -146,14 +137,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
   return (
     <Dialog open={open} onOpenChange={(v) => {
       onOpenChange(v);
-      if (!v) form.reset({
-        title: "",
-        description: "",
-        priority: "medium",
-        device_id: defaultDeviceId ?? "",
-        employee_id: defaultEmployeeId ?? "",
-        created_at: getMoscowDateTimeString(),
-      });
+
     }}>
       <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6">
         <DialogHeader>
@@ -188,16 +172,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
             />
           </div>
 
-          {/* Date and Time */}
-          <div className="space-y-2">
-            <Label htmlFor="created_at">Время инцидента *</Label>
-            <Input
-              id="created_at"
-              type="datetime-local"
-              {...form.register("created_at")}
-              required
-            />
-          </div>
+
 
           {/* Priority, Device, Employee — 2 columns */}
           <div className="grid grid-cols-2 gap-4">
@@ -282,7 +257,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
             <Button
               type="button"
               variant="outline"
-              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", device_id: defaultDeviceId ?? "", employee_id: defaultEmployeeId ?? "", created_at: getMoscowDateTimeString() }); }}
+              onClick={() => { onOpenChange(false); form.reset({ title: "", description: "", priority: "medium", device_id: defaultDeviceId ?? "", employee_id: defaultEmployeeId ?? "" }); }}
               disabled={pending}
             >
               Отмена

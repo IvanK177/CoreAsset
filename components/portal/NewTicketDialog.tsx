@@ -74,11 +74,7 @@ const deviceTypeRussianLabels: Record<string, string> = {
   other: "Устройство",
 };
 
-const getMoscowDateTimeString = (date: Date = new Date()) => {
-  // Moscow timezone is UTC+3 (3 hours in ms is 3 * 3600000)
-  const moscowTime = new Date(date.getTime() + 3 * 3600 * 1000);
-  return moscowTime.toISOString().slice(0, 16);
-};
+
 
 export function NewTicketDialog({
   open,
@@ -90,14 +86,7 @@ export function NewTicketDialog({
   const [description, setDescription] = useState("");
   const [deviceId, setDeviceId] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>("medium");
-  const [createdAt, setCreatedAt] = useState(getMoscowDateTimeString());
   const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setCreatedAt(getMoscowDateTimeString());
-    }
-  }, [open]);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -169,7 +158,6 @@ export function NewTicketDialog({
     formData.set("device_id", deviceId);
     formData.set("employee_id", employeeId);
     formData.set("priority", priority);
-    formData.set("created_at", createdAt);
     formData.set("photo_urls", JSON.stringify(photoUrls));
 
     const result = await createPortalIncident(formData);
@@ -195,7 +183,6 @@ export function NewTicketDialog({
     setDescription("");
     setDeviceId("");
     setPriority("medium");
-    setCreatedAt(getMoscowDateTimeString());
     photoPreviews.forEach((p) => URL.revokeObjectURL(p));
     setPhotos([]);
     setPhotoPreviews([]);
@@ -210,7 +197,6 @@ export function NewTicketDialog({
       setDescription("");
       setDeviceId("");
       setPriority("medium");
-      setCreatedAt(getMoscowDateTimeString());
       photoPreviews.forEach((p) => URL.revokeObjectURL(p));
       setPhotos([]);
       setPhotoPreviews([]);
@@ -271,20 +257,7 @@ export function NewTicketDialog({
             />
           </div>
 
-          {/* Date and Time */}
-          <div className="space-y-2">
-            <Label htmlFor="ticket-created-at" className="text-sm font-medium">
-              Время инцидента *
-            </Label>
-            <Input
-              id="ticket-created-at"
-              type="datetime-local"
-              value={createdAt}
-              onChange={(e) => setCreatedAt(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
-              required
-            />
-          </div>
+
 
           {/* Device select */}
           <div className="space-y-2">
