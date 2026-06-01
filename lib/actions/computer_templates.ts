@@ -17,6 +17,8 @@ export async function createTemplate(formData: FormData) {
       storage: formData.get("storage") || undefined,
       gpu: formData.get("gpu") || undefined,
       mac_address: formData.get("mac_address") || undefined,
+      diagonal: formData.get("diagonal") || undefined,
+      resolution: formData.get("resolution") || undefined,
     },
   };
 
@@ -50,6 +52,8 @@ export async function updateTemplate(id: string, formData: FormData) {
       storage: formData.get("storage") || undefined,
       gpu: formData.get("gpu") || undefined,
       mac_address: formData.get("mac_address") || undefined,
+      diagonal: formData.get("diagonal") || undefined,
+      resolution: formData.get("resolution") || undefined,
     },
   };
 

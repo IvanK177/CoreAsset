@@ -22,6 +22,11 @@ const computerTypeLabels: Record<string, string> = {
   laptop: "Ноутбук",
   monoblock: "Моноблок",
   server: "Сервер",
+  monitor: "Монитор",
+  keyboard: "Клавиатура",
+  mouse: "Мышь",
+  printer: "Принтер",
+  other: "Другая периферия",
 };
 
 export default function TemplatesPageClient({ templates }: TemplatesPageClientProps) {
@@ -31,8 +36,8 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Шаблоны сборок"
-        description="Управление шаблонами конфигураций оборудования для быстрого создания ПК"
+        title="Шаблоны"
+        description="Управление шаблонами конфигураций оборудования для быстрого создания устройств"
         actionNode={
           <Link href="/templates/new">
             <Button size="sm" className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white gap-2">
@@ -50,7 +55,7 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Нет созданных шаблонов</h3>
           <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">
-            Создайте шаблон, чтобы стандартизировать конфигурации компьютеров и быстро заполнять характеристики при добавлении ПК.
+            Создайте шаблон, чтобы стандартизировать конфигурации устройств и быстро заполнять характеристики при добавлении оборудования.
           </p>
           <Link href="/templates/new">
             <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white">Создать первый шаблон</Button>
@@ -59,7 +64,10 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {templates.map((tpl) => {
-            const hw = safeHardware(tpl.hardware);
+            const hw = safeHardware(tpl.hardware) as any;
+            const isComputer = ["desktop", "laptop", "monoblock", "server"].includes(tpl.computer_type ?? "");
+            const isMonitor = tpl.computer_type === "monitor";
+
             return (
               <div key={tpl.id} className="rounded-2xl bg-white p-5 border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
@@ -88,24 +96,45 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
                   )}
 
                   {/* Hardware details grid */}
-                  <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Cpu className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span className="truncate" title={hw.cpu}>{hw.cpu || "—"}</span>
+                  {isComputer && (
+                    <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Cpu className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <span className="truncate" title={hw.cpu}>{hw.cpu || "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MemoryStick className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <span className="truncate" title={hw.ram}>{hw.ram || "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HardDrive className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <span className="truncate" title={hw.storage}>{hw.storage || "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Layout className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <span className="truncate" title={hw.gpu}>{hw.gpu || "—"}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <MemoryStick className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span className="truncate" title={hw.ram}>{hw.ram || "—"}</span>
+                  )}
+
+                  {isMonitor && (
+                    <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-400 shrink-0">Диагональ:</span>
+                        <span className="truncate" title={hw.diagonal}>{hw.diagonal || "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-400 shrink-0">Разрешение:</span>
+                        <span className="truncate" title={hw.resolution}>{hw.resolution || "—"}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <HardDrive className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span className="truncate" title={hw.storage}>{hw.storage || "—"}</span>
+                  )}
+
+                  {!isComputer && !isMonitor && (
+                    <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-500 italic text-center">
+                      Простой шаблон без спецификаций железа
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Layout className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span className="truncate" title={hw.gpu}>{hw.gpu || "—"}</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Footer actions */}

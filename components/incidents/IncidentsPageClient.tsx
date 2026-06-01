@@ -75,7 +75,7 @@ export function IncidentsPageClient({
   return (
     <div>
       <PageHeader
-        title={activeMainTab === "it" ? "Инциденты" : "Заявки АХО"}
+        title={activeMainTab === "it" ? "Инциденты" : "Заявки АХЧ"}
         description={activeMainTab === "it" ? "Журнал всех заявок и технических неисправностей" : "Журнал заявок на ремонт и оснащение помещений"}
         actionNode={
           activeMainTab === "it" ? (
@@ -109,7 +109,7 @@ export function IncidentsPageClient({
               : "border-transparent text-gray-500 hover:text-gray-900"
           )}
         >
-          Заявки АХО
+          Заявки АХЧ
         </button>
       </div>
 

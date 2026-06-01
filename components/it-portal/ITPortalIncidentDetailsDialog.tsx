@@ -41,6 +41,7 @@ interface IncidentRow {
   assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
   photo_urls?: string[] | null;
   resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
 }
 
 interface ITPortalIncidentDetailsDialogProps {
@@ -221,6 +222,31 @@ export function ITPortalIncidentDetailsDialog({
                 <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
                   {incident.resolution}
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* IT Specialist Resolution Photos */}
+          {incident.status === "resolved" && incident.resolution_photo_urls && incident.resolution_photo_urls.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider block">
+                Фотоотчет выполненной работы ({incident.resolution_photo_urls.length})
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {incident.resolution_photo_urls.map((url, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPreviewImageUrl(url)}
+                    className="relative w-20 h-20 rounded-lg overflow-hidden border border-emerald-100 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
+                  >
+                    <img
+                      src={url}
+                      alt={`Решение ${idx + 1}`}
+                      className="object-cover w-full h-full"
+                    />
+                  </button>
+                ))}
               </div>
             </div>
           )}

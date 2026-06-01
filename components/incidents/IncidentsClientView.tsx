@@ -39,6 +39,8 @@ interface IncidentRow {
   created_at: string;
   incident_type: string;
   device_id: string | null;
+  photo_urls?: string[] | null;
+  resolution_photo_urls?: string[] | null;
   device: { id: string; inventory_number: string; device_type: string; computer_type: string | null } | null;
   employee: { id: string; full_name: string; position: string | null; room: string | null; building: string | null } | null;
   assignee?: { id: string; full_name: string | null } | null;
@@ -354,6 +356,56 @@ export function IncidentsClientView({
               <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Описание</h4>
               <DecompressedText text={selectedIncident.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
             </div>
+
+            {selectedIncident.photo_urls && selectedIncident.photo_urls.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Фотографии к заявке ({selectedIncident.photo_urls.length})
+                </h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {selectedIncident.photo_urls.map((url, idx) => (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                    >
+                      <img
+                        src={url}
+                        alt={`Вложение ${idx + 1}`}
+                        className="object-cover w-full h-full"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedIncident.resolution_photo_urls && selectedIncident.resolution_photo_urls.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
+                  Фотоотчет выполненной работы ({selectedIncident.resolution_photo_urls.length})
+                </h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {selectedIncident.resolution_photo_urls.map((url, idx) => (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity"
+                    >
+                      <img
+                        src={url}
+                        alt={`Решение ${idx + 1}`}
+                        className="object-cover w-full h-full"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-gray-50 rounded-lg p-3">

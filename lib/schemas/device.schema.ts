@@ -19,6 +19,7 @@ export const deviceSchema = z.object({
   device_type: z.enum(["pc", "monitor", "keyboard", "mouse", "printer", "other"]),
   hardware: hardwareSchema.optional().nullable(),
   template_id: z.string().optional().nullable().or(z.literal("")),
+  photo_urls: z.array(z.string()).optional().nullable(),
 }).superRefine((data, ctx) => {
   if (data.device_type === "pc") {
     if (!data.hardware?.cpu || !data.hardware.cpu.trim()) {

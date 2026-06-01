@@ -121,15 +121,31 @@ export function NewTicketDialog({
     const photoUrls: string[] = [];
     try {
       if (photos.length > 0) {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         for (const file of photos) {
-          const fileExt = file.name.split(".").pop();
-          const fileName = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}.${fileExt}`;
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+            console.log(`Original: ${Math.round(file.size / 1024)}KB, Compressed: ${compressionResult.finalSizeKB}KB`);
+          } catch (compressErr) {
+            console.warn("Compression failed, using original file:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
           const filePath = `${employeeId}/${fileName}`;
           const { error: uploadError } = await supabase.storage
             .from("ticket-attachments")
-            .upload(filePath, file);
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
 
           if (uploadError) {
             console.error("Photo upload error:", uploadError);

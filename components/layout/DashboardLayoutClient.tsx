@@ -43,22 +43,32 @@ export default function DashboardLayoutClient({
         </button>
       </header>
 
-      {/* Sidebar container with mobile drawer */}
+      {/* Desktop Fixed Sidebar (No animations or transforms that break position: fixed containing block context) */}
+      <div className="hidden lg:block lg:fixed lg:inset-y-0 lg:left-0 lg:w-[220px] lg:z-30">
+        <Sidebar
+          openIncidents={openIncidents}
+          expiringLicenses={expiringLicenses}
+          attentionCount={attentionCount}
+          userName={userName}
+        />
+      </div>
+
+      {/* Mobile Drawer Sidebar */}
       <div 
-        className={`fixed inset-0 z-50 lg:relative lg:z-auto transition-opacity duration-300 ${
-          sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto"
+        className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${
+          sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >
         {/* Backdrop for mobile */}
         <div 
           onClick={() => setSidebarOpen(false)}
-          className={`absolute inset-0 bg-black/50 lg:hidden transition-opacity duration-300 ${
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
             sidebarOpen ? "opacity-100" : "opacity-0"
           }`} 
         />
         {/* Sidebar container */}
         <div 
-          className={`absolute inset-y-0 left-0 w-[220px] transition-transform duration-300 lg:translate-x-0 ${
+          className={`absolute inset-y-0 left-0 w-[220px] transition-transform duration-300 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >

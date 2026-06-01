@@ -89,6 +89,7 @@ export type Database = {
           lifecycle_status:
             | Database["public"]["Enums"]["computer_status"]
             | null
+          photo_urls: string[] | null
           room: string | null
           serial_number: string | null
           template_id: string | null
@@ -105,6 +106,7 @@ export type Database = {
           lifecycle_status?:
             | Database["public"]["Enums"]["computer_status"]
             | null
+          photo_urls?: string[] | null
           room?: string | null
           serial_number?: string | null
           template_id?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           lifecycle_status?:
             | Database["public"]["Enums"]["computer_status"]
             | null
+          photo_urls?: string[] | null
           room?: string | null
           serial_number?: string | null
           template_id?: string | null
@@ -200,6 +203,7 @@ export type Database = {
           photo_urls: string[] | null
           priority: Database["public"]["Enums"]["incident_priority"] | null
           resolution: string | null
+          resolution_photo_urls: string[] | null
           resolved_at: string | null
           status: Database["public"]["Enums"]["incident_status"] | null
           title: string
@@ -216,6 +220,7 @@ export type Database = {
           photo_urls?: string[] | null
           priority?: Database["public"]["Enums"]["incident_priority"] | null
           resolution?: string | null
+          resolution_photo_urls?: string[] | null
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["incident_status"] | null
           title: string
@@ -232,6 +237,7 @@ export type Database = {
           photo_urls?: string[] | null
           priority?: Database["public"]["Enums"]["incident_priority"] | null
           resolution?: string | null
+          resolution_photo_urls?: string[] | null
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["incident_status"] | null
           title?: string
@@ -312,6 +318,9 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          photo_urls: string[] | null
+          resolution: string | null
+          resolution_photo_urls: string[] | null
           room: string
           status: string
           type: string
@@ -321,6 +330,9 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          photo_urls?: string[] | null
+          resolution?: string | null
+          resolution_photo_urls?: string[] | null
           room: string
           status?: string
           type: string
@@ -330,6 +342,9 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          photo_urls?: string[] | null
+          resolution?: string | null
+          resolution_photo_urls?: string[] | null
           room?: string
           status?: string
           type?: string

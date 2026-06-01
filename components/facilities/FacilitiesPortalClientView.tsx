@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
-import { AlertTriangle, Clock, CheckCircle2, User, Building, Wrench, Loader2 } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, User, Building, Wrench, Loader2, Camera, Image as ImageIcon, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DecompressedText } from "@/components/shared/DecompressedText";
@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { takeRoomRequestToWork, resolveRoomRequest } from "@/lib/actions/facilities-portal";
 import { toast } from "sonner";
 
@@ -25,6 +27,9 @@ interface RoomRequestRow {
   status: string;
   author_id: string;
   created_at: string;
+  photo_urls?: string[] | null;
+  resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
   employee: {
     id: string;
     full_name: string;
@@ -74,6 +79,31 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
+  const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
+  const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
+  const [resolutionText, setResolutionText] = useState("");
+  
+  const [resolutionPhotos, setResolutionPhotos] = useState<File[]>([]);
+  const [resolutionPhotoPreviews, setResolutionPhotoPreviews] = useState<string[]>([]);
+
+  const handleResolutionPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setResolutionPhotos((prev) => [...prev, ...filesArray]);
+
+      const previewsArray = filesArray.map((file) => URL.createObjectURL(file));
+      setResolutionPhotoPreviews((prev) => [...prev, ...previewsArray]);
+    }
+  };
+
+  const removeResolutionPhoto = (index: number) => {
+    setResolutionPhotos((prev) => prev.filter((_, i) => i !== index));
+    setResolutionPhotoPreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const handleTakeToWork = (id: string) => {
     setPendingId(id);
     startTransition(async () => {
@@ -87,16 +117,87 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
     });
   };
 
-  const handleResolve = (id: string) => {
-    setPendingId(id);
+  const handleResolveClick = (id: string) => {
+    setResolvingRequestId(id);
+    setResolutionText("");
+    setResolutionPhotos([]);
+    setResolutionPhotoPreviews([]);
+    setResolveDialogOpen(true);
+  };
+
+  const handleResolveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resolvingRequestId) return;
+
+    setResolveDialogOpen(false);
+    setPendingId(resolvingRequestId);
+
+    // Upload resolution photos if any
+    const uploadedUrls: string[] = [];
+    try {
+      if (resolutionPhotos.length > 0) {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        for (const file of resolutionPhotos) {
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+            console.log(`Original: ${Math.round(file.size / 1024)}KB, Compressed: ${compressionResult.finalSizeKB}KB`);
+          } catch (compressErr) {
+            console.warn("Compression failed, using original:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
+          const filePath = `resolutions/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            toast.error(`Ошибка при загрузке фото ${file.name}`);
+            setPendingId(null);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+
+          uploadedUrls.push(publicUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Resolution photo upload exception:", err);
+      toast.error("Не удалось загрузить фотографии выполненной работы");
+      setPendingId(null);
+      return;
+    }
+
     startTransition(async () => {
-      const result = await resolveRoomRequest(id);
+      const result = await resolveRoomRequest(resolvingRequestId, resolutionText, uploadedUrls);
       if (result.error) {
         toast.error("Не удалось завершить заявку: " + result.error);
       } else {
         toast.success("Заявка успешно выполнена");
       }
       setPendingId(null);
+      setResolvingRequestId(null);
+      setResolutionText("");
+      setResolutionPhotos([]);
+      setResolutionPhotoPreviews((prev) => {
+        prev.forEach((url) => URL.revokeObjectURL(url));
+        return [];
+      });
     });
   };
 
@@ -133,7 +234,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
       <div className="rounded-2xl bg-emerald-600 p-6 text-white shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold mb-2">Заявки АХО</h1>
+            <h1 className="text-2xl font-bold mb-2">Заявки АХЧ</h1>
             <p className="text-emerald-100 text-sm">
               Управление заявками на ремонт и оснащение кабинетов. Берите в работу и отмечайте выполнение.
             </p>
@@ -305,7 +406,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                       disabled={isActionPending}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleResolve(req.id);
+                        handleResolveClick(req.id);
                       }}
                     >
                       {isActionPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -343,7 +444,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                   </Badge>
                 </div>
                 <DialogTitle className="text-lg font-bold text-gray-900">
-                  Заявка АХО: Кабинет {selectedRequest.room}
+                  Заявка АХЧ: Кабинет {selectedRequest.room}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-gray-400">
                   Создана: {formatDateTimeRu(selectedRequest.created_at)}
@@ -356,6 +457,64 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Описание проблемы</h4>
                   <DecompressedText text={selectedRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
                 </div>
+
+                {/* Attached request photos */}
+                {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
+                  <div className="space-y-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Прикрепленные фотографии</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedRequest.photo_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={url}
+                            alt={`Вложение ${idx + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resolution note */}
+                {selectedRequest.status === "resolved" && selectedRequest.resolution && (
+                  <div className="space-y-1 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
+                    <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Что было сделано</h4>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {selectedRequest.resolution}
+                    </p>
+                  </div>
+                )}
+
+                {/* Resolution photos */}
+                {selectedRequest.status === "resolved" && selectedRequest.resolution_photo_urls && selectedRequest.resolution_photo_urls.length > 0 && (
+                  <div className="space-y-1 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
+                    <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-2">Фотоотчет выполненной работы</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedRequest.resolution_photo_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={url}
+                            alt={`Решение ${idx + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Author info */}
                 <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
@@ -400,7 +559,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                     size="sm"
                     className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9"
                     onClick={() => {
-                      handleResolve(selectedRequest.id);
+                      handleResolveClick(selectedRequest.id);
                       setSelectedRequest(null);
                     }}
                   >
@@ -410,6 +569,81 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+      {/* Resolve Request Dialog */}
+      <Dialog open={resolveDialogOpen} onOpenChange={setResolveDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">Выполнение заявки АХЧ</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Укажите подробности выполненной работы
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleResolveSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="resolve-desc" className="text-xs font-bold text-gray-400 uppercase">Описание решения *</Label>
+              <Textarea
+                id="resolve-desc"
+                placeholder="Укажите, что именно было сделано..."
+                value={resolutionText}
+                onChange={(e) => setResolutionText(e.target.value)}
+                required
+                rows={4}
+                className="rounded-xl border-gray-200"
+              />
+            </div>
+
+            {/* Resolution Photos Attach */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1.5">
+                <Camera className="w-4 h-4 text-gray-500" />
+                Прикрепить фото проделанной работы (опционально)
+              </Label>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleResolutionPhotoChange}
+                    className="hidden"
+                  />
+                  <div className="text-center space-y-1">
+                    <ImageIcon className="w-5 h-5 text-gray-400 mx-auto" />
+                    <span className="text-xs text-gray-500 block">Нажмите для выбора фото решения</span>
+                  </div>
+                </label>
+
+                {resolutionPhotoPreviews.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {resolutionPhotoPreviews.map((preview, index) => (
+                      <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                        <img src={preview} alt="Решение" className="object-cover w-full h-full" />
+                        <button
+                          type="button"
+                          onClick={() => removeResolutionPhoto(index)}
+                          className="absolute top-1 right-1 bg-black/70 hover:bg-black/90 text-white rounded-full p-1 cursor-pointer transition-colors"
+                          title="Удалить"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setResolveDialogOpen(false)}>
+                Отмена
+              </Button>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                Выполнить
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

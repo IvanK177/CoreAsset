@@ -131,12 +131,16 @@ export async function createPortalRoomRequest(formData: FormData) {
   const description = formData.get("description") as string;
   const authorId = formData.get("author_id") as string;
 
+  const photoUrlsRaw = formData.get("photo_urls") as string | null;
+  const photoUrls = photoUrlsRaw ? JSON.parse(photoUrlsRaw) : [];
+
   const insertData = {
     room: room.trim(),
     type: type,
     description: description.trim(),
     author_id: authorId,
     status: "open" as const,
+    photo_urls: photoUrls,
   };
 
   const { data, error } = await supabase

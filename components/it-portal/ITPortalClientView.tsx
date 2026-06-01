@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Cpu, Keyboard, Mouse, Printer, HelpCircle, Camera, Image as ImageIcon } from "lucide-react";
 import { cn, extractJoinObject, BUILDING_ADDRESSES, formatDateTimeRu } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { ITPortalIncidentDetailsDialog } from "./ITPortalIncidentDetailsDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 /* ── Types ── */
 
@@ -132,6 +133,31 @@ export default function ITPortalClientView({
   const [resolutionText, setResolutionText] = useState("");
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
+  const [resolutionPhotos, setResolutionPhotos] = useState<File[]>([]);
+  const [resolutionPhotoPreviews, setResolutionPhotoPreviews] = useState<string[]>([]);
+
+  const handleResolutionPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setResolutionPhotos((prev) => [...prev, ...filesArray]);
+
+      const previewsArray = filesArray.map((file) => URL.createObjectURL(file));
+      setPhotoPreviewsArray(previewsArray);
+    }
+  };
+
+  const setPhotoPreviewsArray = (previewsArray: string[]) => {
+    setResolutionPhotoPreviews((prev) => [...prev, ...previewsArray]);
+  };
+
+  const removeResolutionPhoto = (index: number) => {
+    setResolutionPhotos((prev) => prev.filter((_, i) => i !== index));
+    setResolutionPhotoPreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const [buildingFilter, setBuildingFilter] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("it_building_filter") || "all";
@@ -168,11 +194,67 @@ export default function ITPortalClientView({
     setResolveDialogOpen(false);
     setPendingId(resolvingIncidentId);
 
+    // Upload resolution photos if any
+    const uploadedUrls: string[] = [];
+    try {
+      if (resolutionPhotos.length > 0) {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        for (const file of resolutionPhotos) {
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+            console.log(`Original: ${Math.round(file.size / 1024)}KB, Compressed: ${compressionResult.finalSizeKB}KB`);
+          } catch (compressErr) {
+            console.warn("Compression failed, using original:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
+          const filePath = `resolutions/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            toast.error(`Ошибка при загрузке фото ${file.name}`);
+            setPendingId(null);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+
+          uploadedUrls.push(publicUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Resolution photo upload exception:", err);
+      toast.error("Не удалось загрузить фотографии выполненной работы");
+      setPendingId(null);
+      return;
+    }
+
     startTransition(async () => {
-      await resolveIncident(resolvingIncidentId, resolutionText);
+      await resolveIncident(resolvingIncidentId, resolutionText, uploadedUrls);
       setPendingId(null);
       setResolvingIncidentId(null);
       setResolutionText("");
+      setResolutionPhotos([]);
+      setResolutionPhotoPreviews((prev) => {
+        prev.forEach((url) => URL.revokeObjectURL(url));
+        return [];
+      });
     });
   };
 
@@ -654,6 +736,46 @@ export default function ITPortalClientView({
                 required
                 rows={4}
               />
+            </div>
+            {/* Resolution Photos Attach */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5 text-gray-700">
+                <Camera className="w-4 h-4 text-gray-500" />
+                Прикрепить фото проделанной работы (опционально)
+              </Label>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleResolutionPhotoChange}
+                    className="hidden"
+                  />
+                  <div className="text-center space-y-1">
+                    <ImageIcon className="w-5 h-5 text-gray-400 mx-auto" />
+                    <span className="text-xs text-gray-500 block">Нажмите для выбора фото решения</span>
+                  </div>
+                </label>
+
+                {resolutionPhotoPreviews.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {resolutionPhotoPreviews.map((preview, index) => (
+                      <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                        <img src={preview} alt="Решение" className="object-cover w-full h-full" />
+                        <button
+                          type="button"
+                          onClick={() => removeResolutionPhoto(index)}
+                          className="absolute top-1 right-1 bg-black/70 hover:bg-black/90 text-white rounded-full p-1 cursor-pointer transition-colors"
+                          title="Удалить"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setResolveDialogOpen(false)}>

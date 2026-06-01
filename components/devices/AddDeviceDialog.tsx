@@ -26,6 +26,7 @@ import { createDeviceDialog } from "@/lib/actions/devices";
 import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
 import type { Tables } from "@/types/database.types";
+import { Camera, Image as ImageIcon, X } from "lucide-react";
 
 const deviceDialogSchema = z.object({
   inventory_number: z.string().min(1, "Обязательное поле"),
@@ -125,6 +126,27 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
     },
   });
 
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setPhotos((prev) => [...prev, ...filesArray]);
+
+      const previewsArray = filesArray.map((file) => URL.createObjectURL(file));
+      setPhotoPreviews((prev) => [...prev, ...previewsArray]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const deviceType = form.watch("device_type");
 
   const templateItems: Record<string, React.ReactNode> = {
@@ -157,6 +179,59 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
       if (data.resolution) formData.set("resolution", data.resolution);
     }
 
+    // Upload photos if any
+    const photoUrls: string[] = [];
+    try {
+      if (photos.length > 0) {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        for (const file of photos) {
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+            console.log(`Original: ${Math.round(file.size / 1024)}KB, Compressed: ${compressionResult.finalSizeKB}KB`);
+          } catch (compressErr) {
+            console.warn("Compression failed, using original:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
+          const filePath = `devices/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            toast.error(`Ошибка при загрузке фото ${file.name}`);
+            setPending(false);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+
+          photoUrls.push(publicUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Device photo upload exception:", err);
+      toast.error("Не удалось загрузить фотографии устройства");
+      setPending(false);
+      return;
+    }
+
+    formData.set("photo_urls", JSON.stringify(photoUrls));
+
     const result = await createDeviceDialog(formData);
     if (result.error) {
       if (result.code === "23505") {
@@ -185,6 +260,11 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
       if (!val) {
         form.reset();
         setError(null);
+        setPhotos([]);
+        setPhotoPreviews((prev) => {
+          prev.forEach((url) => URL.revokeObjectURL(url));
+          return [];
+        });
       }
     }}>
       <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
@@ -278,17 +358,7 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
                 <p className="text-xs text-destructive">{form.formState.errors.inventory_number.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="serial_number">Серийный номер</Label>
-              <Input
-                id="serial_number"
-                placeholder="SN-XYZ-008"
-                {...form.register("serial_number")}
-              />
-              {form.formState.errors.serial_number && (
-                <p className="text-xs text-destructive">{form.formState.errors.serial_number.message}</p>
-              )}
-            </div>
+
           </div>
 
           {/* Dynamic Name / Subtype field */}
@@ -443,6 +513,48 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
               </div>
             </>
           )}
+          {/* Photo attachment field */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-1.5 text-gray-700">
+              <Camera className="w-4 h-4 text-gray-500" />
+              Фотографии устройства
+            </Label>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  disabled={pending}
+                />
+                <div className="text-center space-y-1">
+                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto" />
+                  <span className="text-xs text-gray-500 block">Нажмите, чтобы выбрать фото устройства</span>
+                </div>
+              </label>
+
+              {photoPreviews.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {photoPreviews.map((preview, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                      <img src={preview} alt="Превью" className="object-cover w-full h-full" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 bg-black/70 hover:bg-black/90 text-white rounded-full p-1 cursor-pointer transition-colors"
+                        title="Удалить"
+                        disabled={pending}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
           {error && (
             <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>

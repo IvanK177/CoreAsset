@@ -63,6 +63,9 @@ interface RoomRequestData {
   description: string;
   status: string;
   created_at: string;
+  photo_urls?: string[] | null;
+  resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
 }
 
 interface PortalClientViewProps {
@@ -344,7 +347,7 @@ export default function PortalClientView({
                         {isIT ? getIncidentNumber(item as IncidentData) : `#R${item.id.substring(0, 4).toUpperCase()}`}
                       </span>
                       <span className="font-semibold text-sm text-gray-900 truncate">
-                        {isIT ? getIncidentTitle(item as IncidentData) : `Заявка АХО: каб. ${item.room}`}
+                        {isIT ? getIncidentTitle(item as IncidentData) : `Заявка АХЧ: каб. ${item.room}`}
                       </span>
                       {isIT && (() => {
                         const deviceObj = extractJoinObject((item as IncidentData).device) as { device_type: string | null } | null;
@@ -369,7 +372,7 @@ export default function PortalClientView({
                     </div>
                     <div className="text-xs text-gray-400 mt-1 flex items-center gap-1.5 flex-wrap">
                       <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
-                        {isIT ? "IT инцидент" : "АХО"}
+                        {isIT ? "IT инцидент" : "АХЧ"}
                       </span>
                       <span>·</span>
                       <span>{formatDate(item.created_at)}</span>
@@ -499,7 +502,7 @@ export default function PortalClientView({
                   </Badge>
                 </div>
                 <DialogTitle className="text-lg font-bold text-gray-900">
-                  Заявка АХО: Кабинет {selectedRoomRequest.room}
+                  Заявка АХЧ: Кабинет {selectedRoomRequest.room}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-gray-400">
                   Создана: {formatDate(selectedRoomRequest.created_at)}
@@ -511,6 +514,63 @@ export default function PortalClientView({
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Описание проблемы</h4>
                   <DecompressedText text={selectedRoomRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
                 </div>
+
+                {selectedRoomRequest.photo_urls && selectedRoomRequest.photo_urls.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Прикрепленные фото ({selectedRoomRequest.photo_urls.length})
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedRoomRequest.photo_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={url}
+                            alt={`Вложение ${idx + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedRoomRequest.status === "resolved" && selectedRoomRequest.resolution && (
+                  <div className="space-y-1 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                    <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Выполненная работа</h4>
+                    <p className="text-sm text-emerald-900 whitespace-pre-wrap">{selectedRoomRequest.resolution}</p>
+                  </div>
+                )}
+
+                {selectedRoomRequest.status === "resolved" && selectedRoomRequest.resolution_photo_urls && selectedRoomRequest.resolution_photo_urls.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                      Фотоотчет выполненной работы ({selectedRoomRequest.resolution_photo_urls.length})
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedRoomRequest.resolution_photo_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={url}
+                            alt={`Решение ${idx + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end pt-2">
