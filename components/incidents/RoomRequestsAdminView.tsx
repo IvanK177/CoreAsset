@@ -71,6 +71,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
   const [activeTab, setActiveTab] = useState<string>("active");
   const [buildingFilter, setBuildingFilter] = useState<string>("all");
   const [selectedRequest, setSelectedRequest] = useState<RoomRequestRow | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const filteredRequests = requests.filter((req) => {
     const matchesStatus =
@@ -233,26 +234,25 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                   <DecompressedText text={selectedRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
                 </div>
 
-                {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
+                 {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                       Прикрепленные фото ({selectedRequest.photo_urls.length})
                     </h4>
                     <div className="grid grid-cols-3 gap-2">
                       {selectedRequest.photo_urls.map((url, idx) => (
-                        <a
+                        <button
                           key={idx}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                          type="button"
+                          onClick={() => setPreviewImageUrl(url)}
+                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none"
                         >
                           <img
                             src={url}
                             alt={`Вложение ${idx + 1}`}
                             className="object-cover w-full h-full"
                           />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -265,26 +265,25 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                   </div>
                 )}
 
-                {selectedRequest.status === "resolved" && selectedRequest.resolution_photo_urls && selectedRequest.resolution_photo_urls.length > 0 && (
+                 {selectedRequest.status === "resolved" && selectedRequest.resolution_photo_urls && selectedRequest.resolution_photo_urls.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
                       Фотоотчет выполненной работы ({selectedRequest.resolution_photo_urls.length})
                     </h4>
                     <div className="grid grid-cols-3 gap-2">
                       {selectedRequest.resolution_photo_urls.map((url, idx) => (
-                        <a
+                        <button
                           key={idx}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity"
+                          type="button"
+                          onClick={() => setPreviewImageUrl(url)}
+                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none"
                         >
                           <img
                             src={url}
                             alt={`Решение ${idx + 1}`}
                             className="object-cover w-full h-full"
                           />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -316,6 +315,27 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                 </button>
               </div>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* Photo Preview Dialog */}
+      <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+        <DialogContent className="sm:max-w-3xl bg-transparent border-none shadow-none p-0 flex items-center justify-center">
+          {previewImageUrl && (
+            <div className="relative max-w-full max-h-[85vh] rounded-xl overflow-hidden bg-black/50 p-1 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(null)}
+                className="absolute top-4 right-4 bg-black/60 hover:bg-black/85 text-white rounded-full p-2 cursor-pointer transition-colors z-[100] focus:outline-none"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img
+                src={previewImageUrl}
+                alt="Просмотр изображения"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+            </div>
           )}
         </DialogContent>
       </Dialog>

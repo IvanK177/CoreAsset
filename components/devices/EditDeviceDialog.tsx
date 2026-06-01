@@ -129,8 +129,8 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
       mac_address: hw.mac_address ?? "",
       computer_type: device.computer_type ?? "",
       room: device.room ?? "",
-      lifecycle_status: device.lifecycle_status as any,
-      device_type: device.device_type as any,
+      lifecycle_status: device.lifecycle_status as "active" | "repair" | "storage" | "decommissioned",
+      device_type: device.device_type as "pc" | "monitor" | "keyboard" | "mouse" | "printer" | "other",
       cpu: hw.cpu ?? "",
       ram: hw.ram ?? "",
       storage: hw.storage ?? "",
@@ -184,8 +184,8 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
         mac_address: currentHw.mac_address ?? "",
         computer_type: device.computer_type ?? "",
         room: device.room ?? "",
-        lifecycle_status: device.lifecycle_status as any,
-        device_type: device.device_type as any,
+        lifecycle_status: device.lifecycle_status as "active" | "repair" | "storage" | "decommissioned",
+        device_type: device.device_type as "pc" | "monitor" | "keyboard" | "mouse" | "printer" | "other",
         cpu: currentHw.cpu ?? "",
         ram: currentHw.ram ?? "",
         storage: currentHw.storage ?? "",
@@ -197,7 +197,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
       setError(null);
       setPhotos([]);
       setPhotoPreviews([]);
-      setExistingPhotos((device as any).photo_urls ?? []);
+      setExistingPhotos((device.photo_urls as string[] | null) ?? []);
     }
   }, [open, device, form]);
 
@@ -330,14 +330,17 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
             <Label>Тип устройства *</Label>
             <Select
               value={deviceType}
-              onValueChange={(val: any) => {
-                form.setValue("device_type", val);
-                if (val === "pc") {
-                  form.setValue("computer_type", "desktop");
-                } else {
-                  form.setValue("computer_type", "");
+              onValueChange={(val) => {
+                if (val) {
+                  form.setValue("device_type", val);
+                  if (val === "pc") {
+                    form.setValue("computer_type", "desktop");
+                  } else {
+                    form.setValue("computer_type", "");
+                  }
                 }
               }}
+              items={DEVICE_TYPE_ITEMS}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -377,6 +380,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
                     form.setValue("template_id", "");
                   }
                 }}
+                items={templateItems}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Выберите шаблон..." />
@@ -407,6 +411,18 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
               )}
             </div>
 
+            {deviceType === "pc" ? (
+              <div className="space-y-2">
+                <Label htmlFor="edit_serial_number">Серийный номер</Label>
+                <Input
+                  id="edit_serial_number"
+                  placeholder="SN-PC-XYZ"
+                  {...form.register("serial_number")}
+                />
+              </div>
+            ) : (
+              <input type="hidden" {...form.register("serial_number")} />
+            )}
           </div>
 
           {/* Dynamic Name / Subtype field */}
@@ -417,6 +433,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
                 <Select
                   value={form.watch("computer_type")}
                   onValueChange={(v) => form.setValue("computer_type", v ?? "desktop")}
+                  items={PC_SUBTYPE_ITEMS}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -468,7 +485,8 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
               <Label>Статус *</Label>
               <Select
                 value={form.watch("lifecycle_status")}
-                onValueChange={(v) => form.setValue("lifecycle_status", v as any)}
+                onValueChange={(v) => form.setValue("lifecycle_status", v as "active" | "repair" | "storage" | "decommissioned")}
+                items={STATUS_ITEMS}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />

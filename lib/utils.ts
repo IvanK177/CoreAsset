@@ -69,7 +69,15 @@ export function extractJoinObject<T>(value: T | T[] | null | undefined): T | nul
  * cpu/ram/storage with type checking. Unknown fields (e.g. gpu) are ignored.
  * Returns an empty object for null, non-object, or array values.
  */
-export function safeHardware(raw: unknown): { cpu?: string; ram?: string; storage?: string; gpu?: string; mac_address?: string } {
+export function safeHardware(raw: unknown): { 
+  cpu?: string; 
+  ram?: string; 
+  storage?: string; 
+  gpu?: string; 
+  mac_address?: string;
+  diagonal?: string;
+  resolution?: string;
+} {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const obj = raw as Record<string, unknown>;
   return {
@@ -78,6 +86,8 @@ export function safeHardware(raw: unknown): { cpu?: string; ram?: string; storag
     storage: typeof obj.storage === "string" ? obj.storage : undefined,
     gpu: typeof obj.gpu === "string" ? obj.gpu : undefined,
     mac_address: typeof obj.mac_address === "string" ? obj.mac_address : undefined,
+    diagonal: typeof obj.diagonal === "string" ? obj.diagonal : undefined,
+    resolution: typeof obj.resolution === "string" ? obj.resolution : undefined,
   };
 }
 

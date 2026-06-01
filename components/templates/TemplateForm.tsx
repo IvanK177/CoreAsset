@@ -44,7 +44,7 @@ export default function TemplateForm({ template, action }: TemplateFormProps) {
     initialState
   );
 
-  const hw = safeHardware(template?.hardware) as any;
+  const hw = safeHardware(template?.hardware);
 
   const isComputer = ["desktop", "laptop", "monoblock", "server"].includes(deviceType);
   const isMonitor = deviceType === "monitor";

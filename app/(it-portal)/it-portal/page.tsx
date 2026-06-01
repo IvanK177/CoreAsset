@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import ITPortalClientView from "@/components/it-portal/ITPortalClientView";
+import { Message } from "@/components/TicketChat";
 
 interface RelatedEmployee {
   full_name: string | null;
@@ -31,6 +32,7 @@ interface IncidentRow {
   device: RelatedDevice | RelatedDevice[] | null;
   photo_urls?: string[] | null;
   resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
 }
 
 export default async function ITPortalPage() {
@@ -82,6 +84,7 @@ export default async function ITPortalPage() {
       assigned_to,
       photo_urls,
       resolution,
+      resolution_photo_urls,
       employee:employees!incidents_employee_id_fkey(full_name, room, building),
       device:devices!incidents_device_id_fkey(inventory_number, computer_type, device_type),
       assignee:employees!incidents_assigned_to_fkey(full_name)
@@ -95,11 +98,28 @@ export default async function ITPortalPage() {
   // Count stats
   const allIncidents: IncidentRow[] = (incidents as IncidentRow[]) ?? [];
 
+  // Fetch messages for these incidents
+  const incidentIds = allIncidents.map((i) => i.id);
+  const { data: rawMessages } = await dataClient
+    .from("incident_messages")
+    .select("*, sender:employees!incident_messages_sender_id_fkey(full_name)")
+    .in("incident_id", incidentIds)
+    .order("created_at", { ascending: true });
+
+  const initialMessagesMap: Record<string, Message[]> = {};
+  (rawMessages ?? []).forEach((msg) => {
+    if (!initialMessagesMap[msg.incident_id]) {
+      initialMessagesMap[msg.incident_id] = [];
+    }
+    initialMessagesMap[msg.incident_id].push(msg);
+  });
+
   return (
     <ITPortalClientView
       specialistId={specialistId ?? ""}
       incidents={allIncidents}
       currentPath="/it-portal"
+      initialMessagesMap={initialMessagesMap}
     />
   );
 }

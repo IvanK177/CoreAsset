@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import ITPortalClientView from "@/components/it-portal/ITPortalClientView";
+import { Message } from "@/components/TicketChat";
 
 interface RelatedEmployee {
   full_name: string | null;
@@ -31,6 +32,7 @@ interface IncidentRow {
   device: RelatedDevice | RelatedDevice[] | null;
   photo_urls?: string[] | null;
   resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
 }
 
 export default async function MyTasksPage() {
@@ -67,40 +69,54 @@ export default async function MyTasksPage() {
     specialistId = data?.id;
   }
 
-  // Fetch only incidents assigned to this specialist
-  let myIncidents: IncidentRow[] = [];
-  if (specialistId) {
-    const { data, error: myError } = await dataClient
-      .from("incidents")
-      .select(`
-        id,
-        title,
-        description,
-        priority,
-        status,
-        incident_type,
-        created_at,
-        resolved_at,
-        assigned_to,
-        photo_urls,
-        resolution,
-        employee:employees!incidents_employee_id_fkey(full_name, room, building),
-        device:devices!incidents_device_id_fkey(inventory_number, computer_type, device_type),
-        assignee:employees!incidents_assigned_to_fkey(full_name)
-      `)
-      .eq("assigned_to", specialistId)
-      .order("created_at", { ascending: false });
-    if (myError) {
-      console.error("[MyTasksPage] Supabase query error:", myError.code, myError.message);
-    }
-    myIncidents = (data as IncidentRow[]) ?? [];
+  // Fetch ALL incidents (so stats are overall, client view handles filtering)
+  const { data, error: myError } = await dataClient
+    .from("incidents")
+    .select(`
+      id,
+      title,
+      description,
+      priority,
+      status,
+      incident_type,
+      created_at,
+      resolved_at,
+      assigned_to,
+      photo_urls,
+      resolution,
+      resolution_photo_urls,
+      employee:employees!incidents_employee_id_fkey(full_name, room, building),
+      device:devices!incidents_device_id_fkey(inventory_number, computer_type, device_type),
+      assignee:employees!incidents_assigned_to_fkey(full_name)
+    `)
+    .order("created_at", { ascending: false });
+  if (myError) {
+    console.error("[MyTasksPage] Supabase query error:", myError.code, myError.message);
   }
+  const myIncidents = (data as IncidentRow[]) ?? [];
+
+  // Fetch messages for these incidents
+  const incidentIds = myIncidents.map((i) => i.id);
+  const { data: rawMessages } = await dataClient
+    .from("incident_messages")
+    .select("*, sender:employees!incident_messages_sender_id_fkey(full_name)")
+    .in("incident_id", incidentIds)
+    .order("created_at", { ascending: true });
+
+  const initialMessagesMap: Record<string, Message[]> = {};
+  (rawMessages ?? []).forEach((msg) => {
+    if (!initialMessagesMap[msg.incident_id]) {
+      initialMessagesMap[msg.incident_id] = [];
+    }
+    initialMessagesMap[msg.incident_id].push(msg);
+  });
 
   return (
     <ITPortalClientView
       specialistId={specialistId ?? ""}
       incidents={myIncidents}
       currentPath="/it-portal/my-tasks"
+      initialMessagesMap={initialMessagesMap}
     />
   );
 }

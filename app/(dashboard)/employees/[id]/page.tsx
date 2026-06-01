@@ -161,7 +161,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
                     </p>
                   </div>
                 </div>
-                <ComputerStatusBadge status={dev.lifecycle_status as any} />
+                <ComputerStatusBadge status={dev.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
               </Link>
             ))}
           </div>
@@ -195,8 +195,8 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <PriorityBadge priority={inc.priority as any} />
-                  <IncidentStatusBadge status={inc.status as any} />
+                  <PriorityBadge priority={inc.priority as "low" | "medium" | "high" | "critical"} />
+                  <IncidentStatusBadge status={inc.status as "open" | "in_progress" | "resolved" | "cancelled"} />
                 </div>
               </Link>
             ))}

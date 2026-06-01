@@ -43,7 +43,7 @@ export default function DeviceTable({ devices }: { devices: Device[] }) {
               <TableCell className="font-medium">{d.computer_type}</TableCell>
               <TableCell className="text-muted-foreground">{d.room ?? "—"}</TableCell>
               <TableCell>
-                <DeviceStatusBadge status={d.lifecycle_status as any} />
+                <DeviceStatusBadge status={d.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
               </TableCell>
               <TableCell>
                 <Link href={`/devices/${d.id}`} className={buttonVariants({ variant: "ghost", size: "icon" })}>

@@ -36,7 +36,7 @@ export async function completeOnboarding(formData: FormData): Promise<Onboarding
         email = pending.email;
         password = pending.password;
         isPendingReg = true;
-      } catch (e) {
+      } catch {
         return { error: "Ошибка сессии регистрации. Пожалуйста, зарегистрируйтесь заново." };
       }
     } else {

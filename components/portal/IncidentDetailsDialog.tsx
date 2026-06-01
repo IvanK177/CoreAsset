@@ -16,6 +16,7 @@ import { formatDateTimeRu, extractJoinObject } from "@/lib/utils";
 import { Calendar, Monitor, Wrench, FileText, XCircle, Loader2, User, CheckCircle, Cpu, Keyboard, Mouse, Printer, HelpCircle, X } from "lucide-react";
 import { cancelPortalIncident } from "@/lib/actions/portal";
 import { DecompressedText } from "@/components/shared/DecompressedText";
+import { TicketChat, Message } from "@/components/TicketChat";
 
 interface IncidentData {
   id: string;
@@ -48,6 +49,8 @@ interface IncidentDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   incident: IncidentData | null;
+  employeeId: string;
+  initialMessages: Message[];
 }
 
 const incidentTypeLabels: Record<string, string> = {
@@ -70,6 +73,8 @@ export function IncidentDetailsDialog({
   open,
   onOpenChange,
   incident,
+  employeeId,
+  initialMessages,
 }: IncidentDetailsDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -220,6 +225,11 @@ export function IncidentDetailsDialog({
               </div>
             </div>
           )}
+
+          {/* Incident Chat */}
+          <div className="pt-2">
+            <TicketChat key={incident.id} incidentId={incident.id} currentUserId={employeeId} initialMessages={initialMessages} />
+          </div>
         </div>
 
         {/* Action Buttons */}

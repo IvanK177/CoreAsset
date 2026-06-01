@@ -2,6 +2,7 @@ import DashboardLayoutClient from "@/components/layout/DashboardLayoutClient";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { daysUntilExpiry } from "@/lib/utils";
 import { cookies } from "next/headers";
+import { RealtimeNotifications } from "@/components/shared/RealtimeNotifications";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Use regular client for auth (needs user JWT), service client for data (bypasses RLS)
@@ -75,6 +76,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       attentionCount={attentionCount}
       userName={userName}
     >
+      <RealtimeNotifications role="admin" />
       {children}
     </DashboardLayoutClient>
   );

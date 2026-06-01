@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import PortalClientView from "@/components/portal/PortalClientView";
+import { Message } from "@/components/TicketChat";
 
 export default async function PortalPage() {
   const authClient = await createClient();
@@ -66,6 +67,22 @@ export default async function PortalPage() {
     .eq("employee_id", employeeId)
     .order("created_at", { ascending: false });
 
+  // Fetch messages for these incidents
+  const incidentIds = (incidents ?? []).map((i) => i.id);
+  const { data: rawMessages } = await dataClient
+    .from("incident_messages")
+    .select("*, sender:employees!incident_messages_sender_id_fkey(full_name)")
+    .in("incident_id", incidentIds)
+    .order("created_at", { ascending: true });
+
+  const initialMessagesMap: Record<string, Message[]> = {};
+  (rawMessages ?? []).forEach((msg) => {
+    if (!initialMessagesMap[msg.incident_id]) {
+      initialMessagesMap[msg.incident_id] = [];
+    }
+    initialMessagesMap[msg.incident_id].push(msg);
+  });
+
   // Fetch room requests created by this employee
   const { data: roomRequests } = await dataClient
     .from("room_requests")
@@ -122,6 +139,7 @@ export default async function PortalPage() {
       roomRequests={roomRequests ?? []}
       openIncidents={openIncidents}
       resolvedIncidents={resolvedIncidents}
+      initialMessagesMap={initialMessagesMap}
     />
   );
 }

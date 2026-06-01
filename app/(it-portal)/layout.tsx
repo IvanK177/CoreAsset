@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import ITPortalHeader from "@/components/it-portal/ITPortalHeader";
+import { RealtimeNotifications } from "@/components/shared/RealtimeNotifications";
 
 export default async function ITPortalLayout({ children }: { children: React.ReactNode }) {
   const authClient = await createClient();
@@ -52,6 +53,7 @@ export default async function ITPortalLayout({ children }: { children: React.Rea
         specialistName={employeeData?.full_name ?? "IT-специалист"}
         specialistPosition={employeeData?.position ?? "IT-специалист"}
       />
+      <RealtimeNotifications role="it_specialist" />
       <main className="pt-16">
         <div className="max-w-5xl mx-auto p-6">
           {children}

@@ -78,6 +78,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
   const [selectedRequest, setSelectedRequest] = useState<RoomRequestRow | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
   const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
@@ -466,19 +467,18 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Прикрепленные фотографии</h4>
                     <div className="grid grid-cols-3 gap-2">
                       {selectedRequest.photo_urls.map((url, idx) => (
-                        <a
+                        <button
                           key={idx}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                          type="button"
+                          onClick={() => setPreviewImageUrl(url)}
+                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none"
                         >
                           <img
                             src={url}
                             alt={`Вложение ${idx + 1}`}
                             className="object-cover w-full h-full"
                           />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -500,19 +500,18 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                     <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-2">Фотоотчет выполненной работы</h4>
                     <div className="grid grid-cols-3 gap-2">
                       {selectedRequest.resolution_photo_urls.map((url, idx) => (
-                        <a
+                        <button
                           key={idx}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity"
+                          type="button"
+                          onClick={() => setPreviewImageUrl(url)}
+                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none"
                         >
                           <img
                             src={url}
                             alt={`Решение ${idx + 1}`}
                             className="object-cover w-full h-full"
                           />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -523,7 +522,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                   <div>
                     <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Автор</h5>
                     <p className="font-medium text-gray-900">{selectedRequest.employee?.full_name ?? "—"}</p>
-                    <p className="text-xs text-gray-500">{selectedRequest.employee?.position ?? "—"}</p>
+                    <p className="text-xs text-gray-550">{selectedRequest.employee?.position ?? "—"}</p>
                   </div>
                   <div>
                     <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Размещение</h5>
@@ -646,6 +645,28 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Photo Preview Dialog */}
+      <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-3xl mx-auto bg-transparent border-none shadow-none p-0 flex items-center justify-center">
+          {previewImageUrl && (
+            <div className="relative max-w-full max-h-[85vh] rounded-xl overflow-hidden bg-black/50 p-1 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setPreviewImageUrl(null)}
+                className="absolute top-4 right-4 bg-black/60 hover:bg-black/85 text-white rounded-full p-2 cursor-pointer transition-colors z-[100] focus:outline-none"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img
+                src={previewImageUrl}
+                alt="Просмотр изображения"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

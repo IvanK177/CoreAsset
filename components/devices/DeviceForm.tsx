@@ -57,7 +57,7 @@ export default function DeviceForm({ device, action, templates }: DeviceFormProp
   const hw = device?.hardware as Hardware | null;
 
   const [deviceType, setDeviceType] = useState<"pc" | "monitor" | "keyboard" | "mouse" | "printer" | "other">(
-    (device?.device_type as any) ?? "pc"
+    (device?.device_type as "pc" | "monitor" | "keyboard" | "mouse" | "printer" | "other") ?? "pc"
   );
   const [templateId, setTemplateId] = useState(device?.template_id ?? "");
   const [computerType, setComputerType] = useState(device?.computer_type ?? "desktop");
@@ -93,8 +93,8 @@ export default function DeviceForm({ device, action, templates }: DeviceFormProp
         <Select
           name="device_type"
           value={deviceType}
-          onValueChange={(val: any) => {
-            setDeviceType(val);
+          onValueChange={(val) => {
+            setDeviceType(val as "pc" | "monitor" | "keyboard" | "mouse" | "printer" | "other");
             if (val === "pc" && !device) {
               setComputerType("desktop");
             } else if (val !== "pc" && !device) {
@@ -163,7 +163,14 @@ export default function DeviceForm({ device, action, templates }: DeviceFormProp
           <Label htmlFor="inventory_number">Инвентарный номер *</Label>
           <Input id="inventory_number" name="inventory_number" defaultValue={device?.inventory_number} required placeholder="DEV-008" />
         </div>
-        <input type="hidden" name="serial_number" value={device?.serial_number ?? ""} />
+        {deviceType === "pc" ? (
+          <div className="space-y-2">
+            <Label htmlFor="serial_number">Серийный номер</Label>
+            <Input id="serial_number" name="serial_number" defaultValue={device?.serial_number ?? ""} placeholder="SN-PC-XYZ" />
+          </div>
+        ) : (
+          <input type="hidden" name="serial_number" value={device?.serial_number ?? ""} />
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">

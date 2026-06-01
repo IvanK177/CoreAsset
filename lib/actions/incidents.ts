@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { incidentSchema } from "@/lib/schemas/incident.schema";
 import { compressText, decompressText } from "@/lib/compression";
 

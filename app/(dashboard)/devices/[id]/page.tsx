@@ -68,7 +68,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
   const employee = extractJoinObject(device.employees as unknown) as { id: string; full_name: string; position: string | null; email: string | null; room: string | null } | null;
 
   // Safely parse hardware JSON
-  const hw = safeHardware(device.hardware) as Record<string, string>;
+  const hw = safeHardware(device.hardware);
 
   // Incidents are supplementary — log errors but don't crash
   if (incidentsRes.error) {
@@ -101,7 +101,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
               {DEVICE_TYPE_LABELS[device.device_type]} {device.computer_type ? `(${device.computer_type})` : ""}
             </p>
           </div>
-          <DeviceStatusBadge status={device.lifecycle_status as any} />
+          <DeviceStatusBadge status={device.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
         </div>
         <div className="flex gap-2">
           <Link href={`/devices/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" }) + " gap-2"}>
@@ -210,8 +210,8 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
                   <p className="text-xs text-muted-foreground">{formatDateTimeRu(inc.created_at)} · {inc.incident_type}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <PriorityBadge priority={inc.priority as any} />
-                  <IncidentStatusBadge status={inc.status as any} />
+                  <PriorityBadge priority={inc.priority as "low" | "medium" | "high" | "critical"} />
+                  <IncidentStatusBadge status={inc.status as "open" | "in_progress" | "resolved" | "cancelled"} />
                 </div>
               </Link>
             ))}

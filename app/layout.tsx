@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PWARegister />
         {children}
         <SupportWidget />
-        <Toaster position="top-right" richColors />
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   );

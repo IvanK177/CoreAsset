@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import FacilitiesLayoutClient from "@/components/facilities/FacilitiesLayoutClient";
+import { RealtimeNotifications } from "@/components/shared/RealtimeNotifications";
 
 export default async function FacilitiesPortalLayout({ children }: { children: React.ReactNode }) {
   const authClient = await createClient();
@@ -55,6 +56,7 @@ export default async function FacilitiesPortalLayout({ children }: { children: R
       openRequests={openRequestsCount}
       userName={userName}
     >
+      <RealtimeNotifications role="facilities" />
       {children}
     </FacilitiesLayoutClient>
   );

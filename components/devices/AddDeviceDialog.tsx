@@ -282,14 +282,15 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
             <Label>Тип устройства *</Label>
             <Select
               value={deviceType}
-              onValueChange={(val: any) => {
-                form.setValue("device_type", val);
+              onValueChange={(val) => {
+                form.setValue("device_type", val as DeviceDialogValues["device_type"]);
                 if (val === "pc") {
                   form.setValue("computer_type", "desktop");
                 } else {
                   form.setValue("computer_type", "");
                 }
               }}
+              items={DEVICE_TYPE_ITEMS}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -329,6 +330,7 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
                     form.setValue("template_id", "");
                   }
                 }}
+                items={templateItems}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Выберите шаблон..." />
@@ -359,6 +361,18 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
               )}
             </div>
 
+            {deviceType === "pc" ? (
+              <div className="space-y-2">
+                <Label htmlFor="serial_number">Серийный номер</Label>
+                <Input
+                  id="serial_number"
+                  placeholder="SN-PC-XYZ"
+                  {...form.register("serial_number")}
+                />
+              </div>
+            ) : (
+              <input type="hidden" {...form.register("serial_number")} />
+            )}
           </div>
 
           {/* Dynamic Name / Subtype field */}
@@ -369,6 +383,7 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
                 <Select
                   value={form.watch("computer_type")}
                   onValueChange={(v) => form.setValue("computer_type", v ?? "desktop")}
+                  items={PC_SUBTYPE_ITEMS}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -420,7 +435,8 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
               <Label>Статус *</Label>
               <Select
                 value={form.watch("lifecycle_status")}
-                onValueChange={(v) => form.setValue("lifecycle_status", v as any)}
+                onValueChange={(v) => form.setValue("lifecycle_status", v as DeviceDialogValues["lifecycle_status"])}
+                items={STATUS_ITEMS}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />

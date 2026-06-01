@@ -5,17 +5,10 @@ import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { updateIncidentStatus } from "@/lib/actions/incidents";
-import { X, AlertTriangle, Monitor, Users, Calendar, CheckCircle, Loader2 } from "lucide-react";
+import { X, AlertTriangle, Monitor, Users, Calendar, CheckCircle, Loader2, BarChart3 } from "lucide-react";
 import { DecompressedText } from "@/components/shared/DecompressedText";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +33,7 @@ interface IncidentRow {
   incident_type: string;
   device_id: string | null;
   photo_urls?: string[] | null;
+  resolution?: string | null;
   resolution_photo_urls?: string[] | null;
   device: { id: string; inventory_number: string; device_type: string; computer_type: string | null } | null;
   employee: { id: string; full_name: string; position: string | null; room: string | null; building: string | null } | null;
@@ -89,6 +83,49 @@ const deviceTypeEmojis: Record<string, string> = {
   other: "🔌",
 };
 
+function getMonthlyStats(incidentsList: IncidentRow[], building: string) {
+  const filtered = incidentsList.filter(inc => {
+    if (building === "all") return true;
+    return inc.employee?.building === building;
+  });
+
+  const groups: Record<string, { monthKey: string; monthName: string; total: number; resolved: number; open: number; sortKey: string }> = {};
+
+  filtered.forEach(inc => {
+    if (!inc.created_at) return;
+    const date = new Date(inc.created_at);
+    const year = date.getFullYear();
+    const month = date.getMonth(); // 0-11
+    const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+    
+    const monthNames = [
+      "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+      "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+    ];
+    const monthName = `${monthNames[month]} ${year}`;
+
+    if (!groups[monthKey]) {
+      groups[monthKey] = {
+        monthKey,
+        monthName,
+        total: 0,
+        resolved: 0,
+        open: 0,
+        sortKey: monthKey,
+      };
+    }
+
+    groups[monthKey].total += 1;
+    if (inc.status === "resolved") {
+      groups[monthKey].resolved += 1;
+    } else if (inc.status === "open" || inc.status === "in_progress") {
+      groups[monthKey].open += 1;
+    }
+  });
+
+  return Object.values(groups).sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+}
+
 export function IncidentsClientView({
   incidents,
   openCount,
@@ -119,6 +156,8 @@ export function IncidentsClientView({
   const selectedIncident = selectedId
     ? incidents.find((i) => i.id === selectedId)
     : null;
+
+  const stats = getMonthlyStats(incidents, buildingFilter);
 
   const getCounts = (tab: "active" | IncidentStatus) => {
     const filteredByBuilding = incidents.filter((i) => buildingFilter === "all" || i.employee?.building === buildingFilter);
@@ -264,34 +303,26 @@ export function IncidentsClientView({
           {/* Left: Compact list */}
           <div className="hidden lg:block lg:w-1/3 space-y-2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] pr-1 custom-scrollbar">
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <Select
+              <select
                 value={buildingFilter}
-                onValueChange={(val) => setBuildingFilter(val ?? "all")}
+                onChange={(e) => setBuildingFilter(e.target.value)}
+                className="w-full h-8 rounded-lg border border-gray-200 bg-white px-2.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate cursor-pointer"
               >
-                <SelectTrigger className="w-full h-8 text-xs bg-white">
-                  <SelectValue placeholder="Все корпуса" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Все корпуса</SelectItem>
-                  {Object.keys(BUILDING_ADDRESSES).map((building) => (
-                    <SelectItem key={building} value={building}>{building}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="all">Все корпуса</option>
+                {Object.keys(BUILDING_ADDRESSES).map((building) => (
+                  <option key={building} value={building}>{building}</option>
+                ))}
+              </select>
 
-              <Select
+              <select
                 value={priorityFilter}
-                onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
+                onChange={(e) => setPriorityFilter(e.target.value as "all" | IncidentPriority)}
+                className="w-full h-8 rounded-lg border border-gray-200 bg-white px-2.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate cursor-pointer"
               >
-                <SelectTrigger className="w-full h-8 text-xs bg-white">
-                  <SelectValue placeholder="Все приоритеты" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(PRIORITY_ITEMS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {Object.entries(PRIORITY_ITEMS).map(([key, label]) => (
+                  <option key={key} value={key}>{label as string}</option>
+                ))}
+              </select>
             </div>
             {filteredIncidents.map((inc) => (
               <button
@@ -544,87 +575,122 @@ export function IncidentsClientView({
           {/* Building Filter */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500 font-medium">Корпус:</span>
-            <Select
+            <select
               value={buildingFilter}
-              onValueChange={(val) => setBuildingFilter(val ?? "all")}
+              onChange={(e) => setBuildingFilter(e.target.value)}
+              className="w-[180px] h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate cursor-pointer"
             >
-              <SelectTrigger className="w-[180px] h-9 bg-white text-xs">
-                <SelectValue placeholder="Все корпуса" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все корпуса</SelectItem>
-                {Object.keys(BUILDING_ADDRESSES).map((building) => (
-                  <SelectItem key={building} value={building}>{building}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="all">Все корпуса</option>
+              {Object.keys(BUILDING_ADDRESSES).map((building) => (
+                <option key={building} value={building}>{building}</option>
+              ))}
+            </select>
           </div>
 
           {/* Priority Filter */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500 font-medium">Приоритет:</span>
-            <Select
+            <select
               value={priorityFilter}
-              onValueChange={(v) => setPriorityFilter(v as "all" | IncidentPriority)}
+              onChange={(e) => setPriorityFilter(e.target.value as "all" | IncidentPriority)}
+              className="w-[140px] h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate cursor-pointer"
             >
-              <SelectTrigger className="w-[140px] h-9 bg-white">
-                <SelectValue placeholder="Все приоритеты" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все приоритеты</SelectItem>
-                <SelectItem value="low">Низкий</SelectItem>
-                <SelectItem value="medium">Средний</SelectItem>
-                <SelectItem value="high">Высокий</SelectItem>
-                <SelectItem value="critical">Критический</SelectItem>
-              </SelectContent>
-            </Select>
+              {Object.entries(PRIORITY_ITEMS).map(([key, label]) => (
+                <option key={key} value={key}>{label as string}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Incident cards */}
-      <div className="max-h-[600px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
-        {filteredIncidents.length === 0 ? (
-          <div className="py-16 text-center text-gray-500">
-            <AlertTriangle className="w-10 h-10 mx-auto opacity-40 mb-3" />
-            <p className="text-sm">Инцидентов нет</p>
-          </div>
-        ) : (
-          filteredIncidents.map((inc) => (
-            <button
-              key={inc.id}
-              onClick={() => setSelectedId(inc.id)}
-              className="w-full flex items-center justify-between p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
-                  <PriorityBadge priority={inc.priority} />
-                  <IncidentStatusBadge status={inc.status} />
+      {/* Incident cards & Statistics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        {/* Left: Incident cards list */}
+        <div className="lg:col-span-3 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
+          {filteredIncidents.length === 0 ? (
+            <div className="py-16 text-center text-gray-500">
+              <AlertTriangle className="w-10 h-10 mx-auto opacity-40 mb-3" />
+              <p className="text-sm">Инцидентов нет</p>
+            </div>
+          ) : (
+            filteredIncidents.map((inc) => (
+              <button
+                key={inc.id}
+                onClick={() => setSelectedId(inc.id)}
+                className="w-full flex items-center justify-between p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
+                    <PriorityBadge priority={inc.priority} />
+                    <IncidentStatusBadge status={inc.status} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    <DecompressedText text={inc.title || inc.description} truncate={100} />
+                  </p>
+                  <p className="text-xs text-gray-550 mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span>
+                      {inc.device
+                        ? `${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`
+                        : "—"}
+                    </span>
+                    <span>·</span>
+                    <span>{formatDateTimeRu(inc.created_at)}</span>
+                    {inc.status === "resolved" && (
+                      <>
+                        <span>·</span>
+                        <span className="text-emerald-600 font-medium">Решено кем: {inc.assignee?.full_name ?? "IT-специалист"}</span>
+                      </>
+                    )}
+                  </p>
                 </div>
-                <p className="text-sm font-semibold text-gray-900 truncate">
-                  <DecompressedText text={inc.title || inc.description} truncate={100} />
-                </p>
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
-                  <span>
-                    {inc.device
-                      ? `${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`
-                      : "—"}
-                  </span>
-                  <span>·</span>
-                  <span>{formatDateTimeRu(inc.created_at)}</span>
-                  {inc.status === "resolved" && (
-                    <>
-                      <span>·</span>
-                      <span className="text-emerald-600 font-medium">Решено кем: {inc.assignee?.full_name ?? "IT-специалист"}</span>
-                    </>
-                  )}
-                </p>
+                <span className="text-gray-400 ml-4">›</span>
+              </button>
+            ))
+          )}
+        </div>
+
+        {/* Right: Statistics Card */}
+        <div className="lg:col-span-1 space-y-4 self-start">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div>
+              <h3 className="font-bold text-gray-950 text-sm tracking-tight flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-blue-600" />
+                Статистика по месяцам
+              </h3>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                {buildingFilter === "all" ? "Все корпуса" : `Корпус: ${buildingFilter}`}
+              </p>
+            </div>
+
+            {stats.length === 0 ? (
+              <p className="text-xs text-gray-500 text-center py-4">Нет данных для статистики</p>
+            ) : (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr] text-[10px] font-bold text-gray-400 uppercase tracking-wider pb-1 border-b border-gray-100">
+                  <span>Месяц</span>
+                  <span className="text-right">Решено</span>
+                  <span className="text-right">Открыто</span>
+                  <span className="text-right">Всего</span>
+                </div>
+                {stats.map((row) => (
+                  <div key={row.monthKey} className="grid grid-cols-[2fr_1fr_1fr_1fr] items-center text-xs py-2 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 rounded px-1 -mx-1">
+                    <span className="font-medium text-gray-800 truncate" title={row.monthName}>{row.monthName}</span>
+                    <span className="text-right font-semibold text-emerald-600">
+                      {row.resolved}
+                    </span>
+                    <span className="text-right font-semibold text-amber-600">
+                      {row.open}
+                    </span>
+                    <span className="text-right font-bold text-gray-900">
+                      {row.total}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <span className="text-gray-400 ml-4">›</span>
-            </button>
-          ))
-        )}
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Export to XLS Button */}

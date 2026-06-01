@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import ITPortalClientView from "@/components/it-portal/ITPortalClientView";
+import { Message } from "@/components/TicketChat";
 
 interface RelatedEmployee {
   full_name: string | null;
@@ -32,6 +33,7 @@ interface IncidentRow {
   assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
   photo_urls?: string[] | null;
   resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
 }
 
 export default async function ITPortalArchivePage() {
@@ -68,7 +70,7 @@ export default async function ITPortalArchivePage() {
     specialistId = data?.id;
   }
 
-  // Fetch only resolved incidents
+  // Fetch ALL incidents (so stats are overall, client view handles filtering)
   const { data: incidents, error: incidentsError } = await dataClient
     .from("incidents")
     .select(`
@@ -83,12 +85,12 @@ export default async function ITPortalArchivePage() {
       assigned_to,
       photo_urls,
       resolution,
+      resolution_photo_urls,
       employee:employees!incidents_employee_id_fkey(full_name, room, building),
       device:devices!incidents_device_id_fkey(inventory_number, computer_type, device_type),
       assignee:employees!incidents_assigned_to_fkey(full_name)
     `)
-    .eq("status", "resolved")
-    .order("resolved_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (incidentsError) {
     console.error("[ITPortalArchivePage] Supabase query error:", incidentsError.code, incidentsError.message);
@@ -96,11 +98,28 @@ export default async function ITPortalArchivePage() {
 
   const resolvedIncidents = (incidents as IncidentRow[]) ?? [];
 
+  // Fetch messages for these incidents
+  const incidentIds = resolvedIncidents.map((i) => i.id);
+  const { data: rawMessages } = await dataClient
+    .from("incident_messages")
+    .select("*, sender:employees!incident_messages_sender_id_fkey(full_name)")
+    .in("incident_id", incidentIds)
+    .order("created_at", { ascending: true });
+
+  const initialMessagesMap: Record<string, Message[]> = {};
+  (rawMessages ?? []).forEach((msg) => {
+    if (!initialMessagesMap[msg.incident_id]) {
+      initialMessagesMap[msg.incident_id] = [];
+    }
+    initialMessagesMap[msg.incident_id].push(msg);
+  });
+
   return (
     <ITPortalClientView
       specialistId={specialistId ?? ""}
       incidents={resolvedIncidents}
       currentPath="/it-portal/archive"
+      initialMessagesMap={initialMessagesMap}
     />
   );
 }

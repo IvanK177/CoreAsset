@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, createElement } from "react";
 import { DeviceFilterBar } from "@/components/devices/DeviceFilterBar";
 import { ComputerStatusBadge as DeviceStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
@@ -102,7 +102,7 @@ const typeFilterOptions = [
   { value: "other", label: "Другое" },
 ];
 
-export function getDeviceIcon(type: string) {
+export function resolveDeviceIcon(type: string) {
   switch (type) {
     case "pc":
       return Cpu;
@@ -194,7 +194,7 @@ export function DevicesClientView({
     ? incidents.filter((i) => i.device_id === selectedId)
     : [];
 
-  const hw = selectedDevice ? safeHardware(selectedDevice.hardware) as any : {};
+  const hw = selectedDevice ? safeHardware(selectedDevice.hardware) : {};
 
   const normalizedInstalls = selectedInstalls.map((inst) => {
     const lic = (Array.isArray(inst.licenses) ? inst.licenses[0] : inst.licenses) as { id: string; software_name: string; version: string | null; license_type: string; total_seats: number; used_seats: number; price_per_unit: number | null; expires_at: string | null } | null;
@@ -205,7 +205,7 @@ export function DevicesClientView({
     };
   });
 
-  const DeviceIcon = selectedDevice ? getDeviceIcon(selectedDevice.device_type) : HelpCircle;
+  const deviceIcon = selectedDevice ? resolveDeviceIcon(selectedDevice.device_type) : HelpCircle;
 
   if (selectedDevice) {
     return (
@@ -266,7 +266,7 @@ export function DevicesClientView({
                   <span className="font-mono text-sm font-medium text-gray-900 truncate">{d.inventory_number}</span>
                   <span className="text-xs text-gray-500">{d.room ?? "—"}</span>
                 </div>
-                <DeviceStatusBadge status={d.lifecycle_status as any} />
+                <DeviceStatusBadge status={d.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
               </button>
             ))}
           </div>
@@ -279,12 +279,12 @@ export function DevicesClientView({
                 <ArrowLeft className="w-5 h-5 text-gray-500" />
               </button>
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#dbeafe] shrink-0">
-                <DeviceIcon className="w-5 h-5 text-[#2563eb]" />
+                {createElement(deviceIcon, { className: "w-5 h-5 text-[#2563eb]" })}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-xl font-bold text-gray-900 truncate">{selectedDevice.inventory_number}</h2>
-                  <DeviceStatusBadge status={selectedDevice.lifecycle_status as any} />
+                  <DeviceStatusBadge status={selectedDevice.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
                 </div>
                 <p className="text-sm text-gray-500 truncate">
                   {getDeviceTypeLabel(selectedDevice.device_type)} · {selectedDevice.computer_type}
@@ -336,31 +336,33 @@ export function DevicesClientView({
             </div>
           </div>
 
-          {/* Device photos section */}
-          {(selectedDevice as any).photo_urls && (selectedDevice as any).photo_urls.length > 0 && (
-            <div className="rounded-xl border border-gray-200 p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Фотографии устройства ({(selectedDevice as any).photo_urls.length})
-              </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {((selectedDevice as any).photo_urls as string[]).map((url, idx) => (
-                  <a
-                    key={idx}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
-                  >
-                    <img
-                      src={url}
-                      alt={`Устройство ${idx + 1}`}
-                      className="object-cover w-full h-full"
-                    />
-                  </a>
-                ))}
+          {(() => {
+            const devicePhotos = selectedDevice.photo_urls as string[] | null;
+            return devicePhotos && devicePhotos.length > 0 && (
+              <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Фотографии устройства ({devicePhotos.length})
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {devicePhotos.map((url, idx) => (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                    >
+                      <img
+                        src={url}
+                        alt={`Устройство ${idx + 1}`}
+                        className="object-cover w-full h-full"
+                      />
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           <div className="rounded-xl border border-gray-200 p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -597,7 +599,7 @@ export function DevicesClientView({
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">{d.computer_type}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">{d.room ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <DeviceStatusBadge status={d.lifecycle_status as any} />
+                    <DeviceStatusBadge status={d.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-gray-400">›</span>

@@ -25,8 +25,8 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   // Normalize device and employee joins
   const normalizedIncidents = allIncidents.map((inc: RawIncident) => ({
     ...inc,
-    priority: (inc.priority || "medium") as any,
-    status: (inc.status || "open") as any,
+    priority: (inc.priority || "medium") as "low" | "medium" | "high" | "critical",
+    status: (inc.status || "open") as "open" | "in_progress" | "resolved" | "cancelled",
     created_at: inc.created_at || new Date().toISOString(),
     incident_type: inc.incident_type || "other",
     device: extractJoinObject(inc.devices as unknown) as { id: string; inventory_number: string; device_type: string; computer_type: string | null } | null,

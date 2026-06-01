@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Cpu, Keyboard, Mouse, Printer, HelpCircle, Camera, Image as ImageIcon } from "lucide-react";
+import { useState, useTransition, useEffect } from "react";
+import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Camera, Image as ImageIcon, BarChart3 } from "lucide-react";
 import { cn, extractJoinObject, BUILDING_ADDRESSES, formatDateTimeRu } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { DecompressedText } from "@/components/shared/DecompressedText";
+import { TicketChat, Message } from "@/components/TicketChat";
 import { takeIncidentToWork, resolveIncident } from "@/lib/actions/it-portal";
 import { ITPortalIncidentDetailsDialog } from "./ITPortalIncidentDetailsDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -44,12 +45,14 @@ interface IncidentRow {
   assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
   photo_urls?: string[] | null;
   resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
 }
 
 interface ITPortalClientViewProps {
   specialistId: string;
   incidents: IncidentRow[];
   currentPath: string;
+  initialMessagesMap: Record<string, Message[]>;
 }
 
 /* ── Helpers ── */
@@ -79,14 +82,7 @@ const deviceTypeEmojis: Record<string, string> = {
   other: "🔌",
 };
 
-const deviceIconMap: Record<string, any> = {
-  pc: Cpu,
-  monitor: Monitor,
-  keyboard: Keyboard,
-  mouse: Mouse,
-  printer: Printer,
-  other: HelpCircle,
-};
+
 
 function formatDate(dateStr: string): string {
   return formatDateTimeRu(dateStr);
@@ -118,12 +114,57 @@ function getDeviceInfo(incident: IncidentRow): string {
   return `${dev.inventory_number} [${typeLabel}] (${dev.computer_type ?? "—"})`;
 }
 
+function getMonthlyStats(incidentsList: IncidentRow[], building: string) {
+  const filtered = incidentsList.filter(inc => {
+    if (building === "all") return true;
+    const emp = Array.isArray(inc.employee) ? inc.employee[0] : inc.employee;
+    return emp?.building === building;
+  });
+
+  const groups: Record<string, { monthKey: string; monthName: string; total: number; resolved: number; open: number; sortKey: string }> = {};
+
+  filtered.forEach(inc => {
+    if (!inc.created_at) return;
+    const date = new Date(inc.created_at);
+    const year = date.getFullYear();
+    const month = date.getMonth(); // 0-11
+    const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+    
+    const monthNames = [
+      "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+      "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+    ];
+    const monthName = `${monthNames[month]} ${year}`;
+
+    if (!groups[monthKey]) {
+      groups[monthKey] = {
+        monthKey,
+        monthName,
+        total: 0,
+        resolved: 0,
+        open: 0,
+        sortKey: monthKey,
+      };
+    }
+
+    groups[monthKey].total += 1;
+    if (inc.status === "resolved") {
+      groups[monthKey].resolved += 1;
+    } else if (inc.status === "open" || inc.status === "in_progress") {
+      groups[monthKey].open += 1;
+    }
+  });
+
+  return Object.values(groups).sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+}
+
 /* ── Component ── */
 
 export default function ITPortalClientView({
   specialistId,
   incidents,
   currentPath,
+  initialMessagesMap,
 }: ITPortalClientViewProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -169,6 +210,14 @@ export default function ITPortalClientView({
     setBuildingFilter(val);
     localStorage.setItem("it_building_filter", val);
   };
+
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [prevPath, setPrevPath] = useState(currentPath);
+
+  if (currentPath !== prevPath) {
+    setPrevPath(currentPath);
+    setStatusFilter("all");
+  }
 
   const isMyTasks = currentPath === "/it-portal/my-tasks";
   const isArchive = currentPath === "/it-portal/archive";
@@ -270,7 +319,10 @@ export default function ITPortalClientView({
       if (inc.status !== "open" && inc.status !== "in_progress") return false;
     }
 
-    // 2. Building filter
+    // 2. Status filter
+    if (statusFilter !== "all" && inc.status !== statusFilter) return false;
+
+    // 3. Building filter
     if (buildingFilter !== "all") {
       const emp = Array.isArray(inc.employee) ? inc.employee[0] : inc.employee;
       if (emp?.building !== buildingFilter) return false;
@@ -283,6 +335,8 @@ export default function ITPortalClientView({
   const openCountVal = incidents.filter((i) => i.status === "open").length;
   const inProgressCountVal = incidents.filter((i) => i.status === "in_progress").length;
   const resolvedCountVal = incidents.filter((i) => i.status === "resolved").length;
+
+  const stats = getMonthlyStats(incidents, buildingFilter);
 
   if (selectedIncident) {
     return (
@@ -399,6 +453,47 @@ export default function ITPortalClientView({
                   </div>
                 </div>
               )}
+
+              {/* IT Specialist Resolution */}
+              {selectedIncident.status === "resolved" && selectedIncident.resolution && (
+                <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100 space-y-2">
+                  <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                    Что было сделано (Решение)
+                  </h4>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {selectedIncident.resolution}
+                  </p>
+                </div>
+              )}
+
+              {/* IT Specialist Resolution Photos */}
+              {selectedIncident.status === "resolved" && selectedIncident.resolution_photo_urls && selectedIncident.resolution_photo_urls.length > 0 && (
+                <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100 space-y-2">
+                  <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                    Фотоотчет выполненной работы ({selectedIncident.resolution_photo_urls.length})
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedIncident.resolution_photo_urls.map((url, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setPreviewImageUrl(url)}
+                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-emerald-100 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
+                      >
+                        <img
+                          src={url}
+                          alt={`Решение ${idx + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Incident Chat */}
+              <div className="pt-2">
+                <TicketChat key={selectedIncident.id} incidentId={selectedIncident.id} currentUserId={specialistId} initialMessages={initialMessagesMap[selectedIncident.id] ?? []} />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
@@ -499,20 +594,48 @@ export default function ITPortalClientView({
 
       {/* ===== Ticket List & SLA Side-by-Side ===== */}
       <div className="space-y-4">
-        {/* Building Filter Bar */}
-        <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <Building className="w-4 h-4 text-gray-400 shrink-0" />
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Корпус:</span>
-          <select
-            value={buildingFilter}
-            onChange={(e) => handleBuildingChange(e.target.value)}
-            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate cursor-pointer"
-          >
-            <option value="all">Все корпуса</option>
-            {Object.keys(BUILDING_ADDRESSES).map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
+        {/* Filters Bar */}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Building Filter */}
+          <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex-1 min-w-[200px]">
+            <Building className="w-4 h-4 text-gray-400 shrink-0" />
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Корпус:</span>
+            <select
+              value={buildingFilter}
+              onChange={(e) => handleBuildingChange(e.target.value)}
+              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none w-full truncate cursor-pointer"
+            >
+              <option value="all">Все корпуса</option>
+              {Object.keys(BUILDING_ADDRESSES).map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          {!isMyTasks && (
+            <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex-1 min-w-[200px]">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Статус:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none w-full truncate cursor-pointer"
+              >
+                <option value="all">Все статусы</option>
+                {isArchive ? (
+                  <>
+                    <option value="resolved">Решено</option>
+                    <option value="cancelled">Отменено</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="open">Новая</option>
+                    <option value="in_progress">В работе</option>
+                  </>
+                )}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
@@ -682,33 +805,90 @@ export default function ITPortalClientView({
           </div>
 
           {/* Right: SLA Deadlines Card */}
-          <div className="lg:col-span-1 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 shrink-0 self-start">
-            <div>
-              <h3 className="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">
-                <Clock className="w-4 h-4 text-blue-600" />
-                Сроки решения
-              </h3>
-              <p className="text-xs text-gray-550 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
-            </div>
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-red-50/70 border border-red-100/50">
-                <span className="font-semibold text-red-700">Критический</span>
-                <span className="font-bold text-red-800">1 день</span>
+          <div className="lg:col-span-1 space-y-4 self-start">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  Сроки решения
+                </h3>
+                <p className="text-xs text-gray-555 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
               </div>
-              <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-orange-50/70 border border-orange-100/50">
-                <span className="font-semibold text-orange-700">Высокий</span>
-                <span className="font-bold text-orange-800">1–2 дня</span>
-              </div>
-              <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-blue-50/70 border border-blue-100/50">
-                <span className="font-semibold text-blue-700">Средний</span>
-                <span className="font-bold text-blue-800">3–5 дней</span>
-              </div>
-              <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-gray-50/70 border border-gray-100/50">
-                <span className="font-semibold text-gray-600">Низкий</span>
-                <span className="font-bold text-gray-700">5–7 дней</span>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-red-50/70 border border-red-100/50">
+                  <span className="font-semibold text-red-700">Критический</span>
+                  <span className="font-bold text-red-800">1 день</span>
+                </div>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-orange-50/70 border border-orange-100/50">
+                  <span className="font-semibold text-orange-700">Высокий</span>
+                  <span className="font-bold text-orange-800">1–2 дня</span>
+                </div>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-blue-50/70 border border-blue-100/50">
+                  <span className="font-semibold text-blue-700">Средний</span>
+                  <span className="font-bold text-blue-800">3–5 дней</span>
+                </div>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-gray-50/70 border border-gray-100/50">
+                  <span className="font-semibold text-gray-600">Низкий</span>
+                  <span className="font-bold text-gray-700">5–7 дней</span>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Statistics Card (Full-width) */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
+            <div className="space-y-1">
+              <h3 className="font-bold text-gray-900 text-base tracking-tight flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
+                Статистика по месяцам
+              </h3>
+              <p className="text-xs text-gray-550 mt-1 leading-relaxed">
+                Показатели по инцидентам во всех и отдельных корпусах
+              </p>
+            </div>
+            <div className="bg-blue-50/50 text-blue-700 border border-blue-100 text-xs px-3 py-1.5 rounded-lg font-medium self-start sm:self-center">
+              Текущий фильтр: <span className="font-semibold">{buildingFilter === "all" ? "Все корпуса" : `Корпус ${buildingFilter}`}</span>
+            </div>
+          </div>
+
+          {stats.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-8">Нет данных для статистики</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[500px]">
+                <thead>
+                  <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="pb-3 font-semibold">Месяц</th>
+                    <th className="pb-3 text-center font-semibold w-32">Решено</th>
+                    <th className="pb-3 text-center font-semibold w-32">В работе / Новые</th>
+                    <th className="pb-3 text-center font-semibold w-32">Всего</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm">
+                  {stats.map((row) => (
+                    <tr key={row.monthKey} className="hover:bg-gray-50/40 transition-colors">
+                      <td className="py-3.5 font-medium text-gray-900">{row.monthName}</td>
+                      <td className="py-3.5 text-center">
+                        <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                          {row.resolved}
+                        </span>
+                      </td>
+                      <td className="py-3.5 text-center">
+                        <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">
+                          {row.open}
+                        </span>
+                      </td>
+                      <td className="py-3.5 text-center font-bold text-gray-700">
+                        {row.total}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 

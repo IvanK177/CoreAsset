@@ -9,7 +9,7 @@ import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
 import { restoreEmployeeDialog, dismissEmployeeDialog, deleteEmployeeDialog } from "@/lib/actions/employees";
 import { clearCache } from "@/lib/actions/revalidate";
-import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Loader2, Edit, Building, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
+import { ArrowLeft, Users, Mail, Phone, MessageSquare, MapPin, Monitor, AlertTriangle, Search, X, UserCheck, UserX, Loader2, Edit, Building, Cpu, Keyboard, Mouse, Printer, HelpCircle, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +59,7 @@ interface EmployeesClientViewProps {
   onBuildingFilterChange: (val: string) => void;
 }
 
-const deviceIconMap: Record<string, any> = {
+const deviceIconMap: Record<string, LucideIcon> = {
   pc: Cpu,
   monitor: Monitor,
   keyboard: Keyboard,

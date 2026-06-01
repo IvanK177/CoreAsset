@@ -119,7 +119,7 @@ export const getCachedIncidentsWithRelations = unstable_cache(
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("incidents")
-      .select("id, title, description, priority, status, created_at, incident_type, device_id, employee_id, photo_urls, resolution_photo_urls, devices!incidents_device_id_fkey(id, inventory_number, device_type, computer_type), employees!incidents_employee_id_fkey(id, full_name, position, room), assignee:employees!incidents_assigned_to_fkey(id, full_name)")
+      .select("id, title, description, priority, status, created_at, incident_type, device_id, employee_id, photo_urls, resolution, resolution_photo_urls, devices!incidents_device_id_fkey(id, inventory_number, device_type, computer_type), employees!incidents_employee_id_fkey(id, full_name, position, room), assignee:employees!incidents_assigned_to_fkey(id, full_name)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];

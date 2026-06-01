@@ -30,6 +30,7 @@ interface IncidentRow {
   created_at: string;
   incident_type: string;
   device_id: string | null;
+  resolution?: string | null;
   device: { id: string; inventory_number: string; device_type: string; computer_type: string | null } | null;
   employee: { id: string; full_name: string; position: string | null; room: string | null; building: string | null } | null;
   assignee?: { id: string; full_name: string | null } | null;

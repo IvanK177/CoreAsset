@@ -30,7 +30,7 @@ const computerTypeLabels: Record<string, string> = {
 };
 
 export default function TemplatesPageClient({ templates }: TemplatesPageClientProps) {
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   return (
@@ -64,7 +64,7 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {templates.map((tpl) => {
-            const hw = safeHardware(tpl.hardware) as any;
+            const hw = safeHardware(tpl.hardware);
             const isComputer = ["desktop", "laptop", "monoblock", "server"].includes(tpl.computer_type ?? "");
             const isMonitor = tpl.computer_type === "monitor";
 

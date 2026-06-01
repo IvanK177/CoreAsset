@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -87,7 +87,7 @@ export function NewTicketDialog({
   const [deviceId, setDeviceId] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>("medium");
   const [pending, setPending] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
