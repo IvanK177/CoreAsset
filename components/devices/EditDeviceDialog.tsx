@@ -27,6 +27,7 @@ import { updateDeviceDialog } from "@/lib/actions/devices";
 import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
 import type { Tables } from "@/types/database.types";
+import { Camera, Image as ImageIcon, X } from "lucide-react";
 
 type Device = Tables<"devices">;
 type Hardware = {
@@ -140,6 +141,32 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
     },
   });
 
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setPhotos((prev) => [...prev, ...filesArray]);
+
+      const previewsArray = filesArray.map((file) => URL.createObjectURL(file));
+      setPhotoPreviews((prev) => [...prev, ...previewsArray]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const removeExistingPhoto = (index: number) => {
+    setExistingPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const deviceType = form.watch("device_type");
 
   const templateItems: Record<string, React.ReactNode> = {
@@ -168,6 +195,9 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
         template_id: device.template_id ?? "",
       });
       setError(null);
+      setPhotos([]);
+      setPhotoPreviews([]);
+      setExistingPhotos((device as any).photo_urls ?? []);
     }
   }, [open, device, form]);
 
@@ -195,6 +225,60 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
       if (data.diagonal) formData.set("diagonal", data.diagonal);
       if (data.resolution) formData.set("resolution", data.resolution);
     }
+
+    // Combine existing and new photos
+    const photoUrls = [...existingPhotos];
+    // Upload new photos if any
+    try {
+      if (photos.length > 0) {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        for (const file of photos) {
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+            console.log(`Original: ${Math.round(file.size / 1024)}KB, Compressed: ${compressionResult.finalSizeKB}KB`);
+          } catch (compressErr) {
+            console.warn("Compression failed, using original:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
+          const filePath = `devices/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            toast.error(`Ошибка при загрузке фото ${file.name}`);
+            setPending(false);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+
+          photoUrls.push(publicUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Device photo upload exception:", err);
+      toast.error("Не удалось загрузить новые фотографии устройства");
+      setPending(false);
+      return;
+    }
+
+    formData.set("photo_urls", JSON.stringify(photoUrls));
 
     const result = await updateDeviceDialog(device.id, formData);
     if (result.error) {
@@ -224,6 +308,11 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
       onOpenChange(val);
       if (!val) {
         setError(null);
+        setPhotos([]);
+        setPhotoPreviews((prev) => {
+          prev.forEach((url) => URL.revokeObjectURL(url));
+          return [];
+        });
       }
     }}>
       <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
@@ -317,17 +406,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
                 <p className="text-xs text-destructive">{form.formState.errors.inventory_number.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_serial_number">Серийный номер</Label>
-              <Input
-                id="edit_serial_number"
-                placeholder="SN-XYZ-008"
-                {...form.register("serial_number")}
-              />
-              {form.formState.errors.serial_number && (
-                <p className="text-xs text-destructive">{form.formState.errors.serial_number.message}</p>
-              )}
-            </div>
+
           </div>
 
           {/* Dynamic Name / Subtype field */}
@@ -482,6 +561,75 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
               </div>
             </>
           )}
+          {/* Photo attachment field */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-1.5 text-gray-700">
+              <Camera className="w-4 h-4 text-gray-500" />
+              Фотографии устройства
+            </Label>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  disabled={pending}
+                />
+                <div className="text-center space-y-1">
+                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto" />
+                  <span className="text-xs text-gray-500 block">Нажмите, чтобы выбрать фото устройства</span>
+                </div>
+              </label>
+
+              {/* Existing Photos Previews */}
+              {existingPhotos.length > 0 && (
+                <div className="space-y-1 mt-2">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Текущие фото</span>
+                  <div className="grid grid-cols-4 gap-2">
+                    {existingPhotos.map((url, index) => (
+                      <div key={`existing-${index}`} className="relative aspect-square rounded-lg border overflow-hidden group">
+                        <img src={url} alt="Устройство" className="object-cover w-full h-full" />
+                        <button
+                          type="button"
+                          onClick={() => removeExistingPhoto(index)}
+                          className="absolute top-1 right-1 bg-black/70 hover:bg-black/90 text-white rounded-full p-1 cursor-pointer transition-colors"
+                          title="Удалить"
+                          disabled={pending}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Photos Previews */}
+              {photoPreviews.length > 0 && (
+                <div className="space-y-1 mt-2">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Новые фото</span>
+                  <div className="grid grid-cols-4 gap-2">
+                    {photoPreviews.map((preview, index) => (
+                      <div key={`new-${index}`} className="relative aspect-square rounded-lg border overflow-hidden group">
+                        <img src={preview} alt="Превью" className="object-cover w-full h-full" />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(index)}
+                          className="absolute top-1 right-1 bg-black/70 hover:bg-black/90 text-white rounded-full p-1 cursor-pointer transition-colors"
+                          title="Удалить"
+                          disabled={pending}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           {error && (
             <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>

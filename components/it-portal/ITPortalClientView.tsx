@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Cpu, Keyboard, Mouse, Printer, HelpCircle, Camera, Image as ImageIcon } from "lucide-react";
 import { cn, extractJoinObject, BUILDING_ADDRESSES, formatDateTimeRu } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { ITPortalIncidentDetailsDialog } from "./ITPortalIncidentDetailsDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 /* ── Types ── */
 
@@ -132,6 +133,31 @@ export default function ITPortalClientView({
   const [resolutionText, setResolutionText] = useState("");
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
+  const [resolutionPhotos, setResolutionPhotos] = useState<File[]>([]);
+  const [resolutionPhotoPreviews, setResolutionPhotoPreviews] = useState<string[]>([]);
+
+  const handleResolutionPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setResolutionPhotos((prev) => [...prev, ...filesArray]);
+
+      const previewsArray = filesArray.map((file) => URL.createObjectURL(file));
+      setPhotoPreviewsArray(previewsArray);
+    }
+  };
+
+  const setPhotoPreviewsArray = (previewsArray: string[]) => {
+    setResolutionPhotoPreviews((prev) => [...prev, ...previewsArray]);
+  };
+
+  const removeResolutionPhoto = (index: number) => {
+    setResolutionPhotos((prev) => prev.filter((_, i) => i !== index));
+    setResolutionPhotoPreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const [buildingFilter, setBuildingFilter] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("it_building_filter") || "all";
@@ -168,11 +194,67 @@ export default function ITPortalClientView({
     setResolveDialogOpen(false);
     setPendingId(resolvingIncidentId);
 
+    // Upload resolution photos if any
+    const uploadedUrls: string[] = [];
+    try {
+      if (resolutionPhotos.length > 0) {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        for (const file of resolutionPhotos) {
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+            console.log(`Original: ${Math.round(file.size / 1024)}KB, Compressed: ${compressionResult.finalSizeKB}KB`);
+          } catch (compressErr) {
+            console.warn("Compression failed, using original:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
+          const filePath = `resolutions/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            toast.error(`Ошибка при загрузке фото ${file.name}`);
+            setPendingId(null);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+
+          uploadedUrls.push(publicUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Resolution photo upload exception:", err);
+      toast.error("Не удалось загрузить фотографии выполненной работы");
+      setPendingId(null);
+      return;
+    }
+
     startTransition(async () => {
-      await resolveIncident(resolvingIncidentId, resolutionText);
+      await resolveIncident(resolvingIncidentId, resolutionText, uploadedUrls);
       setPendingId(null);
       setResolvingIncidentId(null);
       setResolutionText("");
+      setResolutionPhotos([]);
+      setResolutionPhotoPreviews((prev) => {
+        prev.forEach((url) => URL.revokeObjectURL(url));
+        return [];
+      });
     });
   };
 
@@ -207,7 +289,7 @@ export default function ITPortalClientView({
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left: Quick navigation list */}
-          <div className="w-full lg:w-1/3 space-y-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100/50 max-h-[600px] overflow-y-auto">
+          <div className="hidden lg:block w-full lg:w-1/3 space-y-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100/50 max-h-[600px] overflow-y-auto">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">Заявки в списке</h3>
             {displayIncidents.map((inc) => (
               <button
@@ -381,7 +463,7 @@ export default function ITPortalClientView({
     <div className="space-y-6">
       {/* ===== Header Banner ===== */}
       <div className="rounded-2xl bg-blue-600 p-6 text-white">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6">
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-2">
               {isMyTasks ? "Мои задачи" : isArchive ? "Архив заявок" : "Заявки"}
@@ -394,21 +476,21 @@ export default function ITPortalClientView({
                 : "Все входящие заявки от сотрудников. Берите в работу и решайте."}
             </p>
           </div>
-          <div className="flex items-center gap-6 ml-6">
+          <div className="flex flex-row items-center justify-around sm:justify-end gap-4 sm:gap-6 border-t border-blue-500/30 sm:border-t-0 pt-4 sm:pt-0 shrink-0">
             {!isMyTasks && !isArchive && (
               <div className="flex flex-col items-center">
-                <span className="text-3xl font-bold">{openCountVal}</span>
+                <span className="text-2xl sm:text-3xl font-bold">{openCountVal}</span>
                 <span className="text-blue-200 text-xs">Открытых</span>
               </div>
             )}
             {!isArchive && (
               <div className="flex flex-col items-center">
-                <span className="text-3xl font-bold">{inProgressCountVal}</span>
+                <span className="text-2xl sm:text-3xl font-bold">{inProgressCountVal}</span>
                 <span className="text-blue-200 text-xs">В работе</span>
               </div>
             )}
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold">{resolvedCountVal}</span>
+              <span className="text-2xl sm:text-3xl font-bold">{resolvedCountVal}</span>
               <span className="text-blue-200 text-xs">Решено</span>
             </div>
           </div>
@@ -471,55 +553,57 @@ export default function ITPortalClientView({
                       )}
                     >
                       {/* Top row: number + title + badges */}
-                      <div className="flex items-start gap-3 mb-3">
-                        {/* Status icon */}
-                        <div className={cn(
-                          "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
-                          isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
-                        )}>
-                          {isOpen
-                            ? <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                            : isInProgress
-                              ? <Clock className="w-4 h-4 text-blue-600" />
-                              : <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          }
-                        </div>
-
-                        {/* Title + meta */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className="text-xs font-medium text-gray-400">
-                              {getIncidentNumber(incident)}
-                            </span>
-                            <span className="font-semibold text-sm text-gray-900 truncate">
-                              {getIncidentTitle(incident)}
-                            </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          {/* Status icon */}
+                          <div className={cn(
+                            "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
+                            isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
+                          )}>
+                            {isOpen
+                              ? <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                              : isInProgress
+                                ? <Clock className="w-4 h-4 text-blue-600" />
+                                : <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            }
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-gray-550 flex-wrap">
-                            {/* Author */}
-                            <span className="flex items-center gap-1">
-                              <User className="w-3 h-3 text-gray-400" />
-                              {getEmployeeName(incident)}
-                            </span>
-                            {/* Device */}
-                            {getDeviceInfo(incident) && (
-                              <span className="flex items-center gap-1 font-mono">
-                                <Monitor className="w-3 h-3 text-gray-400" />
-                                {getDeviceInfo(incident)}
+
+                          {/* Title + meta */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className="text-xs font-medium text-gray-400">
+                                {getIncidentNumber(incident)}
                               </span>
-                            )}
-                            {/* Type */}
-                            <span className="flex items-center gap-1">
-                              <Wrench className="w-3 h-3 text-gray-400" />
-                              {incidentTypeLabels[incident.incident_type] ?? incident.incident_type}
-                            </span>
-                            {/* Date */}
-                            <span>{formatDate(incident.created_at)}</span>
+                              <span className="font-semibold text-sm text-gray-900 truncate">
+                                {getIncidentTitle(incident)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-gray-550 flex-wrap">
+                              {/* Author */}
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3 text-gray-400" />
+                                {getEmployeeName(incident)}
+                              </span>
+                              {/* Device */}
+                              {getDeviceInfo(incident) && (
+                                <span className="flex items-center gap-1 font-mono">
+                                  <Monitor className="w-3 h-3 text-gray-400" />
+                                  {getDeviceInfo(incident)}
+                                </span>
+                              )}
+                              {/* Type */}
+                              <span className="flex items-center gap-1">
+                                <Wrench className="w-3 h-3 text-gray-400" />
+                                {incidentTypeLabels[incident.incident_type] ?? incident.incident_type}
+                              </span>
+                              {/* Date */}
+                              <span>{formatDate(incident.created_at)}</span>
+                            </div>
                           </div>
                         </div>
 
                         {/* Badges */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap pl-12 sm:pl-0">
                           {(() => {
                             const dev = Array.isArray(incident.device) ? incident.device[0] : incident.device;
                             if (!dev?.device_type) return null;
@@ -654,6 +738,46 @@ export default function ITPortalClientView({
                 required
                 rows={4}
               />
+            </div>
+            {/* Resolution Photos Attach */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5 text-gray-700">
+                <Camera className="w-4 h-4 text-gray-500" />
+                Прикрепить фото проделанной работы (опционально)
+              </Label>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleResolutionPhotoChange}
+                    className="hidden"
+                  />
+                  <div className="text-center space-y-1">
+                    <ImageIcon className="w-5 h-5 text-gray-400 mx-auto" />
+                    <span className="text-xs text-gray-500 block">Нажмите для выбора фото решения</span>
+                  </div>
+                </label>
+
+                {resolutionPhotoPreviews.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {resolutionPhotoPreviews.map((preview, index) => (
+                      <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                        <img src={preview} alt="Решение" className="object-cover w-full h-full" />
+                        <button
+                          type="button"
+                          onClick={() => removeResolutionPhoto(index)}
+                          className="absolute top-1 right-1 bg-black/70 hover:bg-black/90 text-white rounded-full p-1 cursor-pointer transition-colors"
+                          title="Удалить"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setResolveDialogOpen(false)}>

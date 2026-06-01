@@ -107,10 +107,22 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
     if (l.license_type === "subscription") {
       const monthlyCost = price * seats;
 
-      // Add to each month from creation month to current month (within this year)
-      for (let m = 0; m <= currentMonth; m++) {
-        if (createdYear < currentYear || (createdYear === currentYear && createdMonth <= m)) {
-          monthlyCosts[m] += monthlyCost;
+      // Project subscription costs for all 12 months in the selected year
+      for (let m = 0; m < 12; m++) {
+        if (createdYear < selectedYear || (createdYear === selectedYear && createdMonth <= m)) {
+          // Check if subscription expired before month m in selectedYear
+          let isExpired = false;
+          if (l.expires_at) {
+            const expDate = new Date(l.expires_at);
+            const expYear = expDate.getFullYear();
+            const expMonth = expDate.getMonth();
+            if (expYear < selectedYear || (expYear === selectedYear && expMonth < m)) {
+              isExpired = true;
+            }
+          }
+          if (!isExpired) {
+            monthlyCosts[m] += monthlyCost;
+          }
         }
       }
 
@@ -125,11 +137,12 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
     } else if (l.license_type === "perpetual") {
       const oneTimeCost = price * seats;
 
-      if (createdYear === currentYear && createdMonth <= currentMonth) {
+      // Perpetual costs occur exactly in their creation month/year
+      if (createdYear === selectedYear) {
         monthlyCosts[createdMonth] += oneTimeCost;
       }
 
-      if (createdYear === currentYear && createdMonth === currentMonth) {
+      if (createdYear === selectedYear && createdMonth === (selectedYear === currentYear ? currentMonth : 0)) {
         perpetualBreakdown.push({
           name: l.software_name ?? "—",
           vendor: l.vendor ?? "—",
@@ -143,7 +156,9 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
   }
 
   // Metrics
-  const thisMonth = monthlyCosts[currentMonth];
+  const isSelectedCurrentYear = selectedYear === currentYear;
+  const thisMonthIndex = isSelectedCurrentYear ? currentMonth : 0;
+  const thisMonth = monthlyCosts[thisMonthIndex];
   const nextMonth = subscriptionBreakdown.reduce((sum, s) => sum + s.total, 0); // Only subscriptions recur next month
   const yearTotal = monthlyCosts.reduce((sum, v) => sum + v, 0);
   const activeSubscriptions = subscriptionBreakdown.filter(s => s.seats > 0).length;
@@ -155,16 +170,19 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
   const grandTotal = breakdown.reduce((sum, b) => sum + b.total, 0);
 
   // Generate monthly data for chart
-  const monthlyData = months.map((label, index) => ({
-    label,
-    value: monthlyCosts[index],
-    isCurrent: index === currentMonth,
-    isPast: index < currentMonth,
-    isFuture: index > currentMonth,
-  }));
+  const monthlyData = months.map((label, index) => {
+    const isCurrentYear = selectedYear === currentYear;
+    return {
+      label,
+      value: monthlyCosts[index],
+      isCurrent: isCurrentYear && index === currentMonth,
+      isPast: selectedYear < currentYear || (isCurrentYear && index < currentMonth),
+      isFuture: selectedYear > currentYear || (isCurrentYear && index > currentMonth),
+    };
+  });
 
   const maxBarValue = Math.max(...monthlyData.map((d) => d.value), 1);
-  const currentMonthName = fullMonths[currentMonth];
+  const currentMonthName = fullMonths[isSelectedCurrentYear ? currentMonth : 0];
 
   const handleExportToExcel = () => {
     let html = `<table border="1">
@@ -263,10 +281,10 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700"
+            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 font-semibold focus:border-blue-500 focus:outline-none"
           >
-            <option value={currentYear}>{currentYear}</option>
-            <option value={currentYear - 1}>{currentYear - 1}</option>
+            <option value={2026}>2026 год</option>
+            <option value={2027}>2027 год</option>
           </select>
         </div>
 
@@ -275,19 +293,24 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
             {monthlyData.map((month) => {
               const heightPct = maxBarValue > 0 ? (month.value / maxBarValue) * 100 : 0;
               return (
-                <div key={month.label} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs text-gray-500 font-medium">
+                <div 
+                  key={month.label} 
+                  className="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
+                  title={`${month.value.toLocaleString("ru-RU")} ₽`}
+                >
+                  <span className="text-[10px] text-gray-500 font-semibold opacity-80 group-hover:opacity-100 transition-opacity">
                     {month.value > 0 ? `${(month.value / 1000).toFixed(0)}k` : "0"}
                   </span>
                   <div className="w-full relative" style={{ height: "160px" }}>
                     <div
                       className={cn(
-                        "absolute bottom-0 w-full rounded-t-md transition-all",
+                        "absolute bottom-0 w-full rounded-t-md transition-all group-hover:brightness-95",
                         month.isCurrent ? "bg-[#2563eb]" :
                         month.isPast ? "bg-[#93c5fd]" :
-                        "bg-[#374151]"
+                        "bg-gray-400"
                       )}
                       style={{ height: `${heightPct}%`, minHeight: month.value > 0 ? "4px" : "0" }}
+                      title={`${month.value.toLocaleString("ru-RU")} ₽`}
                     />
                   </div>
                   <span className={cn(

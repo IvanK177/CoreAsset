@@ -22,6 +22,9 @@ interface RoomRequestRow {
   status: string;
   author_id: string;
   created_at: string;
+  photo_urls?: string[] | null;
+  resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
   employee: {
     id: string;
     full_name: string;
@@ -137,7 +140,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
         {filteredRequests.length === 0 ? (
           <div className="py-16 text-center text-gray-500 bg-white border border-gray-100 rounded-2xl">
             <AlertTriangle className="w-10 h-10 mx-auto opacity-40 mb-3" />
-            <p className="text-sm">Заявок АХО не найдено</p>
+            <p className="text-sm">Заявок АХЧ не найдено</p>
           </div>
         ) : (
           filteredRequests.map((req) => {
@@ -216,7 +219,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                   </Badge>
                 </div>
                 <DialogTitle className="text-lg font-bold text-gray-900">
-                  Заявка АХО: Кабинет {selectedRequest.room}
+                  Заявка АХЧ: Кабинет {selectedRequest.room}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-gray-400">
                   Создана: {formatDateTimeRu(selectedRequest.created_at)}
@@ -229,6 +232,63 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Описание проблемы</h4>
                   <DecompressedText text={selectedRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
                 </div>
+
+                {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Прикрепленные фото ({selectedRequest.photo_urls.length})
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedRequest.photo_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={url}
+                            alt={`Вложение ${idx + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedRequest.status === "resolved" && selectedRequest.resolution && (
+                  <div className="space-y-1 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                    <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Выполненная работа</h4>
+                    <p className="text-sm text-emerald-900 whitespace-pre-wrap">{selectedRequest.resolution}</p>
+                  </div>
+                )}
+
+                {selectedRequest.status === "resolved" && selectedRequest.resolution_photo_urls && selectedRequest.resolution_photo_urls.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                      Фотоотчет выполненной работы ({selectedRequest.resolution_photo_urls.length})
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedRequest.resolution_photo_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={url}
+                            alt={`Решение ${idx + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Author info */}
                 <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">

@@ -16,7 +16,7 @@ interface FacilitiesSidebarProps {
 }
 
 const nav = [
-  { href: "/facilities-portal", label: "Заявки АХО", icon: ClipboardList },
+  { href: "/facilities-portal", label: "Заявки АХЧ", icon: ClipboardList },
 ];
 
 export default function FacilitiesSidebar({ openRequests, userName }: FacilitiesSidebarProps) {
@@ -31,7 +31,7 @@ export default function FacilitiesSidebar({ openRequests, userName }: Facilities
         </div>
         <div>
           <span className="font-bold text-sm tracking-tight text-white">CoreAsset</span>
-          <p className="text-xs text-gray-400 leading-tight">АХО Портал</p>
+          <p className="text-xs text-gray-400 leading-tight">АХЧ Портал</p>
         </div>
       </div>
 
@@ -71,9 +71,9 @@ export default function FacilitiesSidebar({ openRequests, userName }: Facilities
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate" title={userName}>
-              {userName ?? "Сотрудник АХО"}
+              {userName ?? "Сотрудник АХЧ"}
             </p>
-            <p className="text-xs text-gray-400">Сотрудник АХО</p>
+            <p className="text-xs text-gray-400">Сотрудник АХЧ</p>
           </div>
           <div className="flex items-center gap-1">
             <form action={signOut} className="inline">

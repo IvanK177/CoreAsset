@@ -310,7 +310,7 @@ export function DevicesClientView({
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Основные данные / Характеристики</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <InfoRow label="Серийный номер" value={selectedDevice.serial_number} />
+
               <InfoRow label="Кабинет" value={selectedDevice.room} />
               <InfoRow label="Тип устройства" value={getDeviceTypeLabel(selectedDevice.device_type)} />
               <InfoRow label="Название / Модель" value={selectedDevice.computer_type} />
@@ -335,6 +335,32 @@ export function DevicesClientView({
               )}
             </div>
           </div>
+
+          {/* Device photos section */}
+          {(selectedDevice as any).photo_urls && (selectedDevice as any).photo_urls.length > 0 && (
+            <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Фотографии устройства ({(selectedDevice as any).photo_urls.length})
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {((selectedDevice as any).photo_urls as string[]).map((url, idx) => (
+                  <a
+                    key={idx}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                  >
+                    <img
+                      src={url}
+                      alt={`Устройство ${idx + 1}`}
+                      className="object-cover w-full h-full"
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="rounded-xl border border-gray-200 p-4 space-y-3">
             <div className="flex items-center justify-between">

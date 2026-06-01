@@ -8,7 +8,7 @@ import { createTemplate } from "@/lib/actions/computer_templates";
 export default function NewTemplatePage() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Создать шаблон сборки ПК" />
+      <PageHeader title="Создать новый шаблон" />
       <TemplateForm action={createTemplate} />
     </div>
   );

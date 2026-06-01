@@ -20,7 +20,7 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Редактировать шаблон сборки ПК" />
+      <PageHeader title="Редактировать шаблон" />
       <TemplateForm template={template as ComputerTemplateRow} action={action} />
     </div>
   );

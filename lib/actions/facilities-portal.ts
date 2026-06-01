@@ -38,10 +38,7 @@ export async function takeRoomRequestToWork(id: string) {
   return { success: true };
 }
 
-/**
-  * Resolve a room request (set status to "resolved").
-  */
-export async function resolveRoomRequest(id: string) {
+export async function resolveRoomRequest(id: string, resolution: string = "", resolutionPhotoUrls: string[] = []) {
   const supabase = createServiceClient();
 
   const { data: current } = await supabase
@@ -56,7 +53,12 @@ export async function resolveRoomRequest(id: string) {
 
   const { error } = await supabase
     .from("room_requests")
-    .update({ status: "resolved", description: compressedDescription })
+    .update({ 
+      status: "resolved", 
+      description: compressedDescription,
+      resolution: resolution.trim() || null,
+      resolution_photo_urls: resolutionPhotoUrls,
+    })
     .eq("id", id);
 
   if (error) {

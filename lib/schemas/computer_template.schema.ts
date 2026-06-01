@@ -6,6 +6,8 @@ const hardwareSchema = z.object({
   storage: z.string().optional(),
   gpu: z.string().optional(),
   mac_address: z.string().optional(),
+  diagonal: z.string().optional(),
+  resolution: z.string().optional(),
 });
 
 export const computerTemplateSchema = z.object({

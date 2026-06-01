@@ -121,15 +121,31 @@ export function NewTicketDialog({
     const photoUrls: string[] = [];
     try {
       if (photos.length > 0) {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         for (const file of photos) {
-          const fileExt = file.name.split(".").pop();
-          const fileName = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}.${fileExt}`;
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+            console.log(`Original: ${Math.round(file.size / 1024)}KB, Compressed: ${compressionResult.finalSizeKB}KB`);
+          } catch (compressErr) {
+            console.warn("Compression failed, using original file:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
           const filePath = `${employeeId}/${fileName}`;
           const { error: uploadError } = await supabase.storage
             .from("ticket-attachments")
-            .upload(filePath, file);
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
 
           if (uploadError) {
             console.error("Photo upload error:", uploadError);
@@ -219,7 +235,7 @@ export function NewTicketDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Новая заявка</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -293,14 +309,14 @@ export function NewTicketDialog({
           {/* Priority toggle group */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Срочность</Label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 xs:grid-cols-4 gap-2">
               {priorityOptions.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => setPriority(opt.value)}
                   className={cn(
-                    "flex-1 h-9 rounded-lg text-sm font-medium transition-all duration-150 border",
+                    "h-9 rounded-lg text-xs xs:text-sm font-medium transition-all duration-150 border w-full",
                     priority === opt.value
                       ? opt.activeClassName
                       : "border-gray-200 text-gray-400 hover:bg-gray-50"

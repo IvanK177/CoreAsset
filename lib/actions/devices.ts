@@ -24,6 +24,7 @@ export async function createDevice(formData: FormData) {
       resolution: formData.get("resolution") || undefined,
     },
     template_id: formData.get("template_id") || undefined,
+    photo_urls: formData.get("photo_urls") ? JSON.parse(formData.get("photo_urls") as string) : undefined,
   };
 
   const parsed = deviceSchema.safeParse(raw);
@@ -62,6 +63,7 @@ export async function updateDevice(id: string, formData: FormData) {
       resolution: formData.get("resolution") || undefined,
     },
     template_id: formData.get("template_id") || undefined,
+    photo_urls: formData.get("photo_urls") ? JSON.parse(formData.get("photo_urls") as string) : undefined,
   };
 
   const parsed = deviceSchema.safeParse(raw);
@@ -139,6 +141,7 @@ export async function updateDeviceDialog(id: string, formData: FormData) {
       resolution: formData.get("resolution") || undefined,
     },
     template_id: formData.get("template_id") || undefined,
+    photo_urls: formData.get("photo_urls") ? JSON.parse(formData.get("photo_urls") as string) : undefined,
   };
 
   const parsed = deviceSchema.safeParse(raw);
@@ -178,6 +181,7 @@ export async function createDeviceDialog(formData: FormData) {
       resolution: formData.get("resolution") || undefined,
     },
     template_id: formData.get("template_id") || undefined,
+    photo_urls: formData.get("photo_urls") ? JSON.parse(formData.get("photo_urls") as string) : undefined,
   };
 
   const parsed = deviceSchema.safeParse(raw);

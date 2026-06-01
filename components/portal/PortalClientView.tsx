@@ -63,6 +63,9 @@ interface RoomRequestData {
   description: string;
   status: string;
   created_at: string;
+  photo_urls?: string[] | null;
+  resolution?: string | null;
+  resolution_photo_urls?: string[] | null;
 }
 
 interface PortalClientViewProps {
@@ -159,7 +162,7 @@ export default function PortalClientView({
     <div className="space-y-6">
       {/* ===== Block 1: Welcome Banner ===== */}
       <div className="rounded-2xl bg-blue-600 p-6 text-white">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6">
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-2">Привет, {firstName}!</h1>
             <p className="text-blue-100 text-sm mb-4">
@@ -167,20 +170,21 @@ export default function PortalClientView({
             </p>
             <button
               onClick={() => setTypeChoiceOpen(true)}
-              className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-white text-blue-600 font-medium text-sm hover:bg-blue-50 transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-lg bg-white text-blue-600 font-medium text-sm hover:bg-blue-50 transition-colors cursor-pointer w-full sm:w-auto"
             >
               <Plus className="w-4 h-4" />
               Создать заявку
             </button>
           </div>
-          <div className="flex flex-col items-center gap-1 ml-6">
+          <div className="flex flex-row sm:flex-col items-center justify-around sm:justify-center gap-4 sm:gap-1 sm:ml-6 border-t border-blue-500/30 sm:border-t-0 pt-4 sm:pt-0 shrink-0">
             <div className="flex flex-col items-center">
-              <span className="text-4xl font-bold">{openIncidents}</span>
+              <span className="text-3xl sm:text-4xl font-bold">{openIncidents}</span>
               <span className="text-blue-200 text-xs">Открытых заявок</span>
             </div>
-            <span className="text-blue-300 text-xs">
-              {resolvedIncidents} решено
-            </span>
+            <div className="flex flex-col items-center sm:mt-1">
+              <span className="text-xl sm:text-base font-semibold sm:font-normal">{resolvedIncidents}</span>
+              <span className="text-blue-300 text-[10px] sm:text-xs">решено</span>
+            </div>
           </div>
         </div>
       </div>
@@ -226,7 +230,7 @@ export default function PortalClientView({
 
                     {/* Specifications */}
                     {comp.device_type === "pc" && hw && (
-                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 mt-1">
                         {hw.cpu && (
                           <span className="flex items-center gap-1">
                             <Cpu className="w-3 h-3" />
@@ -249,7 +253,7 @@ export default function PortalClientView({
                     )}
 
                     {comp.device_type === "monitor" && hw && (
-                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 mt-1">
                         {hw.diagonal && (
                           <span className="flex items-center gap-1">
                             <Monitor className="w-3 h-3" />
@@ -321,72 +325,74 @@ export default function PortalClientView({
                     }
                   }}
                   className={cn(
-                    "flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-blue-300 hover:bg-blue-50/10 cursor-pointer transition-all duration-150",
+                    "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-blue-300 hover:bg-blue-50/10 cursor-pointer transition-all duration-150",
                     portalTab === "archive" && "p-3 bg-gray-50/30"
                   )}
                 >
-                  {/* Status/Type icon */}
-                  <div className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-full shrink-0",
-                    isOpen ? "bg-yellow-100 text-yellow-600" : "bg-emerald-100 text-emerald-600"
-                  )}>
-                    {isIT ? (
-                      isOpen ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />
-                    ) : (
-                      <Wrench className="w-4 h-4" />
-                    )}
-                  </div>
-
-                  {/* Request info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-mono text-gray-400">
-                        {isIT ? getIncidentNumber(item as IncidentData) : `#R${item.id.substring(0, 4).toUpperCase()}`}
-                      </span>
-                      <span className="font-semibold text-sm text-gray-900 truncate">
-                        {isIT ? getIncidentTitle(item as IncidentData) : `Заявка АХО: каб. ${item.room}`}
-                      </span>
-                      {isIT && (() => {
-                        const deviceObj = extractJoinObject((item as IncidentData).device) as { device_type: string | null } | null;
-                        const deviceType = deviceObj?.device_type;
-                        if (!deviceType) return null;
-                        const emojiMap: Record<string, string> = {
-                          pc: "💻",
-                          monitor: "🖥️",
-                          keyboard: "⌨️",
-                          mouse: "🖱️",
-                          printer: "🖨️",
-                          other: "🔌",
-                        };
-                        const typeLabel = deviceTypeRussianLabels[deviceType] || "Устройство";
-                        return (
-                          <span className="text-[11px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded flex items-center gap-1 font-medium select-none border border-blue-100 shrink-0">
-                            <span>{emojiMap[deviceType] || "🔌"}</span>
-                            <span>{typeLabel}</span>
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
-                        {isIT ? "IT инцидент" : "АХО"}
-                      </span>
-                      <span>·</span>
-                      <span>{formatDate(item.created_at)}</span>
-                      {isIT && item.status === "resolved" && (
-                        <>
-                          <span>·</span>
-                          <span className="text-emerald-600 font-medium">Решено кем: {(() => {
-                            const assignee = extractJoinObject((item as IncidentData).assignee) as { full_name: string | null } | null;
-                            return assignee?.full_name ?? "IT-специалист";
-                          })()}</span>
-                        </>
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {/* Status/Type icon */}
+                    <div className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-full shrink-0",
+                      isOpen ? "bg-yellow-100 text-yellow-600" : "bg-emerald-100 text-emerald-600"
+                    )}>
+                      {isIT ? (
+                        isOpen ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />
+                      ) : (
+                        <Wrench className="w-4 h-4" />
                       )}
+                    </div>
+
+                    {/* Request info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-mono text-gray-400">
+                          {isIT ? getIncidentNumber(item as IncidentData) : `#R${item.id.substring(0, 4).toUpperCase()}`}
+                        </span>
+                        <span className="font-semibold text-sm text-gray-900 truncate">
+                          {isIT ? getIncidentTitle(item as IncidentData) : `Заявка АХЧ: каб. ${item.room}`}
+                        </span>
+                        {isIT && (() => {
+                          const deviceObj = extractJoinObject((item as IncidentData).device) as { device_type: string | null } | null;
+                          const deviceType = deviceObj?.device_type;
+                          if (!deviceType) return null;
+                          const emojiMap: Record<string, string> = {
+                            pc: "💻",
+                            monitor: "🖥️",
+                            keyboard: "⌨️",
+                            mouse: "🖱️",
+                            printer: "🖨️",
+                            other: "🔌",
+                          };
+                          const typeLabel = deviceTypeRussianLabels[deviceType] || "Устройство";
+                          return (
+                            <span className="text-[11px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded flex items-center gap-1 font-medium select-none border border-blue-100 shrink-0">
+                              <span>{emojiMap[deviceType] || "🔌"}</span>
+                              <span>{typeLabel}</span>
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+                          {isIT ? "IT инцидент" : "АХЧ"}
+                        </span>
+                        <span>·</span>
+                        <span>{formatDate(item.created_at)}</span>
+                        {isIT && item.status === "resolved" && (
+                          <>
+                            <span>·</span>
+                            <span className="text-emerald-600 font-medium">Решено кем: {(() => {
+                              const assignee = extractJoinObject((item as IncidentData).assignee) as { full_name: string | null } | null;
+                              return assignee?.full_name ?? "IT-специалист";
+                            })()}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   {/* Badges */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap pl-11 sm:pl-0">
                     {isIT && (
                       <PriorityBadge priority={(item as IncidentData).priority as "low" | "medium" | "high" | "critical"} />
                     )}
@@ -424,7 +430,7 @@ export default function PortalClientView({
 
       {/* ===== Request Type Choice Dialog ===== */}
       <Dialog open={typeChoiceOpen} onOpenChange={setTypeChoiceOpen}>
-        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-center">Создать заявку</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground text-center">
@@ -483,7 +489,7 @@ export default function PortalClientView({
 
       {/* ===== Room Request Details Dialog ===== */}
       <Dialog open={!!selectedRoomRequest} onOpenChange={(open) => !open && setSelectedRoomRequest(null)}>
-        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
           {selectedRoomRequest && (
             <>
               <DialogHeader className="space-y-3">
@@ -499,7 +505,7 @@ export default function PortalClientView({
                   </Badge>
                 </div>
                 <DialogTitle className="text-lg font-bold text-gray-900">
-                  Заявка АХО: Кабинет {selectedRoomRequest.room}
+                  Заявка АХЧ: Кабинет {selectedRoomRequest.room}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-gray-400">
                   Создана: {formatDate(selectedRoomRequest.created_at)}
@@ -511,6 +517,63 @@ export default function PortalClientView({
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Описание проблемы</h4>
                   <DecompressedText text={selectedRoomRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
                 </div>
+
+                {selectedRoomRequest.photo_urls && selectedRoomRequest.photo_urls.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Прикрепленные фото ({selectedRoomRequest.photo_urls.length})
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedRoomRequest.photo_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={url}
+                            alt={`Вложение ${idx + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedRoomRequest.status === "resolved" && selectedRoomRequest.resolution && (
+                  <div className="space-y-1 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                    <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Выполненная работа</h4>
+                    <p className="text-sm text-emerald-900 whitespace-pre-wrap">{selectedRoomRequest.resolution}</p>
+                  </div>
+                )}
+
+                {selectedRoomRequest.status === "resolved" && selectedRoomRequest.resolution_photo_urls && selectedRoomRequest.resolution_photo_urls.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                      Фотоотчет выполненной работы ({selectedRoomRequest.resolution_photo_urls.length})
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedRoomRequest.resolution_photo_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity"
+                        >
+                          <img
+                            src={url}
+                            alt={`Решение ${idx + 1}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end pt-2">

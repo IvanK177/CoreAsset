@@ -48,7 +48,7 @@ export default async function FacilitiesPortalLayout({ children }: { children: R
     employeeData = data;
   }
 
-  const userName = employeeData?.full_name || user?.email || "Сотрудник АХО";
+  const userName = employeeData?.full_name || user?.email || "Сотрудник АХЧ";
 
   return (
     <FacilitiesLayoutClient

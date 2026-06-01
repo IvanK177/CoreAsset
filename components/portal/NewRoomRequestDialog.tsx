@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Camera, Image as ImageIcon, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,7 +44,30 @@ export function NewRoomRequestDialog({
   const [pending, setPending] = useState(false);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [photoPreviews]);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      setPhotos((prev) => [...prev, ...selectedFiles]);
+      const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+      setPhotoPreviews((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(photoPreviews[index]);
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,11 +83,62 @@ export function NewRoomRequestDialog({
     setPending(true);
     setError(null);
 
+    const photoUrls: string[] = [];
+    try {
+      if (photos.length > 0) {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        for (const file of photos) {
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+            console.log(`Original: ${Math.round(file.size / 1024)}KB, Compressed: ${compressionResult.finalSizeKB}KB`);
+          } catch (compressErr) {
+            console.warn("Compression failed, using original file:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
+          const filePath = `${employeeId}/${fileName}`;
+          const { error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.error("Photo upload error:", uploadError);
+            toast.error(`Ошибка при загрузке фото ${file.name}`);
+            setPending(false);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+
+          photoUrls.push(publicUrl);
+        }
+      }
+    } catch (err) {
+      console.error("Attachment upload exception:", err);
+      toast.error("Не удалось загрузить фотографии");
+      setPending(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.set("room", room.trim());
     formData.set("type", type);
     formData.set("description", description.trim());
     formData.set("author_id", employeeId);
+    formData.set("photo_urls", JSON.stringify(photoUrls));
 
     const result = await createPortalRoomRequest(formData);
 
@@ -77,10 +151,13 @@ export function NewRoomRequestDialog({
 
     await clearCache("/portal");
     await clearCache("/incidents");
-    toast.success("Заявка в АХО успешно отправлена");
+    toast.success("Заявка в АХЧ успешно отправлена");
     setRoom(defaultRoom);
     setDescription("");
     setType("ремонт");
+    photoPreviews.forEach((p) => URL.revokeObjectURL(p));
+    setPhotos([]);
+    setPhotoPreviews([]);
     setPending(false);
     onOpenChange(false);
     startTransition(() => {
@@ -93,6 +170,9 @@ export function NewRoomRequestDialog({
       setRoom(defaultRoom);
       setDescription("");
       setType("ремонт");
+      photoPreviews.forEach((p) => URL.revokeObjectURL(p));
+      setPhotos([]);
+      setPhotoPreviews([]);
       setError(null);
       onOpenChange(false);
     }
@@ -100,9 +180,9 @@ export function NewRoomRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Заявка в АХО</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Заявка в АХЧ</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
             Создайте заявку на ремонт или оснащение кабинета
           </DialogDescription>
@@ -111,11 +191,11 @@ export function NewRoomRequestDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Cabinet */}
           <div className="space-y-2">
-            <Label htmlFor="aho-room" className="text-sm font-medium">
+            <Label htmlFor="ahch-room" className="text-sm font-medium">
               Кабинет *
             </Label>
             <Input
-              id="aho-room"
+              id="ahch-room"
               placeholder="Например: 204"
               value={room}
               onChange={(e) => setRoom(e.target.value)}
@@ -147,11 +227,11 @@ export function NewRoomRequestDialog({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="aho-description" className="text-sm font-medium">
+            <Label htmlFor="ahch-description" className="text-sm font-medium">
               Что требуется сделать? *
             </Label>
             <Textarea
-              id="aho-description"
+              id="ahch-description"
               placeholder="Подробно опишите вашу проблему или запрос (например: перегорела лампа, скрипит дверь, нужен дополнительный стул)..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -159,6 +239,49 @@ export function NewRoomRequestDialog({
               className="rounded-lg border-gray-200 resize-none"
               required
             />
+          </div>
+
+          {/* Attach Photos */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-gray-500" />
+              Прикрепить фото
+            </Label>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  disabled={pending}
+                />
+                <div className="text-center space-y-1">
+                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto" />
+                  <span className="text-xs text-gray-500 block">Нажмите, чтобы выбрать изображения</span>
+                </div>
+              </label>
+
+              {photoPreviews.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {photoPreviews.map((preview, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                      <img src={preview} alt="Превью" className="object-cover w-full h-full" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 bg-black/70 hover:bg-black/90 text-white rounded-full p-1 cursor-pointer transition-colors"
+                        title="Удалить"
+                        disabled={pending}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Error */}
