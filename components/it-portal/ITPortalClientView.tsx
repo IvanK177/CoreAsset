@@ -289,7 +289,7 @@ export default function ITPortalClientView({
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left: Quick navigation list */}
-          <div className="w-full lg:w-1/3 space-y-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100/50 max-h-[600px] overflow-y-auto">
+          <div className="hidden lg:block w-full lg:w-1/3 space-y-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100/50 max-h-[600px] overflow-y-auto">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">Заявки в списке</h3>
             {displayIncidents.map((inc) => (
               <button
@@ -463,7 +463,7 @@ export default function ITPortalClientView({
     <div className="space-y-6">
       {/* ===== Header Banner ===== */}
       <div className="rounded-2xl bg-blue-600 p-6 text-white">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6">
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-2">
               {isMyTasks ? "Мои задачи" : isArchive ? "Архив заявок" : "Заявки"}
@@ -476,21 +476,21 @@ export default function ITPortalClientView({
                 : "Все входящие заявки от сотрудников. Берите в работу и решайте."}
             </p>
           </div>
-          <div className="flex items-center gap-6 ml-6">
+          <div className="flex flex-row items-center justify-around sm:justify-end gap-4 sm:gap-6 border-t border-blue-500/30 sm:border-t-0 pt-4 sm:pt-0 shrink-0">
             {!isMyTasks && !isArchive && (
               <div className="flex flex-col items-center">
-                <span className="text-3xl font-bold">{openCountVal}</span>
+                <span className="text-2xl sm:text-3xl font-bold">{openCountVal}</span>
                 <span className="text-blue-200 text-xs">Открытых</span>
               </div>
             )}
             {!isArchive && (
               <div className="flex flex-col items-center">
-                <span className="text-3xl font-bold">{inProgressCountVal}</span>
+                <span className="text-2xl sm:text-3xl font-bold">{inProgressCountVal}</span>
                 <span className="text-blue-200 text-xs">В работе</span>
               </div>
             )}
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold">{resolvedCountVal}</span>
+              <span className="text-2xl sm:text-3xl font-bold">{resolvedCountVal}</span>
               <span className="text-blue-200 text-xs">Решено</span>
             </div>
           </div>
@@ -553,55 +553,57 @@ export default function ITPortalClientView({
                       )}
                     >
                       {/* Top row: number + title + badges */}
-                      <div className="flex items-start gap-3 mb-3">
-                        {/* Status icon */}
-                        <div className={cn(
-                          "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
-                          isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
-                        )}>
-                          {isOpen
-                            ? <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                            : isInProgress
-                              ? <Clock className="w-4 h-4 text-blue-600" />
-                              : <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          }
-                        </div>
-
-                        {/* Title + meta */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className="text-xs font-medium text-gray-400">
-                              {getIncidentNumber(incident)}
-                            </span>
-                            <span className="font-semibold text-sm text-gray-900 truncate">
-                              {getIncidentTitle(incident)}
-                            </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          {/* Status icon */}
+                          <div className={cn(
+                            "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
+                            isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
+                          )}>
+                            {isOpen
+                              ? <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                              : isInProgress
+                                ? <Clock className="w-4 h-4 text-blue-600" />
+                                : <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            }
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-gray-550 flex-wrap">
-                            {/* Author */}
-                            <span className="flex items-center gap-1">
-                              <User className="w-3 h-3 text-gray-400" />
-                              {getEmployeeName(incident)}
-                            </span>
-                            {/* Device */}
-                            {getDeviceInfo(incident) && (
-                              <span className="flex items-center gap-1 font-mono">
-                                <Monitor className="w-3 h-3 text-gray-400" />
-                                {getDeviceInfo(incident)}
+
+                          {/* Title + meta */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className="text-xs font-medium text-gray-400">
+                                {getIncidentNumber(incident)}
                               </span>
-                            )}
-                            {/* Type */}
-                            <span className="flex items-center gap-1">
-                              <Wrench className="w-3 h-3 text-gray-400" />
-                              {incidentTypeLabels[incident.incident_type] ?? incident.incident_type}
-                            </span>
-                            {/* Date */}
-                            <span>{formatDate(incident.created_at)}</span>
+                              <span className="font-semibold text-sm text-gray-900 truncate">
+                                {getIncidentTitle(incident)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-gray-550 flex-wrap">
+                              {/* Author */}
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3 text-gray-400" />
+                                {getEmployeeName(incident)}
+                              </span>
+                              {/* Device */}
+                              {getDeviceInfo(incident) && (
+                                <span className="flex items-center gap-1 font-mono">
+                                  <Monitor className="w-3 h-3 text-gray-400" />
+                                  {getDeviceInfo(incident)}
+                                </span>
+                              )}
+                              {/* Type */}
+                              <span className="flex items-center gap-1">
+                                <Wrench className="w-3 h-3 text-gray-400" />
+                                {incidentTypeLabels[incident.incident_type] ?? incident.incident_type}
+                              </span>
+                              {/* Date */}
+                              <span>{formatDate(incident.created_at)}</span>
+                            </div>
                           </div>
                         </div>
 
                         {/* Badges */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap pl-12 sm:pl-0">
                           {(() => {
                             const dev = Array.isArray(incident.device) ? incident.device[0] : incident.device;
                             if (!dev?.device_type) return null;

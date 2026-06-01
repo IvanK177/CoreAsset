@@ -113,7 +113,7 @@ export function IncidentDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6 border-none shadow-2xl">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6 border-none shadow-2xl">
         <DialogHeader className="space-y-1.5">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">

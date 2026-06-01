@@ -232,24 +232,24 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
     <div className="space-y-6">
       {/* ===== Header Banner ===== */}
       <div className="rounded-2xl bg-emerald-600 p-6 text-white shadow-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6">
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-2">Заявки АХЧ</h1>
             <p className="text-emerald-100 text-sm">
               Управление заявками на ремонт и оснащение кабинетов. Берите в работу и отмечайте выполнение.
             </p>
           </div>
-          <div className="flex items-center gap-6 ml-6">
+          <div className="flex flex-row items-center justify-around sm:justify-end gap-4 sm:gap-6 border-t border-emerald-500/30 sm:border-t-0 pt-4 sm:pt-0 shrink-0">
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold">{totalOpen}</span>
+              <span className="text-2xl sm:text-3xl font-bold">{totalOpen}</span>
               <span className="text-emerald-200 text-xs">Открыто</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold">{totalInProgress}</span>
+              <span className="text-2xl sm:text-3xl font-bold">{totalInProgress}</span>
               <span className="text-emerald-200 text-xs">В работе</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold">{totalResolved}</span>
+              <span className="text-2xl sm:text-3xl font-bold">{totalResolved}</span>
               <span className="text-emerald-200 text-xs">Выполнено</span>
             </div>
           </div>
@@ -257,7 +257,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
       </div>
 
       {/* ===== Filters Bar ===== */}
-      <div className="flex items-center justify-between gap-4 flex-wrap bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
         {/* Status Tabs */}
         <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 overflow-x-auto max-w-full">
           {tabs.map((tab) => (
@@ -319,54 +319,56 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                 )}
               >
                 {/* Header row */}
-                <div className="flex items-start gap-3 mb-3">
-                  {/* Status Icon */}
-                  <div
-                    className={cn(
-                      "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
-                      isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
-                    )}
-                  >
-                    {isOpen ? (
-                      <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                    ) : isInProgress ? (
-                      <Clock className="w-4 h-4 text-blue-600" />
-                    ) : (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    )}
-                  </div>
-
-                  {/* Title & Metadata */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-gray-400">
-                        {getShortId(req.id)}
-                      </span>
-                      <span className="font-semibold text-sm text-gray-900 truncate">
-                        Кабинет {req.room}
-                      </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {/* Status Icon */}
+                    <div
+                      className={cn(
+                        "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
+                        isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
+                      )}
+                    >
+                      {isOpen ? (
+                        <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                      ) : isInProgress ? (
+                        <Clock className="w-4 h-4 text-blue-600" />
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      )}
                     </div>
 
-                    <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3 text-gray-400" />
-                        {req.employee?.full_name ?? "—"}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Building className="w-3 h-3 text-gray-400" />
-                        {req.employee?.building ?? "—"}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Wrench className="w-3 h-3 text-gray-400" />
-                        {typeLabels[req.type] || req.type}
-                      </span>
-                      <span>·</span>
-                      <span>{formatDateTimeRu(req.created_at)}</span>
+                    {/* Title & Metadata */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-mono text-gray-400">
+                          {getShortId(req.id)}
+                        </span>
+                        <span className="font-semibold text-sm text-gray-900 truncate">
+                          Кабинет {req.room}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs text-gray-555 flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3 text-gray-400" />
+                          {req.employee?.full_name ?? "—"}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Building className="w-3 h-3 text-gray-400" />
+                          {req.employee?.building ?? "—"}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Wrench className="w-3 h-3 text-gray-400" />
+                          {typeLabels[req.type] || req.type}
+                        </span>
+                        <span>·</span>
+                        <span>{formatDateTimeRu(req.created_at)}</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Badges */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap pl-12 sm:pl-0">
                     <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[req.type])}>
                       {typeLabels[req.type] || req.type}
                     </Badge>
@@ -428,7 +430,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
 
       {/* ===== Details Dialog ===== */}
       <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
-        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
           {selectedRequest && (
             <>
               <DialogHeader className="space-y-3">
@@ -573,7 +575,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
       </Dialog>
       {/* Resolve Request Dialog */}
       <Dialog open={resolveDialogOpen} onOpenChange={setResolveDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">Выполнение заявки АХЧ</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">

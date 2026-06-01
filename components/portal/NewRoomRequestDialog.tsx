@@ -180,7 +180,7 @@ export function NewRoomRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Заявка в АХЧ</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
