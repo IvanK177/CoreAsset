@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { TaskCalendar, CalendarTask } from "@/components/TaskCalendar";
+import { calculateDeadline } from "@/lib/utils/sla";
 
 /* ── Types ── */
 
@@ -166,6 +168,7 @@ export default function ITPortalClientView({
   currentPath,
   initialMessagesMap,
 }: ITPortalClientViewProps) {
+  const [activeViewTab, setActiveViewTab] = useState<"list" | "calendar">("list");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const [selectedIncident, setSelectedIncident] = useState<IncidentRow | null>(null);
@@ -564,6 +567,42 @@ export default function ITPortalClientView({
     );
   }
 
+  const unclosedIncidents = incidents.filter(
+    (inc) => inc.status !== "resolved" && inc.status !== "cancelled"
+  );
+
+  const calendarTasks: CalendarTask[] = unclosedIncidents
+    .filter((inc) => {
+      if (buildingFilter !== "all") {
+        const emp = Array.isArray(inc.employee) ? inc.employee[0] : inc.employee;
+        if (emp?.building !== buildingFilter) return false;
+      }
+      return true;
+    })
+    .map((inc) => {
+      const emp = Array.isArray(inc.employee) ? inc.employee[0] : inc.employee;
+      const dev = Array.isArray(inc.device) ? inc.device[0] : inc.device;
+      
+      const typeLabel = deviceTypeRussianLabels[dev?.device_type ?? ""] || "Устройство";
+      const devInfo = dev?.inventory_number 
+        ? `${dev.inventory_number} [${typeLabel}] (${dev.computer_type ?? "—"})`
+        : undefined;
+
+      return {
+        id: inc.id,
+        title: getIncidentTitle(inc),
+        description: inc.description,
+        status: inc.status,
+        priority: inc.priority,
+        created_at: inc.created_at,
+        deadline: calculateDeadline(inc.created_at, inc.priority),
+        type: "incident" as const,
+        room: emp?.room ?? null,
+        employeeName: emp?.full_name ?? undefined,
+        deviceInfo: devInfo,
+      };
+    });
+
   return (
     <div className="space-y-6">
       {/* ===== Header Banner ===== */}
@@ -602,8 +641,34 @@ export default function ITPortalClientView({
         </div>
       </div>
 
-      {/* ===== Ticket List & SLA Side-by-Side ===== */}
-      <div className="space-y-4">
+      {/* View Mode Tabs (List vs Calendar) */}
+      <div className="flex border-b border-gray-200 dark:border-slate-800 mb-2">
+        <button
+          onClick={() => setActiveViewTab("list")}
+          className={cn(
+            "px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2",
+            activeViewTab === "list"
+              ? "border-blue-500 text-blue-600 dark:text-blue-400 font-bold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          )}
+        >
+          📋 Список заявок
+        </button>
+        <button
+          onClick={() => setActiveViewTab("calendar")}
+          className={cn(
+            "px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2",
+            activeViewTab === "calendar"
+              ? "border-blue-500 text-blue-600 dark:text-blue-400 font-bold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          )}
+        >
+          📅 SLA Календарь
+        </button>
+      </div>
+
+      {activeViewTab === "list" ? (
+        <div className="space-y-4">
         {/* Filters Bar */}
         <div className="flex flex-wrap items-center gap-4">
           {/* Building Filter */}
@@ -903,6 +968,17 @@ export default function ITPortalClientView({
           </div>
         </div>
       </div>
+    ) : (
+        <div className="bg-white dark:bg-[#1e293b] p-6 rounded-2xl border border-gray-150 dark:border-slate-800 shadow-sm">
+          <TaskCalendar
+            tasks={calendarTasks}
+            onTaskClick={(id) => {
+              const matched = incidents.find((i) => i.id === id);
+              if (matched) setSelectedIncident(matched);
+            }}
+          />
+        </div>
+      )}
 
       <ITPortalIncidentDetailsDialog
         open={!!selectedIncident}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, MonitorIcon, LogOut } from "lucide-react";
+import { ClipboardList, MonitorIcon, LogOut, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/actions/auth";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
@@ -17,6 +17,7 @@ interface DevSidebarProps {
 
 const nav = [
   { href: "/dev-portal", label: "Портал Разработчика", icon: ClipboardList },
+  { href: "/support", label: "Поддержка", icon: HelpCircle },
 ];
 
 export default function DevSidebar({ openRequests, userName, employee }: DevSidebarProps) {
@@ -46,7 +47,7 @@ export default function DevSidebar({ openRequests, userName, employee }: DevSide
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
                 active
                   ? "bg-indigo-600 text-white"
                   : "text-gray-400 hover:bg-white/5 hover:text-white"

@@ -564,9 +564,9 @@ export default function PortalClientView({
 
                 {selectedRoomRequest.status === "resolved" && (
                   <div className="space-y-1 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
-                    <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Выполненная работа</h4>
+                    <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Выполненная работа</h4>
                     {selectedRoomRequest.resolution && (
-                      <p className="text-sm text-emerald-900 whitespace-pre-wrap mb-2">{selectedRoomRequest.resolution}</p>
+                      <p className="text-sm text-emerald-900 dark:text-emerald-100 whitespace-pre-wrap mb-2">{selectedRoomRequest.resolution}</p>
                     )}
                     {(() => {
                       const assignee = extractJoinObject(selectedRoomRequest.assignee) as { full_name: string | null } | null;
@@ -584,7 +584,7 @@ export default function PortalClientView({
 
                 {selectedRoomRequest.status === "resolved" && selectedRoomRequest.resolution_photo_urls && selectedRoomRequest.resolution_photo_urls.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                       Фотоотчет выполненной работы ({selectedRoomRequest.resolution_photo_urls.length})
                     </h4>
                     <div className="grid grid-cols-3 gap-2">

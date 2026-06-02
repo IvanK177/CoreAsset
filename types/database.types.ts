@@ -362,6 +362,7 @@ export type Database = {
           description: string
           id: string
           photo_urls: string[] | null
+          priority: string
           resolution: string | null
           resolution_photo_urls: string[] | null
           room: string
@@ -375,6 +376,7 @@ export type Database = {
           description: string
           id?: string
           photo_urls?: string[] | null
+          priority?: string
           resolution?: string | null
           resolution_photo_urls?: string[] | null
           room: string
@@ -388,6 +390,7 @@ export type Database = {
           description?: string
           id?: string
           photo_urls?: string[] | null
+          priority?: string
           resolution?: string | null
           resolution_photo_urls?: string[] | null
           room?: string

@@ -14,6 +14,7 @@ import {
   LogOut,
   Bell,
   ClipboardList,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/actions/auth";
@@ -37,6 +38,7 @@ const nav = [
   { href: "/licenses", label: "Лицензии", icon: Key },
   { href: "/finances", label: "Финансы", icon: BarChart2 },
   { href: "/incidents", label: "Инциденты", icon: AlertTriangle },
+  { href: "/support", label: "Поддержка", icon: HelpCircle },
 ];
 
 export default function Sidebar({ openIncidents, expiringLicenses, attentionCount, userName, employee, onClose }: SidebarProps) {
@@ -77,7 +79,7 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
               href={href}
               onClick={() => onClose?.()}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
                 active
                   ? "bg-[#2563eb] text-white"
                   : "text-gray-400 hover:bg-white/5 hover:text-white"

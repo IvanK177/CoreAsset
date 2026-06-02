@@ -73,6 +73,7 @@ export function NewRoomRequestDialog({
 }: NewRoomRequestDialogProps) {
   const [room, setRoom] = useState(defaultRoom);
   const [type, setType] = useState<"ремонт" | "оснащение">("ремонт");
+  const [priority, setPriority] = useState<"low" | "medium" | "high" | "critical">("medium");
   const [description, setDescription] = useState("");
   const [pending, setPending] = useState(false);
   const [, startTransition] = useTransition();
@@ -169,6 +170,7 @@ export function NewRoomRequestDialog({
     const formData = new FormData();
     formData.set("room", room.trim());
     formData.set("type", type);
+    formData.set("priority", priority);
     formData.set("description", description.trim());
     formData.set("author_id", employeeId);
     formData.set("photo_urls", JSON.stringify(photoUrls));
@@ -188,6 +190,7 @@ export function NewRoomRequestDialog({
     setRoom(defaultRoom);
     setDescription("");
     setType("ремонт");
+    setPriority("medium");
     photoPreviews.forEach((p) => URL.revokeObjectURL(p));
     setPhotos([]);
     setPhotoPreviews([]);
@@ -203,6 +206,7 @@ export function NewRoomRequestDialog({
       setRoom(defaultRoom);
       setDescription("");
       setType("ремонт");
+      setPriority("medium");
       photoPreviews.forEach((p) => URL.revokeObjectURL(p));
       setPhotos([]);
       setPhotoPreviews([]);
@@ -254,6 +258,31 @@ export function NewRoomRequestDialog({
               <SelectContent>
                 <SelectItem value="ремонт">Ремонт</SelectItem>
                 <SelectItem value="оснащение">Оснащение</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Priority */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Приоритет *</Label>
+            <Select
+              value={priority}
+              onValueChange={(v) => setPriority(v as "low" | "medium" | "high" | "critical")}
+              items={{
+                low: "Низкий",
+                medium: "Средний",
+                high: "Высокий",
+                critical: "Критический",
+              }}
+            >
+              <SelectTrigger className="h-11 rounded-lg border-gray-200 w-full bg-white">
+                <SelectValue placeholder="Выберите приоритет" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Низкий (SLA: 7 дней)</SelectItem>
+                <SelectItem value="medium">Средний (SLA: 4 дня)</SelectItem>
+                <SelectItem value="high">Высокий (SLA: 2 дня)</SelectItem>
+                <SelectItem value="critical">Критический (SLA: 1 день)</SelectItem>
               </SelectContent>
             </Select>
           </div>

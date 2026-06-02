@@ -146,19 +146,83 @@
   scrollbar-color: #cbd5e1 transparent;
 }
 
-/* Dark Mode Overrides for Tailwind Utility Classes */
+/* Theme Overrides for Translucent Utility Classes - Light Mode (Solid Colors) */
+.bg-gray-50\/30, .bg-gray-50\/50, .bg-gray-50\/70, .bg-slate-50\/50, .bg-slate-50\/70 {
+  background-color: #f1f5f9 !important; /* solid slate-100 */
+}
+.bg-blue-50\/10, .bg-blue-50\/20, .bg-blue-500\/10, .bg-blue-500\/20 {
+  background-color: #eff6ff !important; /* solid blue-50 */
+}
+.bg-emerald-50\/20, .bg-emerald-50\/40, .bg-emerald-50\/50, .bg-emerald-500\/10 {
+  background-color: #ecfdf5 !important; /* solid emerald-50 */
+}
+.bg-destructive\/10, .bg-destructive\/20 {
+  background-color: #fef2f2 !important; /* solid red-50 */
+}
+.border-blue-500\/30 {
+  border-color: #bfdbfe !important; /* solid blue-200 */
+}
+.border-emerald-100 {
+  border-color: #d1fae5 !important; /* solid emerald-100 */
+}
+.border-red-500\/30 {
+  border-color: #fecaca !important; /* solid red-200 */
+}
+.border-orange-100\/50, .border-orange-100\/80 {
+  border-color: #ffedd5 !important; /* solid orange-100 */
+}
+.border-red-100\/50, .border-red-100\/80 {
+  border-color: #fee2e2 !important; /* solid red-100 */
+}
+.border-gray-100\/50, .border-gray-100\/80 {
+  border-color: #e2e8f0 !important; /* solid gray-200 */
+}
+
+/* Dark Mode Overrides - Premium Solid Theme */
 .dark {
   /* Override bg-white and standard card layouts */
-  .bg-white, [role="dialog"] {
+  .bg-white, [role="dialog"], .bg-white\/80 {
     background-color: var(--card) !important;
   }
   
-  .bg-gray-50, .bg-gray-50\/50, .bg-gray-50\/70, .bg-slate-50, .bg-slate-50\/50 {
-    background-color: rgba(30, 41, 59, 0.45) !important;
+  .bg-gray-50, .bg-slate-50, .bg-gray-50\/30, .bg-gray-50\/50, .bg-gray-50\/70, .bg-slate-50\/50, .bg-slate-50\/70 {
+    background-color: #131f33 !important; /* Solid premium deep slate, distinct from background */
   }
   
-  .border-gray-100, .border-gray-200, .border-gray-150, .border-gray-100\/50, .border-gray-100\/80, .border-slate-100, .border-slate-200 {
+  .bg-blue-50\/10, .bg-blue-50\/20, .bg-blue-500\/10, .bg-blue-500\/20 {
+    background-color: #1e3a8a !important; /* Solid dark blue */
+  }
+  
+  .bg-emerald-50\/20, .bg-emerald-50\/40, .bg-emerald-50\/50, .bg-emerald-500\/10 {
+    background-color: #064e3b !important; /* Solid dark green */
+  }
+  
+  .bg-destructive\/10, .bg-destructive\/20 {
+    background-color: #7f1d1d !important; /* Solid dark red */
+  }
+  
+  .border-gray-100, .border-gray-200, .border-gray-150, .border-gray-100\/50, .border-gray-100\/80, .border-slate-100, .border-slate-200, .border-slate-100\/50 {
     border-color: var(--border) !important;
+  }
+  
+  .border-blue-500\/30 {
+    border-color: #2563eb !important; /* Solid blue border */
+  }
+  
+  .border-emerald-100 {
+    border-color: #059669 !important; /* Solid emerald border */
+  }
+  
+  .border-red-500\/30 {
+    border-color: #dc2626 !important; /* Solid red border */
+  }
+  
+  .border-orange-100\/50, .border-orange-100\/80 {
+    border-color: #ea580c !important; /* Solid orange border */
+  }
+  
+  .border-red-100\/50, .border-red-100\/80 {
+    border-color: #dc2626 !important; /* Solid red border */
   }
   
   .text-gray-900, .text-slate-900 {
@@ -187,7 +251,7 @@
 
   /* Form Elements (input, select, textarea) */
   input, select, textarea {
-    background-color: var(--card) !important;
+    background-color: #131f33 !important;
     border-color: var(--border) !important;
     color: var(--foreground) !important;
   }
@@ -199,4 +263,38 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: #64748b !important;
   }
+}
+
+/* ===== Performance & Animation Optimizations ===== */
+
+/* Enable smooth scroll behavior globally */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Hardware GPU Acceleration Class */
+.gpu-accelerated {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+/* Global Transition Timing Function Optimization */
+*, *::before, *::after {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Defer off-screen rendering for large lists and tables to prevent layout shift lag */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
+
+/* Fast image rendering prevent contrast/resize repaint lag */
+img {
+  image-rendering: -webkit-optimize-contrast;
 }

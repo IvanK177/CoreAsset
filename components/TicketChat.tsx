@@ -14,7 +14,7 @@ interface SenderInfo {
 export interface Message {
   id: string;
   incident_id: string;
-  sender_id: string;
+  sender_id: string | null;
   text: string;
   created_at: string;
   sender?: SenderInfo | SenderInfo[] | null;
@@ -36,7 +36,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
   const [senderDetails, setSenderDetails] = useState<Record<string, { name: string; avatarUrl: string | null }>>(() => {
     const initialCache: Record<string, { name: string; avatarUrl: string | null }> = {};
     initialMessages.forEach((msg) => {
-      if (msg.sender) {
+      if (msg.sender && msg.sender_id) {
         const extracted = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
         if (extracted?.full_name) {
           initialCache[msg.sender_id] = {
@@ -60,6 +60,18 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     scrollToBottom();
   }, [messages]);
 
+  // Refs to keep subscription callback updated without resetting the Supabase channel
+  const messagesRef = useRef<Message[]>(messages);
+  const senderDetailsRef = useRef<Record<string, { name: string; avatarUrl: string | null }>>(senderDetails);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    senderDetailsRef.current = senderDetails;
+  }, [senderDetails]);
+
   // Supabase Realtime Subscription
   useEffect(() => {
     const supabase = createClient();
@@ -78,11 +90,11 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           const newMsg = payload.new as Omit<Message, "sender">;
           
           // If message is already in state, ignore it
-          if (messages.some((m) => m.id === newMsg.id)) return;
+          if (messagesRef.current.some((m) => m.id === newMsg.id)) return;
 
           // Fetch sender details if not in state cache
-          let senderInfo = senderDetails[newMsg.sender_id];
-          if (!senderInfo) {
+          let senderInfo = newMsg.sender_id ? senderDetailsRef.current[newMsg.sender_id] : null;
+          if (!senderInfo && newMsg.sender_id) {
             const { data } = await supabase
               .from("employees")
               .select("full_name, avatar_url")
@@ -92,15 +104,17 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
               name: data?.full_name ?? "Пользователь",
               avatarUrl: data?.avatar_url ?? null,
             };
-            setSenderDetails((prev) => ({ ...prev, [newMsg.sender_id]: senderInfo }));
+            setSenderDetails((prev) => ({ ...prev, [newMsg.sender_id!]: senderInfo! }));
           }
 
           const completeMsg: Message = {
             ...newMsg,
-            sender: {
-              full_name: senderInfo.name,
-              avatar_url: senderInfo.avatarUrl,
-            },
+            sender: senderInfo
+              ? {
+                  full_name: senderInfo.name,
+                  avatar_url: senderInfo.avatarUrl,
+                }
+              : null,
           };
 
           setMessages((prev) => {
@@ -114,7 +128,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [incidentId, messages, senderDetails]);
+  }, [incidentId]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,8 +164,8 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         ) : (
           messages.map((msg) => {
             const isOwn = msg.sender_id === currentUserId;
-            const senderInfo = senderDetails[msg.sender_id];
-            const senderName = senderInfo?.name ?? "Отправитель";
+            const senderInfo = msg.sender_id ? senderDetails[msg.sender_id] : null;
+            const senderName = senderInfo?.name ?? (msg.sender_id ? "Сотрудник" : "Бывший сотрудник");
             
             return (
               <div key={msg.id} className={`flex items-start gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
@@ -177,13 +191,13 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
                     className={`px-3.5 py-2 rounded-2xl text-sm ${
                       isOwn
                         ? "bg-blue-500 text-white rounded-tr-none"
-                        : "bg-gray-100 text-gray-800 rounded-tl-none"
+                        : "bg-gray-100 dark:bg-slate-800 text-gray-800 rounded-tl-none"
                     }`}
                   >
                     <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
                     <span
                       className={`block text-[9px] mt-1 text-right ${
-                        isOwn ? "text-blue-100" : "text-gray-400"
+                        isOwn ? "text-blue-100" : "text-gray-400 dark:text-gray-500"
                       }`}
                     >
                       {formatDateTimeRu(msg.created_at)}

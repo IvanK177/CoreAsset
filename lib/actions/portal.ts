@@ -17,12 +17,14 @@ export async function createPortalIncident(formData: FormData) {
   const photoUrlsRaw = formData.get("photo_urls") as string | null;
   const photoUrls = photoUrlsRaw ? JSON.parse(photoUrlsRaw) : [];
 
+  const incidentType = ((formData.get("incident_type") as string) || "other") as "other" | "hardware" | "software" | "network";
+
   const insertData = {
     title: title || "",
     description: description || title,
     device_id: deviceId || null,
     employee_id: employeeId,
-    incident_type: "other" as const,
+    incident_type: incidentType,
     priority: priority as "low" | "medium" | "high" | "critical",
     status: "open" as const,
     photo_urls: photoUrls,
@@ -130,6 +132,7 @@ export async function createPortalRoomRequest(formData: FormData) {
   const type = formData.get("type") as string;
   const description = formData.get("description") as string;
   const authorId = formData.get("author_id") as string;
+  const priority = (formData.get("priority") as string) || "medium";
 
   const photoUrlsRaw = formData.get("photo_urls") as string | null;
   const photoUrls = photoUrlsRaw ? JSON.parse(photoUrlsRaw) : [];
@@ -141,6 +144,7 @@ export async function createPortalRoomRequest(formData: FormData) {
     author_id: authorId,
     status: "open" as const,
     photo_urls: photoUrls,
+    priority: priority as "low" | "medium" | "high" | "critical",
   };
 
   const { data, error } = await supabase

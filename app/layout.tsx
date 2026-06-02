@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import PWARegister from "@/components/shared/PWARegister";
-import SupportWidget from "@/components/SupportWidget";
 import ThemeInitializer from "@/components/shared/ThemeInitializer";
 import "./globals.css";
 
@@ -47,7 +46,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeInitializer />
         <PWARegister />
         {children}
-        <SupportWidget />
         <Toaster position="bottom-right" richColors />
       </body>
     </html>

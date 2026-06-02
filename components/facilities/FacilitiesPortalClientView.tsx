@@ -1,23 +1,17 @@
 "use client";
-
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { cn, formatDateTimeRu, BUILDING_ADDRESSES, extractJoinObject } from "@/lib/utils";
-import { AlertTriangle, Clock, CheckCircle2, User, Building, Wrench, Loader2, Camera, Image as ImageIcon, X } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, User, Building, Wrench, Loader2, Camera, Image as ImageIcon, X, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DecompressedText } from "@/components/shared/DecompressedText";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { takeRoomRequestToWork, resolveRoomRequest } from "@/lib/actions/facilities-portal";
 import { toast } from "sonner";
+import { TaskCalendar, CalendarTask } from "@/components/TaskCalendar";
+import { calculateDeadline } from "@/lib/utils/sla";
 
 interface RoomRequestRow {
   id: string;
@@ -31,6 +25,7 @@ interface RoomRequestRow {
   resolution?: string | null;
   resolution_photo_urls?: string[] | null;
   assigned_to?: string | null;
+  priority?: string;
   employee: {
     id: string;
     full_name: string;
@@ -67,16 +62,68 @@ const typeColors: Record<string, string> = {
   оснащение: "bg-indigo-50 text-indigo-700 border-indigo-200",
 };
 
-const tabs = [
-  { value: "active", label: "Активные" },
-  { value: "open", label: "Открытые" },
-  { value: "in_progress", label: "В работе" },
-  { value: "resolved", label: "Решённые" },
-];
+function getShortId(id: string) {
+  return `#R${id.substring(0, 4).toUpperCase()}`;
+}
+
+function getMonthlyStats(requestsList: RoomRequestRow[], building: string) {
+  const filtered = requestsList.filter(req => {
+    if (building === "all") return true;
+    return req.employee?.building === building;
+  });
+
+  const groups: Record<string, { monthKey: string; monthName: string; total: number; resolved: number; open: number; sortKey: string }> = {};
+
+  filtered.forEach(req => {
+    if (!req.created_at) return;
+    const date = new Date(req.created_at);
+    const year = date.getFullYear();
+    const month = date.getMonth(); // 0-11
+    const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+    
+    const monthNames = [
+      "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+      "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+    ];
+    const monthName = `${monthNames[month]} ${year}`;
+
+    if (!groups[monthKey]) {
+      groups[monthKey] = {
+        monthKey,
+        monthName,
+        total: 0,
+        resolved: 0,
+        open: 0,
+        sortKey: monthKey,
+      };
+    }
+
+    groups[monthKey].total += 1;
+    if (req.status === "resolved") {
+      groups[monthKey].resolved += 1;
+    } else {
+      groups[monthKey].open += 1;
+    }
+  });
+
+  return Object.values(groups).sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+}
 
 export default function FacilitiesPortalClientView({ requests }: FacilitiesPortalClientViewProps) {
-  const [activeTab, setActiveTab] = useState<string>("active");
-  const [buildingFilter, setBuildingFilter] = useState<string>("all");
+  const [activeViewTab, setActiveViewTab] = useState<"list" | "calendar">("list");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [buildingFilter, setBuildingFilter] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("facilities_building_filter") || "all";
+    }
+    return "all";
+  });
+
+  const handleBuildingChange = (val: string) => {
+    setBuildingFilter(val);
+    localStorage.setItem("facilities_building_filter", val);
+  };
+
   const [selectedRequest, setSelectedRequest] = useState<RoomRequestRow | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -205,31 +252,272 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
   };
 
   const filteredRequests = requests.filter((req) => {
-    const matchesStatus =
-      activeTab === "active" ? req.status !== "resolved" : req.status === activeTab;
-    const matchesBuilding = buildingFilter === "all" || req.employee?.building === buildingFilter;
-    return matchesStatus && matchesBuilding;
+    // 1. Status Filter
+    if (statusFilter !== "all") {
+      if (statusFilter === "active" && req.status === "resolved") return false;
+      if (statusFilter !== "active" && req.status !== statusFilter) return false;
+    }
+    // 2. Building Filter
+    if (buildingFilter !== "all" && req.employee?.building !== buildingFilter) return false;
+    return true;
   });
 
-  const getCounts = (tabValue: string) => {
-    const filteredByBuilding = requests.filter(
-      (req) => buildingFilter === "all" || req.employee?.building === buildingFilter
-    );
-    if (tabValue === "active") return filteredByBuilding.filter((r) => r.status !== "resolved").length;
-    if (tabValue === "open") return filteredByBuilding.filter((r) => r.status === "open").length;
-    if (tabValue === "in_progress") return filteredByBuilding.filter((r) => r.status === "in_progress").length;
-    if (tabValue === "resolved") return filteredByBuilding.filter((r) => r.status === "resolved").length;
-    return 0;
-  };
-
-  const getShortId = (id: string) => {
-    return `#R${id.substring(0, 4).toUpperCase()}`;
-  };
-
-  // Global counts for banner stats
   const totalOpen = requests.filter((r) => r.status === "open").length;
   const totalInProgress = requests.filter((r) => r.status === "in_progress").length;
   const totalResolved = requests.filter((r) => r.status === "resolved").length;
+
+  const stats = getMonthlyStats(requests, buildingFilter);
+
+  if (selectedRequest) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left: Quick navigation list */}
+          <div className="hidden lg:block w-full lg:w-1/3 space-y-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100/50 max-h-[600px] overflow-y-auto">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">Заявки в списке</h3>
+            {filteredRequests.map((req) => (
+              <button
+                key={req.id}
+                onClick={() => setSelectedRequest(req)}
+                className={cn(
+                  "w-full text-left p-3 rounded-xl border transition-all duration-150 flex flex-col gap-1 cursor-pointer bg-white",
+                  selectedRequest.id === req.id
+                    ? "border-emerald-400 bg-emerald-50/10 shadow-sm"
+                    : "border-gray-100 hover:border-gray-300"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs text-gray-400 font-mono">{getShortId(req.id)}</span>
+                  <Badge variant="outline" className={cn("text-[10px] font-semibold", typeColors[req.type])}>
+                    {typeLabels[req.type] || req.type}
+                  </Badge>
+                  <Badge variant="outline" className={cn("text-[10px] font-medium", statusColors[req.status])}>
+                    {statusLabels[req.status] || req.status}
+                  </Badge>
+                </div>
+                <p className="text-sm font-medium text-gray-900 truncate">Кабинет {req.room}</p>
+                <p className="text-xs text-gray-555 truncate">{req.employee?.full_name ?? "—"}</p>
+              </button>
+            ))}
+          </div>
+
+          {/* Right: Detail panel */}
+          <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">{getShortId(selectedRequest.id)}</span>
+                <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[selectedRequest.type])}>
+                  {typeLabels[selectedRequest.type] || selectedRequest.type}
+                </Badge>
+                <Badge variant="outline" className={cn("text-xs font-medium", statusColors[selectedRequest.status])}>
+                  {statusLabels[selectedRequest.status] || selectedRequest.status}
+                </Badge>
+              </div>
+              <button
+                onClick={() => setSelectedRequest(null)}
+                className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Заявка АХЧ: Кабинет {selectedRequest.room}</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Создана: {formatDateTimeRu(selectedRequest.created_at)}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Описание</h4>
+                <DecompressedText text={selectedRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Заявитель</h4>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-gray-800">{selectedRequest.employee?.full_name ?? "—"}</p>
+                    <p className="text-xs text-gray-550">{selectedRequest.employee?.position ?? "—"}</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Размещение</h4>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-gray-800">Кабинет {selectedRequest.room}</p>
+                    <p className="text-xs text-gray-500">{selectedRequest.employee?.building ?? "—"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Attached Photos */}
+              {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
+                <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100/50 space-y-2">
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    Фотографии ({selectedRequest.photo_urls.length})
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRequest.photo_urls.map((url, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setPreviewImageUrl(url)}
+                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
+                      >
+                        <img
+                          src={url}
+                          alt={`Вложение ${idx + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Resolution details */}
+              {selectedRequest.status === "resolved" && (
+                <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100 space-y-2">
+                  <h4 className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                    Выполнение заявки
+                  </h4>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    Заявка успешно выполнена.
+                  </p>
+                  {(() => {
+                    const resolver = extractJoinObject(selectedRequest.assignee) as { full_name: string | null } | null;
+                    if (resolver?.full_name) {
+                      return (
+                        <p className="text-xs text-gray-500">
+                          Исполнитель: <span className="font-semibold text-gray-700">{resolver.full_name}</span>
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {selectedRequest.resolution && (
+                    <div className="border-t border-emerald-100/50 pt-2 mt-2">
+                      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Решение</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {selectedRequest.resolution}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Resolution Photos */}
+              {selectedRequest.status === "resolved" && selectedRequest.resolution_photo_urls && selectedRequest.resolution_photo_urls.length > 0 && (
+                <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100 space-y-2">
+                  <h4 className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                    Фотоотчет выполненной работы ({selectedRequest.resolution_photo_urls.length})
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRequest.resolution_photo_urls.map((url, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setPreviewImageUrl(url)}
+                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-emerald-100 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
+                      >
+                        <img
+                          src={url}
+                          alt={`Решение ${idx + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedRequest(null)}
+                className="rounded-lg h-9 text-sm"
+              >
+                Закрыть
+              </Button>
+              {selectedRequest.status === "open" && (
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-9 text-sm cursor-pointer"
+                  onClick={() => {
+                    handleTakeToWork(selectedRequest.id);
+                    setSelectedRequest(null);
+                  }}
+                >
+                  Взять в работу
+                </Button>
+              )}
+              {selectedRequest.status === "in_progress" && (
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 text-sm cursor-pointer"
+                  onClick={() => {
+                    handleResolveClick(selectedRequest.id);
+                    setSelectedRequest(null);
+                  }}
+                >
+                  Решено
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Photo Preview Dialog */}
+        <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+          <DialogContent className="sm:max-w-3xl bg-transparent border-none shadow-none p-0 flex items-center justify-center">
+            {previewImageUrl && (
+              <div className="relative max-w-full max-h-[85vh] rounded-xl overflow-hidden bg-black/50 p-1 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => setPreviewImageUrl(null)}
+                  className="absolute top-4 right-4 bg-black/60 hover:bg-black/85 text-white rounded-full p-2 cursor-pointer transition-colors z-50 focus:outline-none"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <img
+                  src={previewImageUrl}
+                  alt="Просмотр изображения"
+                  className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  const unclosedRequests = requests.filter(
+    (req) => req.status !== "resolved"
+  );
+
+  const calendarTasks: CalendarTask[] = unclosedRequests
+    .filter((req) => {
+      if (buildingFilter !== "all") {
+        if (req.employee?.building !== buildingFilter) return false;
+      }
+      return true;
+    })
+    .map((req) => {
+      return {
+        id: req.id,
+        title: `${typeLabels[req.type.toLowerCase()] || req.type}: Каб. ${req.room}`,
+        description: req.description,
+        status: req.status,
+        priority: req.priority || "medium",
+        created_at: req.created_at,
+        deadline: calculateDeadline(req.created_at, req.priority || "medium"),
+        type: "room_request" as const,
+        room: req.room,
+        employeeName: req.employee?.full_name ?? undefined,
+      };
+    });
 
   return (
     <div className="space-y-6">
@@ -259,352 +547,313 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
         </div>
       </div>
 
-      {/* ===== Filters Bar ===== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        {/* Status Tabs */}
-        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 overflow-x-auto max-w-full">
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 whitespace-nowrap cursor-pointer",
-                activeTab === tab.value
-                  ? "bg-emerald-600 text-white"
-                  : "text-gray-600 hover:bg-gray-100"
-              )}
-            >
-              {tab.label} {getCounts(tab.value)}
-            </button>
-          ))}
-        </div>
-
-        {/* Building Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">Корпус:</span>
-          <Select value={buildingFilter} onValueChange={(val) => setBuildingFilter(val ?? "all")}>
-            <SelectTrigger className="w-[200px] h-9 bg-white text-xs">
-              <SelectValue placeholder="Все корпуса" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все корпуса</SelectItem>
-              {Object.keys(BUILDING_ADDRESSES).map((building) => (
-                <SelectItem key={building} value={building}>
-                  {building}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* ===== List of Requests ===== */}
-      <div className="max-h-[600px] overflow-y-auto pr-1 custom-scrollbar space-y-3">
-        {filteredRequests.length === 0 ? (
-          <div className="py-16 text-center text-gray-500 bg-white border border-gray-100 rounded-2xl shadow-sm">
-            <AlertTriangle className="w-10 h-10 mx-auto opacity-40 mb-3" />
-            <p className="text-sm">Нет доступных заявок</p>
-          </div>
-        ) : (
-          filteredRequests.map((req) => {
-            const isOpen = req.status === "open";
-            const isInProgress = req.status === "in_progress";
-            const isResolved = req.status === "resolved";
-            const isActionPending = pendingId === req.id;
-
-            return (
-              <div
-                key={req.id}
-                onClick={() => setSelectedRequest(req)}
-                className={cn(
-                  "rounded-2xl bg-white p-5 shadow-sm border transition-all duration-150 cursor-pointer hover:shadow-md hover:border-slate-300",
-                  isOpen ? "border-yellow-200" : isInProgress ? "border-blue-200" : "border-emerald-200"
-                )}
-              >
-                {/* Header row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    {/* Status Icon */}
-                    <div
-                      className={cn(
-                        "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
-                        isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
-                      )}
-                    >
-                      {isOpen ? (
-                        <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                      ) : isInProgress ? (
-                        <Clock className="w-4 h-4 text-blue-600" />
-                      ) : (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      )}
-                    </div>
-
-                    {/* Title & Metadata */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-gray-400">
-                          {getShortId(req.id)}
-                        </span>
-                        <span className="font-semibold text-sm text-gray-900 truncate">
-                          Кабинет {req.room}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3 text-xs text-gray-555 flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3 text-gray-400" />
-                          {req.employee?.full_name ?? "—"}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Building className="w-3 h-3 text-gray-400" />
-                          {req.employee?.building ?? "—"}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Wrench className="w-3 h-3 text-gray-400" />
-                          {typeLabels[req.type] || req.type}
-                        </span>
-                        <span>·</span>
-                        <span>{formatDateTimeRu(req.created_at)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badges */}
-                  <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap pl-12 sm:pl-0">
-                    <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[req.type])}>
-                      {typeLabels[req.type] || req.type}
-                    </Badge>
-                    <Badge variant="outline" className={cn("text-xs font-medium", statusColors[req.status])}>
-                      {statusLabels[req.status] || req.status}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Description */}
-                {req.description && (
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2 pl-12">
-                    <DecompressedText text={req.description} truncate={120} />
-                  </p>
-                )}
-
-                {/* Action buttons */}
-                <div className="flex items-center gap-2 pl-12">
-                  {isOpen && (
-                    <Button
-                      size="sm"
-                      className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                      disabled={isActionPending}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTakeToWork(req.id);
-                      }}
-                    >
-                      {isActionPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
-                      Взять в работу
-                    </Button>
-                  )}
-                  {isInProgress && (
-                    <Button
-                      size="sm"
-                      className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                      disabled={isActionPending}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleResolveClick(req.id);
-                      }}
-                    >
-                      {isActionPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                      Решено
-                    </Button>
-                  )}
-                  {isResolved && (
-                    <span className="text-xs text-emerald-600 flex items-center gap-1.5 font-medium flex-wrap">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Выполнено</span>
-                      {(() => {
-                        const resolver = extractJoinObject(req.assignee) as { full_name: string | null } | null;
-                        if (resolver?.full_name) {
-                          return (
-                            <>
-                              <span>·</span>
-                              <span>Исполнитель: {resolver.full_name}</span>
-                            </>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* ===== Details Dialog ===== */}
-      <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
-          {selectedRequest && (
-            <>
-              <DialogHeader className="space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-0.5 rounded">
-                    {getShortId(selectedRequest.id)}
-                  </span>
-                  <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[selectedRequest.type])}>
-                    {typeLabels[selectedRequest.type] || selectedRequest.type}
-                  </Badge>
-                  <Badge variant="outline" className={cn("text-xs font-medium", statusColors[selectedRequest.status])}>
-                    {statusLabels[selectedRequest.status] || selectedRequest.status}
-                  </Badge>
-                </div>
-                <DialogTitle className="text-lg font-bold text-gray-900">
-                  Заявка АХЧ: Кабинет {selectedRequest.room}
-                </DialogTitle>
-                <DialogDescription className="text-xs text-gray-400">
-                  Создана: {formatDateTimeRu(selectedRequest.created_at)}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="py-4 space-y-4">
-                {/* Description */}
-                <div className="space-y-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Описание проблемы</h4>
-                  <DecompressedText text={selectedRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
-                </div>
-
-                {/* Attached request photos */}
-                {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
-                  <div className="space-y-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Прикрепленные фотографии</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      {selectedRequest.photo_urls.map((url, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setPreviewImageUrl(url)}
-                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none"
-                        >
-                          <img
-                            src={url}
-                            alt={`Вложение ${idx + 1}`}
-                            className="object-cover w-full h-full"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Resolution note */}
-                {selectedRequest.status === "resolved" && (
-                  <div className="space-y-1 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
-                    <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Статус выполнения</h4>
-                    <p className="text-sm text-gray-800">
-                      Заявка успешно выполнена.
-                    </p>
-                    {(() => {
-                      const resolver = extractJoinObject(selectedRequest.assignee) as { full_name: string | null } | null;
-                      if (resolver?.full_name) {
-                        return (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Исполнитель: <span className="font-semibold text-gray-700">{resolver.full_name}</span>
-                          </p>
-                        );
-                      }
-                      return null;
-                    })()}
-                    {selectedRequest.resolution && (
-                      <div className="border-t border-emerald-100/50 pt-2 mt-2">
-                        <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">Решение</p>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                          {selectedRequest.resolution}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Resolution photos */}
-                {selectedRequest.status === "resolved" && selectedRequest.resolution_photo_urls && selectedRequest.resolution_photo_urls.length > 0 && (
-                  <div className="space-y-1 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
-                    <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-2">Фотоотчет выполненной работы</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      {selectedRequest.resolution_photo_urls.map((url, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setPreviewImageUrl(url)}
-                          className="relative aspect-video rounded-lg overflow-hidden border border-emerald-100 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none"
-                        >
-                          <img
-                            src={url}
-                            alt={`Решение ${idx + 1}`}
-                            className="object-cover w-full h-full"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Author info */}
-                <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
-                  <div>
-                    <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Автор</h5>
-                    <p className="font-medium text-gray-900">{selectedRequest.employee?.full_name ?? "—"}</p>
-                    <p className="text-xs text-gray-550">{selectedRequest.employee?.position ?? "—"}</p>
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Размещение</h5>
-                    <p className="font-medium text-gray-900">Кабинет {selectedRequest.room}</p>
-                    <p className="text-xs text-gray-500 truncate max-w-full" title={selectedRequest.employee?.building ?? ""}>
-                      {selectedRequest.employee?.building ?? "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2 justify-end pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedRequest(null)}
-                  className="rounded-lg h-9"
-                >
-                  Закрыть
-                </Button>
-                {selectedRequest.status === "open" && (
-                  <Button
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-9"
-                    onClick={() => {
-                      handleTakeToWork(selectedRequest.id);
-                      setSelectedRequest(null);
-                    }}
-                  >
-                    Взять в работу
-                  </Button>
-                )}
-                {selectedRequest.status === "in_progress" && (
-                  <Button
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9"
-                    onClick={() => {
-                      handleResolveClick(selectedRequest.id);
-                      setSelectedRequest(null);
-                    }}
-                  >
-                    Решено
-                  </Button>
-                )}
-              </div>
-            </>
+      {/* View Mode Tabs (List vs Calendar) */}
+      <div className="flex border-b border-gray-200 dark:border-slate-800 mb-2">
+        <button
+          onClick={() => setActiveViewTab("list")}
+          className={cn(
+            "px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2",
+            activeViewTab === "list"
+              ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
           )}
-        </DialogContent>
-      </Dialog>
+        >
+          📋 Список заявок
+        </button>
+        <button
+          onClick={() => setActiveViewTab("calendar")}
+          className={cn(
+            "px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2",
+            activeViewTab === "calendar"
+              ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          )}
+        >
+          📅 SLA Календарь
+        </button>
+      </div>
+
+      {activeViewTab === "list" ? (
+        <>
+          {/* ===== Filters Bar ===== */}
+          <div className="flex flex-wrap items-center gap-4">
+        {/* Building Filter */}
+        <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex-1 min-w-[200px]">
+          <Building className="w-4 h-4 text-gray-400 shrink-0" />
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Корпус:</span>
+          <select
+            value={buildingFilter}
+            onChange={(e) => handleBuildingChange(e.target.value)}
+            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-emerald-500 focus:outline-none w-full truncate cursor-pointer"
+          >
+            <option value="all">Все корпуса</option>
+            {Object.keys(BUILDING_ADDRESSES).map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex-1 min-w-[200px]">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Статус:</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-emerald-500 focus:outline-none w-full truncate cursor-pointer"
+          >
+            <option value="all">Все</option>
+            <option value="open">Новые</option>
+            <option value="in_progress">В работе</option>
+            <option value="resolved">Решённые</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ===== Ticket List & SLA statistics Side-by-Side ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Column 1: SLA Deadlines Card */}
+        <div className="lg:col-span-3 space-y-4 self-start order-2 lg:order-1">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div>
+              <h3 className="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">
+                <Clock className="w-4 h-4 text-emerald-600" />
+                Сроки решения АХЧ
+              </h3>
+              <p className="text-xs text-gray-555 mt-1 leading-relaxed">Регламент выполнения заявок АХЧ по типам</p>
+            </div>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-orange-50/70 border border-orange-100/50">
+                <span className="font-semibold text-orange-700">Ремонт</span>
+                <span className="font-bold text-orange-800">3–5 дней</span>
+              </div>
+              <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-100/50">
+                <span className="font-semibold text-indigo-700">Оснащение</span>
+                <span className="font-bold text-indigo-800">5–10 дней</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Column 2: Ticket listing */}
+        <div className="lg:col-span-6 order-1 lg:order-2">
+          {filteredRequests.length === 0 ? (
+            <div className="rounded-2xl bg-white p-12 shadow-sm border border-gray-100 text-center">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                Заявок не найдено
+              </h3>
+              <p className="text-sm text-gray-500">
+                Все заявки в данной категории обработаны. Отличная работа!
+              </p>
+            </div>
+          ) : (
+            <div className="max-h-[600px] overflow-y-auto pr-1 custom-scrollbar space-y-3">
+              {filteredRequests.map((req) => {
+                const isOpen = req.status === "open";
+                const isInProgress = req.status === "in_progress";
+                const isResolved = req.status === "resolved";
+                const isActionPending = pendingId === req.id;
+
+                return (
+                  <div
+                    key={req.id}
+                    onClick={() => setSelectedRequest(req)}
+                    className={cn(
+                      "rounded-2xl bg-white p-5 shadow-sm border transition-all duration-150 cursor-pointer hover:shadow-md hover:border-slate-300",
+                      isOpen ? "border-yellow-200" : isInProgress ? "border-blue-200" : "border-emerald-200"
+                    )}
+                  >
+                    {/* Header info */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        {/* Status Icon */}
+                        <div
+                          className={cn(
+                            "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
+                            isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
+                          )}
+                        >
+                          {isOpen ? (
+                            <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                          ) : isInProgress ? (
+                            <Clock className="w-4 h-4 text-blue-600" />
+                          ) : (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          )}
+                        </div>
+
+                        {/* Text labels */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className="text-xs font-mono text-gray-400">{getShortId(req.id)}</span>
+                            <span className="font-semibold text-sm text-gray-900 truncate">
+                              Кабинет {req.room}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-gray-555 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <User className="w-3 h-3 text-gray-400" />
+                              {req.employee?.full_name ?? "—"}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Building className="w-3 h-3 text-gray-400" />
+                              {req.employee?.building ?? "—"}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Wrench className="w-3 h-3 text-gray-400" />
+                              {typeLabels[req.type] || req.type}
+                            </span>
+                            <span>{formatDateTimeRu(req.created_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Badges */}
+                      <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap pl-12 sm:pl-0">
+                        <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[req.type])}>
+                          {typeLabels[req.type] || req.type}
+                        </Badge>
+                        <Badge variant="outline" className={cn("text-xs font-medium", statusColors[req.status])}>
+                          {statusLabels[req.status] || req.status}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Description preview */}
+                    {req.description && (
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2 pl-12">
+                        <DecompressedText text={req.description} truncate={150} />
+                      </p>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pl-12">
+                      {isOpen && (
+                        <Button
+                          size="sm"
+                          className="gap-2 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                          disabled={isActionPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTakeToWork(req.id);
+                          }}
+                        >
+                          {isActionPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
+                          Взять в работу
+                        </Button>
+                      )}
+                      {isInProgress && (
+                        <Button
+                          size="sm"
+                          className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                          disabled={isActionPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleResolveClick(req.id);
+                          }}
+                        >
+                          {isActionPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                          Решено
+                        </Button>
+                      )}
+                      {isResolved && (
+                        <span className="text-xs text-emerald-600 flex items-center gap-1.5 font-medium flex-wrap">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Выполнено</span>
+                          {(() => {
+                            const resolver = extractJoinObject(req.assignee) as { full_name: string | null } | null;
+                            if (resolver?.full_name) {
+                              return (
+                                <>
+                                  <span>·</span>
+                                  <span>Исполнитель: {resolver.full_name}</span>
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Column 3: Statistics Card */}
+        <div className="lg:col-span-3 space-y-4 self-start order-3 lg:order-3">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div>
+              <h3 className="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-600" />
+                Статистика по месяцам
+              </h3>
+              <p className="text-xs text-gray-555 mt-1 leading-relaxed">
+                Показатели по корпусу: <span className="font-semibold text-emerald-600">{buildingFilter === "all" ? "Все корпуса" : buildingFilter}</span>
+              </p>
+            </div>
+
+            {stats.length === 0 ? (
+              <p className="text-xs text-gray-500 text-center py-4">Нет данных</p>
+            ) : (
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                {stats.map((row) => {
+                  const resolutionRate = row.total > 0 ? Math.round((row.resolved / row.total) * 100) : 0;
+                  return (
+                    <div key={row.monthKey} className="p-4 rounded-xl border border-gray-150 bg-gray-50/50 dark:bg-slate-800/40 space-y-3">
+                      <div className="flex justify-between items-center border-b border-gray-200/50 pb-1.5">
+                        <span className="font-bold text-sm text-gray-800">{row.monthName}</span>
+                        <span className="text-xs font-bold text-gray-900 bg-gray-200 dark:bg-slate-700 px-2.5 py-0.5 rounded-full">
+                          {row.total} всего
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span>Выполнено: {row.resolved}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span>Активно: {row.open}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                          <span>Выполнение задач</span>
+                          <span>{resolutionRate}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-emerald-500 h-full rounded-full transition-all duration-300" 
+                            style={{ width: `${resolutionRate}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+        </>
+      ) : (
+        <div className="bg-white dark:bg-[#1e293b] p-6 rounded-2xl border border-gray-150 dark:border-slate-800 shadow-sm">
+          <TaskCalendar
+            tasks={calendarTasks}
+            onTaskClick={(id) => {
+              const matched = requests.find((r) => r.id === id);
+              if (matched) setSelectedRequest(matched);
+            }}
+          />
+        </div>
+      )}
+
       {/* Resolve Request Dialog */}
       <Dialog open={resolveDialogOpen} onOpenChange={setResolveDialogOpen}>
         <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">

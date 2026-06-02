@@ -128,9 +128,9 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
       )}
 
       {isResolved && inc.resolution && (
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5">
-          <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wide mb-3">Что сделано (Решение)</p>
-          <p className="text-sm whitespace-pre-wrap text-emerald-900">{inc.resolution}</p>
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-5 dark:border-emerald-500/30">
+          <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-3">Что сделано (Решение)</p>
+          <p className="text-sm whitespace-pre-wrap text-emerald-900 dark:text-emerald-100">{inc.resolution}</p>
         </div>
       )}
 

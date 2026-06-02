@@ -181,8 +181,8 @@ export function IncidentDetailsDialog({
               <FileText className="w-3.5 h-3.5" />
               Описание инцидента
             </span>
-            <div className="p-4 rounded-xl bg-white border border-gray-100 max-h-[220px] overflow-y-auto shadow-inner-sm">
-              <DecompressedText text={incident.description} className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed" />
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 max-h-[220px] overflow-y-auto shadow-inner-sm">
+              <DecompressedText text={incident.description} className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed" />
             </div>
           </div>
 

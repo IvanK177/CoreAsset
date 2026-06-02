@@ -1,18 +1,17 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import FacilitiesLayoutClient from "@/components/facilities/FacilitiesLayoutClient";
+import FacilitiesPortalHeader from "@/components/facilities/FacilitiesPortalHeader";
 import { RealtimeNotifications } from "@/components/shared/RealtimeNotifications";
 
 export default async function FacilitiesPortalLayout({ children }: { children: React.ReactNode }) {
   const authClient = await createClient();
   const dataClient = createServiceClient();
 
-  const [requestsRes, userRes] = await Promise.all([
+  const [, userRes] = await Promise.all([
     dataClient.from("room_requests").select("id, status").neq("status", "resolved"),
     authClient.auth.getUser(),
   ]);
 
-  const openRequestsCount = (requestsRes.data ?? []).length;
   const user = userRes.data.user;
 
   const cookieStore = await cookies();
@@ -23,7 +22,7 @@ export default async function FacilitiesPortalLayout({ children }: { children: R
   if (user?.id) {
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, email")
+      .select("id, full_name, position, email, phone, telegram, room, building, avatar_url")
       .eq("id", user.id)
       .single();
     employeeData = data;
@@ -32,7 +31,7 @@ export default async function FacilitiesPortalLayout({ children }: { children: R
   if (!employeeData && demoEmployeeId) {
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, email")
+      .select("id, full_name, position, email, phone, telegram, room, building, avatar_url")
       .eq("id", demoEmployeeId)
       .single();
     employeeData = data;
@@ -41,7 +40,7 @@ export default async function FacilitiesPortalLayout({ children }: { children: R
   if (!employeeData) {
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, email")
+      .select("id, full_name, position, email, phone, telegram, room, building, avatar_url")
       .eq("role", "facilities")
       .eq("is_active", true)
       .limit(1)
@@ -49,15 +48,19 @@ export default async function FacilitiesPortalLayout({ children }: { children: R
     employeeData = data;
   }
 
-  const userName = employeeData?.full_name || user?.email || "Сотрудник АХЧ";
-
   return (
-    <FacilitiesLayoutClient
-      openRequests={openRequestsCount}
-      userName={userName}
-    >
+    <div className="min-h-screen bg-background text-foreground">
+      <FacilitiesPortalHeader
+        facilitiesName={employeeData?.full_name ?? "Сотрудник АХЧ"}
+        facilitiesPosition={employeeData?.position ?? "Специалист АХЧ"}
+        employee={employeeData}
+      />
       <RealtimeNotifications role="facilities" />
-      {children}
-    </FacilitiesLayoutClient>
+      <main className="pt-16">
+        <div className="max-w-7xl mx-auto p-6">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }

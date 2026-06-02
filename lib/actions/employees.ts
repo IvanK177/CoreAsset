@@ -72,6 +72,23 @@ export async function updateEmployee(id: string, formData: FormData) {
   const parsed = employeeUpdateSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
+  // Fetch current employee email to avoid redundant Auth API calls
+  const { data: currentEmp } = await supabase
+    .from("employees")
+    .select("email")
+    .eq("id", id)
+    .single();
+
+  if (parsed.data.email && currentEmp && currentEmp.email !== parsed.data.email.trim()) {
+    const { error: authError } = await supabase.auth.admin.updateUserById(id, {
+      email: parsed.data.email.trim(),
+    });
+    if (authError) {
+      console.error("[updateEmployee] Auth update error:", authError.message);
+      return { error: "Ошибка при обновлении email в системе аутентификации: " + authError.message };
+    }
+  }
+
   const { error } = await supabase
     .from("employees")
     .update({ ...parsed.data, updated_at: new Date().toISOString() })

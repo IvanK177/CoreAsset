@@ -74,6 +74,51 @@ const deviceTypeRussianLabels: Record<string, string> = {
   other: "Устройство",
 };
 
+const TICKET_TEMPLATES = [
+  {
+    title: "🌐 Интернет",
+    type: "network",
+    priority: "high" as const,
+    ticketTitle: "Не работает интернет",
+    description: "Пропал доступ к интернету. Веб-страницы не загружаются, подключение по кабелю/Wi-Fi отсутствует.",
+  },
+  {
+    title: "🖨️ Принтер",
+    type: "hardware",
+    priority: "medium" as const,
+    ticketTitle: "Проблема с принтером",
+    description: "Принтер не реагирует на отправку документов на печать или зажевал бумагу.",
+  },
+  {
+    title: "🖥️ Экран",
+    type: "hardware",
+    priority: "critical" as const,
+    ticketTitle: "Монитор не включается",
+    description: "После включения компьютера монитор остается черным, индикатор питания мигает.",
+  },
+  {
+    title: "📧 Почта",
+    type: "software",
+    priority: "medium" as const,
+    ticketTitle: "Ошибка входа в почту",
+    description: "Не удается войти в корпоративную почту, выдает ошибку авторизации.",
+  },
+  {
+    title: "🖱️ Мышь/Клавиатура",
+    type: "hardware",
+    priority: "low" as const,
+    ticketTitle: "Не работает мышь или клавиатура",
+    description: "Периферийные устройства не реагируют на нажатия или зависают.",
+  },
+  {
+    title: "🔌 Зависает ПК",
+    type: "hardware",
+    priority: "medium" as const,
+    ticketTitle: "Компьютер сильно тормозит",
+    description: "Операционная система сильно зависает или медленно работает. Нужна диагностика.",
+  },
+];
+
 
 
 export function NewTicketDialog({
@@ -86,6 +131,7 @@ export function NewTicketDialog({
   const [description, setDescription] = useState("");
   const [deviceId, setDeviceId] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>("medium");
+  const [incidentType, setIncidentType] = useState("other");
   const [pending, setPending] = useState(false);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -174,6 +220,7 @@ export function NewTicketDialog({
     formData.set("device_id", deviceId);
     formData.set("employee_id", employeeId);
     formData.set("priority", priority);
+    formData.set("incident_type", incidentType);
     formData.set("photo_urls", JSON.stringify(photoUrls));
 
     const result = await createPortalIncident(formData);
@@ -199,6 +246,7 @@ export function NewTicketDialog({
     setDescription("");
     setDeviceId("");
     setPriority("medium");
+    setIncidentType("other");
     photoPreviews.forEach((p) => URL.revokeObjectURL(p));
     setPhotos([]);
     setPhotoPreviews([]);
@@ -213,6 +261,7 @@ export function NewTicketDialog({
       setDescription("");
       setDeviceId("");
       setPriority("medium");
+      setIncidentType("other");
       photoPreviews.forEach((p) => URL.revokeObjectURL(p));
       setPhotos([]);
       setPhotoPreviews([]);
@@ -256,6 +305,30 @@ export function NewTicketDialog({
               onChange={(e) => setTitle(e.target.value)}
               className="h-11 rounded-lg border-gray-200"
             />
+          </div>
+
+          {/* Templates */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Шаблоны заявок (нажмите для автозаполнения)
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {TICKET_TEMPLATES.map((tmpl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setTitle(tmpl.ticketTitle);
+                    setDescription(tmpl.description);
+                    setPriority(tmpl.priority);
+                    setIncidentType(tmpl.type);
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full cursor-pointer transition-colors"
+                >
+                  {tmpl.title}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Description */}
