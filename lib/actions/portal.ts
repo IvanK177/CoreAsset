@@ -172,6 +172,7 @@ export async function updateEmployeeProfile(employeeId: string, formData: FormDa
   const telegram = formData.get("telegram") as string | null;
   const room = formData.get("room") as string | null;
   const building = formData.get("building") as string | null;
+  const avatarUrl = formData.get("avatar_url") as string | null;
 
   if (!fullName || !fullName.trim()) {
     return { error: "ФИО обязательно для заполнения" };
@@ -212,6 +213,7 @@ export async function updateEmployeeProfile(employeeId: string, formData: FormDa
       telegram: telegram ? telegram.trim() : null,
       room: room ? room.trim() : null,
       building: building || null,
+      avatar_url: avatarUrl || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", employeeId);
@@ -226,5 +228,6 @@ export async function updateEmployeeProfile(employeeId: string, formData: FormDa
   revalidatePath("/employees");
   revalidatePath(`/employees/${employeeId}`);
   revalidatePath("/dashboard");
+  revalidatePath("/dev-portal");
   return { success: true };
 }

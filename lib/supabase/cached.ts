@@ -133,7 +133,7 @@ export const getCachedRoomRequests = unstable_cache(
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("room_requests")
-      .select("id, room, type, description, status, author_id, created_at, photo_urls, resolution, resolution_photo_urls, employees!room_requests_author_id_fkey(id, full_name, position, room, building)")
+      .select("id, room, type, description, status, author_id, created_at, photo_urls, resolution, resolution_photo_urls, employees!room_requests_author_id_fkey(id, full_name, position, room, building), assignee:employees!room_requests_assigned_to_fkey(id, full_name)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];

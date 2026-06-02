@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { compressText, decompressText } from "@/lib/compression";
 
 /**
@@ -9,6 +9,8 @@ import { compressText, decompressText } from "@/lib/compression";
   */
 export async function takeRoomRequestToWork(id: string) {
   const supabase = createServiceClient();
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
 
   const { data: current } = await supabase
     .from("room_requests")
@@ -23,7 +25,11 @@ export async function takeRoomRequestToWork(id: string) {
 
   const { error } = await supabase
     .from("room_requests")
-    .update({ status: "in_progress", description })
+    .update({ 
+      status: "in_progress", 
+      description,
+      assigned_to: user?.id || null
+    })
     .eq("id", id);
 
   if (error) {
@@ -40,6 +46,8 @@ export async function takeRoomRequestToWork(id: string) {
 
 export async function resolveRoomRequest(id: string, resolution: string = "", resolutionPhotoUrls: string[] = []) {
   const supabase = createServiceClient();
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
 
   const { data: current } = await supabase
     .from("room_requests")
@@ -58,6 +66,7 @@ export async function resolveRoomRequest(id: string, resolution: string = "", re
       description: compressedDescription,
       resolution: resolution.trim() || null,
       resolution_photo_urls: resolutionPhotoUrls,
+      assigned_to: user?.id || null
     })
     .eq("id", id);
 

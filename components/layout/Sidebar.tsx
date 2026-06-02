@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -16,12 +17,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/actions/auth";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { ProfileDialog, EmployeeProfileData } from "@/components/portal/ProfileDialog";
 
 interface SidebarProps {
   openIncidents: number;
   expiringLicenses: number;
   attentionCount: number;
   userName?: string;
+  employee?: EmployeeProfileData | null;
   onClose?: () => void;
 }
 
@@ -35,7 +39,8 @@ const nav = [
   { href: "/incidents", label: "Инциденты", icon: AlertTriangle },
 ];
 
-export default function Sidebar({ openIncidents, expiringLicenses, attentionCount, userName, onClose }: SidebarProps) {
+export default function Sidebar({ openIncidents, expiringLicenses, attentionCount, userName, employee, onClose }: SidebarProps) {
+  const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
 
   const getBadge = (href: string) => {
@@ -107,26 +112,50 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
       )}
 
       {/* User Block */}
-      <div className="px-3 py-3 border-t border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#2563eb] text-white text-sm font-bold shrink-0">
-            {userName ? userName.charAt(0).toUpperCase() : "А"}
-          </div>
+      <div className="px-4 py-3.5 border-t border-white/10 bg-white/5">
+        <div 
+          onClick={() => employee && setProfileOpen(true)}
+          className={cn(
+            "flex items-start gap-3 p-1 -mx-1 rounded-md transition-colors",
+            employee && "cursor-pointer hover:bg-white/10"
+          )}
+          title={employee ? "Настройки профиля" : undefined}
+        >
+          {employee?.avatar_url ? (
+            <img
+              src={employee.avatar_url}
+              alt={userName}
+              className="w-9 h-9 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#2563eb] text-white text-sm font-bold shrink-0">
+              {userName ? userName.charAt(0).toUpperCase() : "А"}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate" title={userName}>
+            <p className="text-xs text-gray-400 leading-none mb-1">Администратор</p>
+            <p className="text-sm font-medium text-white break-words leading-tight" title={userName}>
               {userName ?? "Администратор"}
             </p>
-            <p className="text-xs text-gray-400">Администратор</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <form action={signOut} className="inline">
-              <button type="submit" className="p-1.5 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
           </div>
         </div>
+        <div className="flex items-center justify-end gap-2 mt-3 pt-2.5 border-t border-white/5">
+          <ThemeToggle className="text-gray-400 hover:text-white hover:bg-white/10 h-8 w-8 rounded-lg" />
+          <form action={signOut} className="inline flex items-center">
+            <button type="submit" className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer" title="Выйти">
+              <LogOut className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
       </div>
+
+      {employee && (
+        <ProfileDialog
+          open={profileOpen}
+          onOpenChange={setProfileOpen}
+          employee={employee}
+        />
+      )}
 
     </aside>
   );

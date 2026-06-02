@@ -41,7 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (user?.id) {
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, email")
+      .select("id, full_name, position, email, phone, telegram, room, building, avatar_url")
       .eq("id", user.id)
       .single();
     employeeData = data;
@@ -50,7 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!employeeData && demoEmployeeId) {
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, email")
+      .select("id, full_name, position, email, phone, telegram, room, building, avatar_url")
       .eq("id", demoEmployeeId)
       .single();
     employeeData = data;
@@ -60,7 +60,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     // Fallback: try to find any admin in the database
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, email")
+      .select("id, full_name, position, email, phone, telegram, room, building, avatar_url")
       .eq("role", "admin")
       .limit(1)
       .single();
@@ -75,6 +75,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       expiringLicenses={expiringLicenses}
       attentionCount={attentionCount}
       userName={userName}
+      employee={employeeData}
     >
       <RealtimeNotifications role="admin" />
       {children}

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import PWARegister from "@/components/shared/PWARegister";
 import SupportWidget from "@/components/SupportWidget";
+import ThemeInitializer from "@/components/shared/ThemeInitializer";
 import "./globals.css";
 
 const inter = Inter({
@@ -11,11 +12,14 @@ const inter = Inter({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#1e3a5f",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-};
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#1e3a5f" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" }
+  ]
+} as any;
 
 export const metadata: Metadata = {
   title: "CoreAsset — Управление IT-активами",
@@ -40,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru" className={inter.variable}>
       <body className="antialiased">
+        <ThemeInitializer />
         <PWARegister />
         {children}
         <SupportWidget />

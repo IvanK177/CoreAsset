@@ -148,6 +148,7 @@ export type Database = {
       }
       employees: {
         Row: {
+          avatar_url: string | null
           building: string | null
           created_at: string | null
           email: string
@@ -162,6 +163,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           building?: string | null
           created_at?: string | null
           email: string
@@ -176,6 +178,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           building?: string | null
           created_at?: string | null
           email?: string
@@ -190,6 +193,45 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      incident_messages: {
+        Row: {
+          created_at: string
+          id: string
+          incident_id: string
+          sender_id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          incident_id: string
+          sender_id: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          incident_id?: string
+          sender_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_messages_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       incidents: {
         Row: {
@@ -314,6 +356,7 @@ export type Database = {
       }
       room_requests: {
         Row: {
+          assigned_to: string | null
           author_id: string
           created_at: string
           description: string
@@ -326,6 +369,7 @@ export type Database = {
           type: string
         }
         Insert: {
+          assigned_to?: string | null
           author_id: string
           created_at?: string
           description: string
@@ -338,6 +382,7 @@ export type Database = {
           type: string
         }
         Update: {
+          assigned_to?: string | null
           author_id?: string
           created_at?: string
           description?: string
@@ -351,6 +396,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "room_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "room_requests_author_id_fkey"
             columns: ["author_id"]
             isOneToOne: false
@@ -359,43 +411,36 @@ export type Database = {
           },
         ]
       }
-      incident_messages: {
+      support_requests: {
         Row: {
+          author_id: string
           created_at: string
           id: string
-          incident_id: string
-          sender_id: string
-          text: string
+          message: string
+          status: string
         }
         Insert: {
+          author_id: string
           created_at?: string
           id?: string
-          incident_id: string
-          sender_id: string
-          text: string
+          message: string
+          status?: string
         }
         Update: {
+          author_id?: string
           created_at?: string
           id?: string
-          incident_id?: string
-          sender_id?: string
-          text?: string
+          message?: string
+          status?: string
         }
         Relationships: [
           {
-            foreignKeyName: "incident_messages_incident_id_fkey"
-            columns: ["incident_id"]
-            isOneToOne: false
-            referencedRelation: "incidents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incident_messages_sender_id_fkey"
-            columns: ["sender_id"]
+            foreignKeyName: "support_requests_author_id_fkey"
+            columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
     }
@@ -417,7 +462,12 @@ export type Database = {
       incident_status: "open" | "in_progress" | "resolved" | "cancelled"
       incident_type: "hardware" | "software" | "network" | "other"
       license_type: "perpetual" | "subscription"
-      user_role: "admin" | "employee" | "it_specialist" | "facilities"
+      user_role:
+        | "admin"
+        | "employee"
+        | "it_specialist"
+        | "facilities"
+        | "developer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -551,7 +601,13 @@ export const Constants = {
       incident_status: ["open", "in_progress", "resolved", "cancelled"],
       incident_type: ["hardware", "software", "network", "other"],
       license_type: ["perpetual", "subscription"],
-      user_role: ["admin", "employee", "it_specialist", "facilities"],
+      user_role: [
+        "admin",
+        "employee",
+        "it_specialist",
+        "facilities",
+        "developer",
+      ],
     },
   },
 } as const

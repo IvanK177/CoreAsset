@@ -32,6 +32,7 @@ async function redirectAfterAuth(userId: string): Promise<never> {
   if (employee.role === "admin") redirect("/dashboard");
   if (employee.role === "it_specialist") redirect("/it-portal");
   if (employee.role === "facilities") redirect("/facilities-portal");
+  if (employee.role === "developer") redirect("/dev-portal");
   redirect("/portal");
 }
 
@@ -83,109 +84,148 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   return { success: "Регистрация завершена. Проверьте email для подтверждения." };
 }
 
-/** Demo sign-in: sets cookies for demo mode and redirects based on role */
-export async function demoSignIn(role: "admin" | "employee" | "it_specialist" | "facilities") {
+async function ensureAuthUserAndSignIn(
+  role: "admin" | "employee" | "it_specialist" | "facilities" | "developer",
+  defaultId: string,
+  defaultEmail: string,
+  defaultName: string
+): Promise<string> {
+  const serviceClient = createServiceClient();
   const cookieStore = await cookies();
 
-  if (role === "admin") {
-    // Try real Supabase auth for admin demo
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: "admin@corp.ru",
-      password: "admin123",
-    });
+  // 1. Try to find existing employee of this role
+  const { data: existingEmp } = await serviceClient
+    .from("employees")
+    .select("id, email, full_name")
+    .eq("role", role)
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
 
-    if (!error && data.user?.id) {
-      // Real auth succeeded — redirect based on profile/role
-      cookieStore.delete("demo_role");
-      cookieStore.delete("demo_employee_id");
-      redirectAfterAuth(data.user.id);
+  let empId = defaultId;
+  let empEmail = defaultEmail;
+  let empName = defaultName;
+
+  if (existingEmp) {
+    empId = existingEmp.id;
+    empEmail = existingEmp.email;
+    empName = existingEmp.full_name;
+  } else {
+    // If not found in database, insert dynamic employee profile
+    const { error: insertErr } = await serviceClient.from("employees").insert({
+      id: empId,
+      email: empEmail,
+      full_name: empName,
+      role: role,
+      is_active: true,
+      position: role === "admin" ? "Администратор" : role === "it_specialist" ? "Системный администратор" : role === "facilities" ? "Специалист АХЧ" : role === "developer" ? "Разработчик" : "Бухгалтер",
+    });
+    if (insertErr) {
+      console.error("[ensureAuthUserAndSignIn] Error inserting employee:", insertErr.message);
     }
+  }
 
-    // Real auth failed — use demo cookie mode
-    cookieStore.set("demo_role", "admin", {
-      path: "/",
-      maxAge: 60 * 60 * 24, // 24 hours
-      httpOnly: true,
-      sameSite: "lax",
+  // 2. Ensure the user exists in auth.users with the exact same ID
+  const { error: createError } = await serviceClient.auth.admin.createUser({
+    id: empId,
+    email: empEmail,
+    password: "demo123password",
+    email_confirm: true,
+    app_metadata: { role: role },
+    user_metadata: { role: role },
+  });
+
+  if (createError) {
+    // If user already exists, update their password & metadata
+    const { error: updateError } = await serviceClient.auth.admin.updateUserById(empId, {
+      password: "demo123password",
+      app_metadata: { role: role },
+      user_metadata: { role: role },
     });
-    cookieStore.delete("demo_employee_id");
+    if (updateError) {
+      console.error("[ensureAuthUserAndSignIn] Error updating auth user:", updateError.message);
+    }
+  }
+
+  // 3. Log the user in on the client side to write auth cookies
+  const authClient = await createClient();
+  const { error: signInError } = await authClient.auth.signInWithPassword({
+    email: empEmail,
+    password: "demo123password",
+  });
+
+  if (signInError) {
+    console.error("[ensureAuthUserAndSignIn] Sign in error:", signInError.message);
+  }
+
+  // 4. Set demo cookies for backward compatibility
+  cookieStore.set("demo_role", role, {
+    path: "/",
+    maxAge: 60 * 60 * 24,
+    httpOnly: true,
+    sameSite: "lax",
+  });
+  cookieStore.set("demo_employee_id", empId, {
+    path: "/",
+    maxAge: 60 * 60 * 24,
+    httpOnly: true,
+    sameSite: "lax",
+  });
+
+  return empId;
+}
+
+/** Demo sign-in: sets cookies for demo mode and redirects based on role */
+export async function demoSignIn(role: "admin" | "employee" | "it_specialist" | "facilities" | "developer") {
+  if (role === "admin") {
+    await ensureAuthUserAndSignIn(
+      "admin",
+      "a0000000-0000-0000-0000-000000000001",
+      "admin@corp.ru",
+      "Администратор Демо"
+    );
     redirect("/dashboard");
   }
 
-  // IT specialist demo — cookie-based demo mode
   if (role === "it_specialist") {
-    cookieStore.set("demo_role", "it_specialist", {
-      path: "/",
-      maxAge: 60 * 60 * 24,
-      httpOnly: true,
-      sameSite: "lax",
-    });
-    // Try to find an IT specialist employee in the database
-    const supabase = createServiceClient();
-    const { data: specialist } = await supabase
-      .from("employees")
-      .select("id")
-      .eq("role", "it_specialist")
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-
-    if (specialist) {
-      cookieStore.set("demo_employee_id", specialist.id, {
-        path: "/",
-        maxAge: 60 * 60 * 24,
-        httpOnly: true,
-        sameSite: "lax",
-      });
-    }
+    await ensureAuthUserAndSignIn(
+      "it_specialist",
+      "e0000001-0000-0000-0000-000000000001",
+      "ivanov@coreasset.ru",
+      "Иванов Иван Петрович"
+    );
     redirect("/it-portal");
   }
 
-  // Facilities demo - cookie-based demo mode
   if (role === "facilities") {
-    cookieStore.set("demo_role", "facilities", {
-      path: "/",
-      maxAge: 60 * 60 * 24,
-      httpOnly: true,
-      sameSite: "lax",
-    });
-    // Try to find a facilities employee in the database
-    const supabase = createServiceClient();
-    const { data: facilitiesEmp } = await supabase
-      .from("employees")
-      .select("id")
-      .eq("role", "facilities")
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-
-    if (facilitiesEmp) {
-      cookieStore.set("demo_employee_id", facilitiesEmp.id, {
-        path: "/",
-        maxAge: 60 * 60 * 24,
-        httpOnly: true,
-        sameSite: "lax",
-      });
-    }
+    await ensureAuthUserAndSignIn(
+      "facilities",
+      "f0000000-0000-0000-0000-000000000001",
+      "facilities@corp.ru",
+      "АХЧ Специалист Демо"
+    );
     redirect("/facilities-portal");
   }
 
-  // Employee demo — always use cookie-based demo mode
-  cookieStore.set("demo_role", "employee", {
-    path: "/",
-    maxAge: 60 * 60 * 24,
-    httpOnly: true,
-    sameSite: "lax",
-  });
-  // Hardcoded demo employee ID (Иванов Иван Петрович from seed data)
-  cookieStore.set("demo_employee_id", "e0000001-0000-0000-0000-000000000001", {
-    path: "/",
-    maxAge: 60 * 60 * 24,
-    httpOnly: true,
-    sameSite: "lax",
-  });
-  redirect("/portal");
+  if (role === "employee") {
+    await ensureAuthUserAndSignIn(
+      "employee",
+      "e0000001-0000-0000-0000-000000000002",
+      "petrova@coreasset.ru",
+      "Петрова Мария Сергеевна"
+    );
+    redirect("/portal");
+  }
+
+  if (role === "developer") {
+    await ensureAuthUserAndSignIn(
+      "developer",
+      "d0000000-0000-0000-0000-000000000001",
+      "developer@corp.ru",
+      "Разработчик Демо"
+    );
+    redirect("/dev-portal");
+  }
 }
 
 /** Reset employee's password by generating a random temporary password using Supabase auth admin API */

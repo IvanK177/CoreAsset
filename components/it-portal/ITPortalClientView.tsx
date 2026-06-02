@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Camera, Image as ImageIcon, BarChart3 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Camera, Image as ImageIcon, BarChart3, MessageSquare } from "lucide-react";
 import { cn, extractJoinObject, BUILDING_ADDRESSES, formatDateTimeRu } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -492,7 +492,17 @@ export default function ITPortalClientView({
               )}
               {/* Incident Chat */}
               <div className="pt-2">
-                <TicketChat key={selectedIncident.id} incidentId={selectedIncident.id} currentUserId={specialistId} initialMessages={initialMessagesMap[selectedIncident.id] ?? []} />
+                {selectedIncident.assigned_to === specialistId ? (
+                  <TicketChat key={selectedIncident.id} incidentId={selectedIncident.id} currentUserId={specialistId} initialMessages={initialMessagesMap[selectedIncident.id] ?? []} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 border border-dashed border-gray-200 rounded-xl bg-gray-50 text-center">
+                    <MessageSquare className="w-8 h-8 text-gray-400 mb-2" />
+                    <p className="text-sm font-medium text-gray-650">Чат недоступен</p>
+                    <p className="text-xs text-gray-400 mt-1 max-w-[280px]">
+                      Вы сможете общаться с сотрудником после того, как примете эту заявку в работу.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -638,9 +648,40 @@ export default function ITPortalClientView({
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-          {/* Left: ticket listing or empty state */}
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Column 1: SLA Deadlines Card */}
+          <div className="lg:col-span-3 space-y-4 self-start order-2 lg:order-1">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  Сроки решения
+                </h3>
+                <p className="text-xs text-gray-555 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-red-50/70 border border-red-100/50">
+                  <span className="font-semibold text-red-700">Критический</span>
+                  <span className="font-bold text-red-800">1 день</span>
+                </div>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-orange-50/70 border border-orange-100/50">
+                  <span className="font-semibold text-orange-700">Высокий</span>
+                  <span className="font-bold text-orange-800">1–2 дня</span>
+                </div>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-blue-50/70 border border-blue-100/50">
+                  <span className="font-semibold text-blue-700">Средний</span>
+                  <span className="font-bold text-blue-800">3–5 дней</span>
+                </div>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-gray-50/70 border border-gray-100/50">
+                  <span className="font-semibold text-gray-600">Низкий</span>
+                  <span className="font-bold text-gray-700">5–7 дней</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: ticket listing or empty state */}
+          <div className="lg:col-span-6 order-1 lg:order-2">
             {displayIncidents.length === 0 ? (
               <div className="rounded-2xl bg-white p-12 shadow-sm border border-gray-100 text-center">
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mx-auto mb-4">
@@ -651,10 +692,10 @@ export default function ITPortalClientView({
                 </h3>
                 <p className="text-sm text-gray-500">
                   {isMyTasks
-                    ? "В работе нет заявок. Перейдите в \"Заявки\", чтобы начать."
-                    : isArchive
-                    ? "Здесь будут отображаться решённые заявки."
-                    : "Все заявки обработаны. Отличная работа!"}
+                     ? "В работе нет заявок. Перейдите в \"Заявки\", чтобы начать."
+                     : isArchive
+                     ? "Здесь будут отображаться решённые заявки."
+                     : "Все заявки обработаны. Отличная работа!"}
                 </p>
               </div>
             ) : (
@@ -701,7 +742,7 @@ export default function ITPortalClientView({
                                 {getIncidentTitle(incident)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-gray-550 flex-wrap">
+                            <div className="flex items-center gap-3 text-xs text-gray-555 flex-wrap">
                               {/* Author */}
                               <span className="flex items-center gap-1">
                                 <User className="w-3 h-3 text-gray-400" />
@@ -804,91 +845,62 @@ export default function ITPortalClientView({
             )}
           </div>
 
-          {/* Right: SLA Deadlines Card */}
-          <div className="lg:col-span-1 space-y-4 self-start">
+          {/* Column 3: Statistics Card */}
+          <div className="lg:col-span-3 space-y-4 self-start order-3 lg:order-3">
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
               <div>
                 <h3 className="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-600" />
-                  Сроки решения
+                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                  Статистика по месяцам
                 </h3>
-                <p className="text-xs text-gray-555 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
+                <p className="text-xs text-gray-555 mt-1 leading-relaxed">
+                  Показатели по корпусу: <span className="font-semibold text-blue-600">{buildingFilter === "all" ? "Все корпуса" : buildingFilter}</span>
+                </p>
               </div>
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-red-50/70 border border-red-100/50">
-                  <span className="font-semibold text-red-700">Критический</span>
-                  <span className="font-bold text-red-800">1 день</span>
+
+              {stats.length === 0 ? (
+                <p className="text-xs text-gray-500 text-center py-4">Нет данных</p>
+              ) : (
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                  {stats.map((row) => {
+                    const resolutionRate = row.total > 0 ? Math.round((row.resolved / row.total) * 100) : 0;
+                    return (
+                      <div key={row.monthKey} className="p-4 rounded-xl border border-gray-150 bg-gray-50/50 dark:bg-slate-800/40 space-y-3">
+                        <div className="flex justify-between items-center border-b border-gray-200/50 pb-1.5">
+                          <span className="font-bold text-sm text-gray-800">{row.monthName}</span>
+                          <span className="text-xs font-bold text-gray-900 bg-gray-200 dark:bg-slate-700 px-2.5 py-0.5 rounded-full">
+                            {row.total} всего
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>Решено: {row.resolved}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            <span>В работе: {row.open}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                            <span>Выполнение задач</span>
+                            <span>{resolutionRate}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-emerald-500 h-full rounded-full transition-all duration-300" 
+                              style={{ width: `${resolutionRate}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-orange-50/70 border border-orange-100/50">
-                  <span className="font-semibold text-orange-700">Высокий</span>
-                  <span className="font-bold text-orange-800">1–2 дня</span>
-                </div>
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-blue-50/70 border border-blue-100/50">
-                  <span className="font-semibold text-blue-700">Средний</span>
-                  <span className="font-bold text-blue-800">3–5 дней</span>
-                </div>
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-gray-50/70 border border-gray-100/50">
-                  <span className="font-semibold text-gray-600">Низкий</span>
-                  <span className="font-bold text-gray-700">5–7 дней</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
-        </div>
-
-        {/* Statistics Card (Full-width) */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
-            <div className="space-y-1">
-              <h3 className="font-bold text-gray-900 text-base tracking-tight flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-blue-600" />
-                Статистика по месяцам
-              </h3>
-              <p className="text-xs text-gray-550 mt-1 leading-relaxed">
-                Показатели по инцидентам во всех и отдельных корпусах
-              </p>
-            </div>
-            <div className="bg-blue-50/50 text-blue-700 border border-blue-100 text-xs px-3 py-1.5 rounded-lg font-medium self-start sm:self-center">
-              Текущий фильтр: <span className="font-semibold">{buildingFilter === "all" ? "Все корпуса" : `Корпус ${buildingFilter}`}</span>
-            </div>
-          </div>
-
-          {stats.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-8">Нет данных для статистики</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[500px]">
-                <thead>
-                  <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                    <th className="pb-3 font-semibold">Месяц</th>
-                    <th className="pb-3 text-center font-semibold w-32">Решено</th>
-                    <th className="pb-3 text-center font-semibold w-32">В работе / Новые</th>
-                    <th className="pb-3 text-center font-semibold w-32">Всего</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm">
-                  {stats.map((row) => (
-                    <tr key={row.monthKey} className="hover:bg-gray-50/40 transition-colors">
-                      <td className="py-3.5 font-medium text-gray-900">{row.monthName}</td>
-                      <td className="py-3.5 text-center">
-                        <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                          {row.resolved}
-                        </span>
-                      </td>
-                      <td className="py-3.5 text-center">
-                        <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">
-                          {row.open}
-                        </span>
-                      </td>
-                      <td className="py-3.5 text-center font-bold text-gray-700">
-                        {row.total}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       </div>
 

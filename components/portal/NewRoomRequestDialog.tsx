@@ -25,6 +25,39 @@ import { createPortalRoomRequest } from "@/lib/actions/portal";
 import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
 
+const ROOM_REQUEST_TEMPLATES = [
+  {
+    title: "💡 Лампочка",
+    type: "ремонт" as const,
+    description: "Перегорела лампочка, требуется замена.",
+  },
+  {
+    title: "🔌 Розетка",
+    type: "ремонт" as const,
+    description: "Не работает электрическая розетка в кабинете, требуется ремонт.",
+  },
+  {
+    title: "🪑 Мебель",
+    type: "ремонт" as const,
+    description: "Сломался офисный стул или стол, требуется ремонт мебели.",
+  },
+  {
+    title: "🚪 Дверь/Замок",
+    type: "ремонт" as const,
+    description: "Скрипит входная дверь или плохо работает дверная ручка/замок.",
+  },
+  {
+    title: "➕ Стул",
+    type: "оснащение" as const,
+    description: "В кабинете требуется дополнительный стул для сотрудника.",
+  },
+  {
+    title: "⚡ Сетевой фильтр",
+    type: "оснащение" as const,
+    description: "Требуется сетевой фильтр (удлинитель) для подключения техники.",
+  },
+];
+
 interface NewRoomRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -223,6 +256,28 @@ export function NewRoomRequestDialog({
                 <SelectItem value="оснащение">Оснащение</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Templates */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Шаблоны заявок (нажмите для автозаполнения)
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {ROOM_REQUEST_TEMPLATES.map((tmpl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setType(tmpl.type);
+                    setDescription(tmpl.description);
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full cursor-pointer transition-colors"
+                >
+                  {tmpl.title}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Description */}

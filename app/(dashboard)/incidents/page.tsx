@@ -37,6 +37,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   const normalizedRoomRequests = roomRequests.map((req: RawRoomRequest) => ({
     ...req,
     employee: extractJoinObject(req.employees as unknown) as { id: string; full_name: string; position: string | null; room: string | null; building: string | null } | null,
+    assignee: extractJoinObject(req.assignee as unknown) as { id: string; full_name: string | null } | null,
   }));
 
   const { selectedId } = await searchParams;

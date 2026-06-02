@@ -144,4 +144,59 @@
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
+}
+
+/* Dark Mode Overrides for Tailwind Utility Classes */
+.dark {
+  /* Override bg-white and standard card layouts */
+  .bg-white, [role="dialog"] {
+    background-color: var(--card) !important;
+  }
+  
+  .bg-gray-50, .bg-gray-50\/50, .bg-gray-50\/70, .bg-slate-50, .bg-slate-50\/50 {
+    background-color: rgba(30, 41, 59, 0.45) !important;
+  }
+  
+  .border-gray-100, .border-gray-200, .border-gray-150, .border-gray-100\/50, .border-gray-100\/80, .border-slate-100, .border-slate-200 {
+    border-color: var(--border) !important;
+  }
+  
+  .text-gray-900, .text-slate-900 {
+    color: var(--foreground) !important;
+  }
+  
+  .text-gray-800, .text-slate-800 {
+    color: #e2e8f0 !important;
+  }
+  
+  .text-gray-700, .text-slate-700 {
+    color: #cbd5e1 !important;
+  }
+  
+  .text-gray-650, .text-gray-600, .text-slate-600 {
+    color: #94a3b8 !important;
+  }
+  
+  .text-gray-550, .text-gray-555, .text-gray-500, .text-slate-550, .text-slate-500 {
+    color: var(--muted-foreground) !important;
+  }
+  
+  .text-gray-400, .text-slate-400 {
+    color: #64748b !important;
+  }
+
+  /* Form Elements (input, select, textarea) */
+  input, select, textarea {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    color: var(--foreground) !important;
+  }
+  
+  /* Scrollbar override */
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #475569 !important;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b !important;
+  }
 }

@@ -92,7 +92,11 @@ export default async function PortalPage() {
       type,
       description,
       status,
-      created_at
+      created_at,
+      resolution,
+      resolution_photo_urls,
+      photo_urls,
+      assignee:employees!room_requests_assigned_to_fkey(full_name)
     `)
     .eq("author_id", employeeId)
     .order("created_at", { ascending: false });

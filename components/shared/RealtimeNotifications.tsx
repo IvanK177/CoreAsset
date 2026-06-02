@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 interface RealtimeNotificationsProps {
-  role: "admin" | "it_specialist" | "facilities";
+  role: "admin" | "it_specialist" | "facilities" | "developer";
 }
 
 interface DeviceRecord {
@@ -44,7 +44,7 @@ export function RealtimeNotifications({ role }: RealtimeNotificationsProps) {
 
     if (role === "admin") {
       // Admin tracks ALL tables for INSERT, UPDATE, DELETE
-      const tables = ["devices", "licenses", "employees", "incidents", "room_requests"];
+      const tables = ["devices", "licenses", "employees", "incidents", "room_requests", "support_requests"];
       
       tables.forEach((table) => {
         const channel = supabase
@@ -97,6 +97,12 @@ export function RealtimeNotifications({ role }: RealtimeNotificationsProps) {
                 if (eventType === "INSERT") msg = `Создана новая заявка АХЧ для кабинета ${room}`;
                 if (eventType === "UPDATE") msg = `Заявка АХЧ #${newReq?.id?.substring(0, 4)} изменена (Статус: ${newReq?.status})`;
                 if (eventType === "DELETE") msg = `Удалена заявка АХЧ`;
+              } else if (table === "support_requests") {
+                const newReq = newRecord as any;
+                title = `Обращение в поддержку`;
+                if (eventType === "INSERT") msg = `Создано новое обращение в поддержку`;
+                if (eventType === "UPDATE") msg = `Обращение #${newReq?.id?.substring(0, 4)} изменено (Статус: ${newReq?.status})`;
+                if (eventType === "DELETE") msg = `Удалено обращение в поддержку`;
               }
 
               if (msg) {
@@ -147,6 +153,24 @@ export function RealtimeNotifications({ role }: RealtimeNotificationsProps) {
             const newRecord = payload.new as RoomRequestRecord;
             toast.success(`Поступила новая заявка АХЧ для кабинета ${newRecord.room}`, {
               description: `Тип: ${newRecord.type}. Описание: ${newRecord.description?.substring(0, 50)}...`,
+              duration: 8000,
+            });
+          }
+        )
+        .subscribe();
+        
+      channels.push(channel);
+    } else if (role === "developer") {
+      // Developer tracks ONLY new support requests (INSERT)
+      const channel = supabase
+        .channel("developer-new-requests")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "support_requests" },
+          (payload) => {
+            const newRecord = payload.new as any;
+            toast.success(`Поступило новое обращение в поддержку`, {
+              description: newRecord.message?.substring(0, 60) + "...",
               duration: 8000,
             });
           }

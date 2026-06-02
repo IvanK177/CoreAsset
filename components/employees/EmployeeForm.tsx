@@ -22,6 +22,7 @@ const ROLE_ITEMS: Record<string, React.ReactNode> = {
   admin: "Администратор",
   it_specialist: "IT-специалист",
   facilities: "Сотрудник АХЧ",
+  developer: "Разработчик",
 };
 
 const initialState = { error: "" };
@@ -69,6 +70,7 @@ export default function EmployeeForm({ employee, action }: EmployeeFormProps) {
               <SelectItem value="admin">Администратор</SelectItem>
               <SelectItem value="it_specialist">IT-специалист</SelectItem>
               <SelectItem value="facilities">Сотрудник АХЧ</SelectItem>
+              <SelectItem value="developer">Разработчик</SelectItem>
             </SelectContent>
           </Select>
         </div>

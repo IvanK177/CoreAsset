@@ -2,14 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MonitorIcon, LogOut, TicketCheck, ClipboardList, Archive } from "lucide-react";
+import { MonitorIcon, LogOut, TicketCheck, ClipboardList, Archive, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/auth";
+import { useState } from "react";
+import { ProfileDialog } from "@/components/portal/ProfileDialog";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
+
+interface EmployeeProfileData {
+  id: string;
+  full_name: string;
+  position: string | null;
+  email: string | null;
+  phone: string | null;
+  telegram: string | null;
+  room: string | null;
+  building: string | null;
+  avatar_url?: string | null;
+}
 
 interface ITPortalHeaderProps {
   specialistName: string;
   specialistPosition: string;
+  employee?: EmployeeProfileData | null;
 }
 
 const navItems = [
@@ -18,9 +34,9 @@ const navItems = [
   { href: "/it-portal/archive", label: "Архив", icon: Archive },
 ];
 
-export default function ITPortalHeader({ specialistName, specialistPosition }: ITPortalHeaderProps) {
+export default function ITPortalHeader({ specialistName, specialistPosition, employee }: ITPortalHeaderProps) {
   const pathname = usePathname();
-  const firstName = specialistName.split(" ")[0] ?? specialistName;
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16 flex items-center justify-between px-3 sm:px-6 bg-white border-b border-gray-200">
@@ -63,24 +79,55 @@ export default function ITPortalHeader({ specialistName, specialistPosition }: I
         </nav>
       </div>
 
-      {/* Right: Specialist info + Logout */}
+      {/* Right: Specialist info + Theme Toggle + Profile + Logout */}
       <div className="flex items-center gap-4">
         <div className="hidden md:flex flex-col items-end">
           <span className="text-sm font-medium text-gray-900">{specialistName}</span>
           <span className="text-xs text-gray-500">{specialistPosition}</span>
         </div>
+
+        <ThemeToggle />
+
+        {employee && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setProfileOpen(true)}
+            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 cursor-pointer h-9 rounded-lg"
+          >
+            {employee.avatar_url ? (
+              <img
+                src={employee.avatar_url}
+                alt={specialistName}
+                className="w-5 h-5 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <User className="w-4 h-4 shrink-0" />
+            )}
+            <span className="hidden sm:inline">Профиль</span>
+          </Button>
+        )}
+
         <form action={signOut}>
           <Button
             variant="ghost"
             size="sm"
             type="submit"
-            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3"
+            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 h-9 rounded-lg"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Выйти</span>
           </Button>
         </form>
       </div>
+
+      {employee && (
+        <ProfileDialog
+          open={profileOpen}
+          onOpenChange={setProfileOpen}
+          employee={employee}
+        />
+      )}
     </header>
   );
 }

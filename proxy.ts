@@ -21,6 +21,7 @@ const ROLE_HOME: Record<string, string> = {
   it_specialist: "/it-portal",
   employee: "/portal",
   facilities: "/facilities-portal",
+  developer: "/dev-portal",
 };
 
 function getRoleHome(role: string): string {
@@ -145,26 +146,32 @@ export async function proxy(request: NextRequest) {
   const isEmployeePortal = pathname.startsWith("/portal");
   const isITPortal = pathname.startsWith("/it-portal");
   const isFacilitiesPortal = pathname.startsWith("/facilities-portal");
+  const isDevPortal = pathname.startsWith("/dev-portal");
   const roleHome = getRoleHome(role!);
 
   if (role === "admin") {
-    // Admin: can access dashboard / admin routes; block employee, IT, & facilities portals
-    if (isEmployeePortal || isITPortal || isFacilitiesPortal) {
+    // Admin: can access dashboard / admin routes; block employee, IT, facilities, & developer portals
+    if (isEmployeePortal || isITPortal || isFacilitiesPortal || isDevPortal) {
       return redirectWithCookies(roleHome);
     }
   } else if (role === "it_specialist") {
-    // IT specialist: can only access /it-portal; block dashboard, employee, & facilities portals
-    if (isAdminRoute || isEmployeePortal || isFacilitiesPortal) {
+    // IT specialist: can only access /it-portal; block dashboard, employee, facilities, & developer portals
+    if (isAdminRoute || isEmployeePortal || isFacilitiesPortal || isDevPortal) {
       return redirectWithCookies(roleHome);
     }
   } else if (role === "facilities") {
-    // Facilities: can only access /facilities-portal; block dashboard, employee, & IT portals
-    if (isAdminRoute || isEmployeePortal || isITPortal) {
+    // Facilities: can only access /facilities-portal; block dashboard, employee, IT, & developer portals
+    if (isAdminRoute || isEmployeePortal || isITPortal || isDevPortal) {
+      return redirectWithCookies(roleHome);
+    }
+  } else if (role === "developer") {
+    // Developer: can only access /dev-portal; block dashboard, employee, IT, & facilities portals
+    if (isAdminRoute || isEmployeePortal || isITPortal || isFacilitiesPortal) {
       return redirectWithCookies(roleHome);
     }
   } else {
-    // Employee (or unknown role): can only access /portal; block dashboard, IT, & facilities portals
-    if (isAdminRoute || isITPortal || isFacilitiesPortal) {
+    // Employee (or unknown role): can only access /portal; block dashboard, IT, facilities, & developer portals
+    if (isAdminRoute || isITPortal || isFacilitiesPortal || isDevPortal) {
       return redirectWithCookies(roleHome);
     }
   }

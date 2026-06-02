@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
+import { cn, formatDateTimeRu, BUILDING_ADDRESSES, extractJoinObject } from "@/lib/utils";
 import { AlertTriangle, Clock, CheckCircle2, User, Building, Wrench, Loader2, Camera, Image as ImageIcon, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ interface RoomRequestRow {
   photo_urls?: string[] | null;
   resolution?: string | null;
   resolution_photo_urls?: string[] | null;
+  assigned_to?: string | null;
   employee: {
     id: string;
     full_name: string;
@@ -37,6 +38,7 @@ interface RoomRequestRow {
     room: string | null;
     building: string | null;
   } | null;
+  assignee?: { full_name: string | null } | { full_name: string | null }[] | null;
 }
 
 interface FacilitiesPortalClientViewProps {
@@ -417,9 +419,21 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                     </Button>
                   )}
                   {isResolved && (
-                    <span className="text-xs text-emerald-600 flex items-center gap-1.5 font-medium">
+                    <span className="text-xs text-emerald-600 flex items-center gap-1.5 font-medium flex-wrap">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Выполнено
+                      <span>Выполнено</span>
+                      {(() => {
+                        const resolver = extractJoinObject(req.assignee) as { full_name: string | null } | null;
+                        if (resolver?.full_name) {
+                          return (
+                            <>
+                              <span>·</span>
+                              <span>Исполнитель: {resolver.full_name}</span>
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
                     </span>
                   )}
                 </div>
@@ -485,12 +499,31 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                 )}
 
                 {/* Resolution note */}
-                {selectedRequest.status === "resolved" && selectedRequest.resolution && (
+                {selectedRequest.status === "resolved" && (
                   <div className="space-y-1 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100">
-                    <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Что было сделано</h4>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                      {selectedRequest.resolution}
+                    <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Статус выполнения</h4>
+                    <p className="text-sm text-gray-800">
+                      Заявка успешно выполнена.
                     </p>
+                    {(() => {
+                      const resolver = extractJoinObject(selectedRequest.assignee) as { full_name: string | null } | null;
+                      if (resolver?.full_name) {
+                        return (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Исполнитель: <span className="font-semibold text-gray-700">{resolver.full_name}</span>
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
+                    {selectedRequest.resolution && (
+                      <div className="border-t border-emerald-100/50 pt-2 mt-2">
+                        <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">Решение</p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                          {selectedRequest.resolution}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 

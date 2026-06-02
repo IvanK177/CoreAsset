@@ -8,6 +8,7 @@ import { formatDateTimeRu } from "@/lib/utils";
 
 interface SenderInfo {
   full_name: string;
+  avatar_url?: string | null;
 }
 
 export interface Message {
@@ -31,14 +32,17 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // Store sender names cache in state to comply with React rules of render
-  const [senderNames, setSenderNames] = useState<Record<string, string>>(() => {
-    const initialCache: Record<string, string> = {};
+  // Store sender details cache in state to comply with React rules of render
+  const [senderDetails, setSenderDetails] = useState<Record<string, { name: string; avatarUrl: string | null }>>(() => {
+    const initialCache: Record<string, { name: string; avatarUrl: string | null }> = {};
     initialMessages.forEach((msg) => {
       if (msg.sender) {
         const extracted = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
         if (extracted?.full_name) {
-          initialCache[msg.sender_id] = extracted.full_name;
+          initialCache[msg.sender_id] = {
+            name: extracted.full_name,
+            avatarUrl: extracted.avatar_url ?? null,
+          };
         }
       }
     });
@@ -76,21 +80,27 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           // If message is already in state, ignore it
           if (messages.some((m) => m.id === newMsg.id)) return;
 
-          // Fetch sender name if not in state cache
-          let senderName = senderNames[newMsg.sender_id];
-          if (!senderName) {
+          // Fetch sender details if not in state cache
+          let senderInfo = senderDetails[newMsg.sender_id];
+          if (!senderInfo) {
             const { data } = await supabase
               .from("employees")
-              .select("full_name")
+              .select("full_name, avatar_url")
               .eq("id", newMsg.sender_id)
               .single();
-            senderName = data?.full_name ?? "Пользователь";
-            setSenderNames((prev) => ({ ...prev, [newMsg.sender_id]: senderName }));
+            senderInfo = {
+              name: data?.full_name ?? "Пользователь",
+              avatarUrl: data?.avatar_url ?? null,
+            };
+            setSenderDetails((prev) => ({ ...prev, [newMsg.sender_id]: senderInfo }));
           }
 
           const completeMsg: Message = {
             ...newMsg,
-            sender: { full_name: senderName },
+            sender: {
+              full_name: senderInfo.name,
+              avatar_url: senderInfo.avatarUrl,
+            },
           };
 
           setMessages((prev) => {
@@ -104,7 +114,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [incidentId, messages, senderNames]);
+  }, [incidentId, messages, senderDetails]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,30 +150,45 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         ) : (
           messages.map((msg) => {
             const isOwn = msg.sender_id === currentUserId;
-            const senderName = senderNames[msg.sender_id] ?? "Отправитель";
+            const senderInfo = senderDetails[msg.sender_id];
+            const senderName = senderInfo?.name ?? "Отправитель";
             
             return (
-              <div key={msg.id} className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
-                {!isOwn && (
-                  <span className="text-[10px] font-semibold text-gray-400 mb-0.5 ml-1">
-                    {senderName}
-                  </span>
-                )}
-                <div
-                  className={`max-w-[75%] px-3.5 py-2 rounded-2xl text-sm ${
-                    isOwn
-                      ? "bg-blue-500 text-white rounded-tr-none"
-                      : "bg-gray-100 text-gray-800 rounded-tl-none"
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
-                  <span
-                    className={`block text-[9px] mt-1 text-right ${
-                      isOwn ? "text-blue-100" : "text-gray-400"
+              <div key={msg.id} className={`flex items-start gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-slate-700 shrink-0 overflow-hidden flex items-center justify-center border border-gray-100">
+                  {senderInfo?.avatarUrl ? (
+                    <img src={senderInfo.avatarUrl} alt={senderName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+                      {senderName.substring(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+
+                {/* Message Bubble Column */}
+                <div className={`flex flex-col max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
+                  {!isOwn && (
+                    <span className="text-[10px] font-semibold text-gray-400 mb-0.5 ml-1">
+                      {senderName}
+                    </span>
+                  )}
+                  <div
+                    className={`px-3.5 py-2 rounded-2xl text-sm ${
+                      isOwn
+                        ? "bg-blue-500 text-white rounded-tr-none"
+                        : "bg-gray-100 text-gray-800 rounded-tl-none"
                     }`}
                   >
-                    {formatDateTimeRu(msg.created_at)}
-                  </span>
+                    <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
+                    <span
+                      className={`block text-[9px] mt-1 text-right ${
+                        isOwn ? "text-blue-100" : "text-gray-400"
+                      }`}
+                    >
+                      {formatDateTimeRu(msg.created_at)}
+                    </span>
+                  </div>
                 </div>
               </div>
             );

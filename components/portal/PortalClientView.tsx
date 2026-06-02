@@ -67,6 +67,11 @@ interface RoomRequestData {
   photo_urls?: string[] | null;
   resolution?: string | null;
   resolution_photo_urls?: string[] | null;
+  assignee?: {
+    full_name: string | null;
+  } | {
+    full_name: string | null;
+  }[] | null;
 }
 
 interface PortalClientViewProps {
@@ -391,6 +396,15 @@ export default function PortalClientView({
                             })()}</span>
                           </>
                         )}
+                        {!isIT && item.status === "resolved" && (
+                          <>
+                            <span>·</span>
+                            <span className="text-emerald-600 font-medium">Решено кем: {(() => {
+                              const assignee = extractJoinObject((item as RoomRequestData).assignee) as { full_name: string | null } | null;
+                              return assignee?.full_name ?? "Сотрудник АХЧ";
+                            })()}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -548,10 +562,23 @@ export default function PortalClientView({
                   </div>
                 )}
 
-                {selectedRoomRequest.status === "resolved" && selectedRoomRequest.resolution && (
+                {selectedRoomRequest.status === "resolved" && (
                   <div className="space-y-1 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
                     <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Выполненная работа</h4>
-                    <p className="text-sm text-emerald-900 whitespace-pre-wrap">{selectedRoomRequest.resolution}</p>
+                    {selectedRoomRequest.resolution && (
+                      <p className="text-sm text-emerald-900 whitespace-pre-wrap mb-2">{selectedRoomRequest.resolution}</p>
+                    )}
+                    {(() => {
+                      const assignee = extractJoinObject(selectedRoomRequest.assignee) as { full_name: string | null } | null;
+                      if (assignee?.full_name) {
+                        return (
+                          <p className="text-xs text-gray-500">
+                            Исполнитель: <span className="font-semibold text-gray-700">{assignee.full_name}</span>
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 )}
 

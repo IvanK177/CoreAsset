@@ -32,6 +32,7 @@ interface RoomRequestRow {
     room: string | null;
     building: string | null;
   } | null;
+  assignee?: { id: string; full_name: string | null } | null;
 }
 
 interface RoomRequestsAdminViewProps {
@@ -193,6 +194,12 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                     </span>
                     <span>·</span>
                     <span>{formatDateTimeRu(req.created_at)}</span>
+                    {req.status === "resolved" && req.assignee?.full_name && (
+                      <>
+                        <span>·</span>
+                        <span className="text-emerald-600 font-medium">Решено кем: {req.assignee.full_name}</span>
+                      </>
+                    )}
                   </p>
                 </div>
                 <span className="text-gray-400 ml-4 shrink-0">›</span>
@@ -258,10 +265,17 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                   </div>
                 )}
 
-                {selectedRequest.status === "resolved" && selectedRequest.resolution && (
+                {selectedRequest.status === "resolved" && (
                   <div className="space-y-1 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
                     <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Выполненная работа</h4>
-                    <p className="text-sm text-emerald-900 whitespace-pre-wrap">{selectedRequest.resolution}</p>
+                    {selectedRequest.resolution && (
+                      <p className="text-sm text-emerald-900 whitespace-pre-wrap mb-2">{selectedRequest.resolution}</p>
+                    )}
+                    {selectedRequest.assignee?.full_name && (
+                      <p className="text-xs text-gray-500">
+                        Исполнитель: <span className="font-semibold text-gray-700">{selectedRequest.assignee.full_name}</span>
+                      </p>
+                    )}
                   </div>
                 )}
 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/auth";
 import { useState } from "react";
 import { ProfileDialog } from "@/components/portal/ProfileDialog";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 interface EmployeeProfileData {
   id: string;
@@ -15,6 +16,7 @@ interface EmployeeProfileData {
   telegram: string | null;
   room: string | null;
   building: string | null;
+  avatar_url?: string | null;
 }
 
 interface PortalHeaderProps {
@@ -41,21 +43,31 @@ export default function PortalHeader({ employeeName, employeePosition, employee 
         </div>
       </div>
 
-      {/* Right: Employee info + Profile + Logout */}
+      {/* Right: Employee info + Theme Toggle + Profile + Logout */}
       <div className="flex items-center gap-4">
         <div className="hidden sm:flex flex-col items-end">
           <span className="text-sm font-medium text-gray-900">{employeeName}</span>
           <span className="text-xs text-gray-500">{employeePosition}</span>
         </div>
 
+        <ThemeToggle />
+
         {employee && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setProfileOpen(true)}
-            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 cursor-pointer"
+            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 cursor-pointer h-9 rounded-lg"
           >
-            <User className="w-4 h-4" />
+            {employee.avatar_url ? (
+              <img
+                src={employee.avatar_url}
+                alt={employeeName}
+                className="w-5 h-5 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <User className="w-4 h-4 shrink-0" />
+            )}
             <span className="hidden sm:inline">Профиль</span>
           </Button>
         )}
@@ -65,7 +77,7 @@ export default function PortalHeader({ employeeName, employeePosition, employee 
             variant="ghost"
             size="sm"
             type="submit"
-            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 cursor-pointer"
+            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 cursor-pointer h-9 rounded-lg"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Выйти</span>

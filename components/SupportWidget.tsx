@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { sendTelegramSupportMessage } from "@/lib/actions/telegram-support";
+import { sendSupportRequest } from "@/lib/actions/support";
 import { toast } from "sonner";
 
 export default function SupportWidget() {
@@ -42,7 +42,7 @@ export default function SupportWidget() {
     setPending(true);
     setError(null);
 
-    const result = await sendTelegramSupportMessage(message);
+    const result = await sendSupportRequest(message);
 
     if (result.error) {
       toast.error(result.error);
@@ -75,7 +75,7 @@ export default function SupportWidget() {
       >
         <LifeBuoy className="w-6 h-6 animate-pulse group-hover:rotate-45 transition-transform duration-500" />
       </button>
-
+ 
       {/* Support Dialog */}
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
@@ -85,7 +85,7 @@ export default function SupportWidget() {
               Служба поддержки
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Опишите возникшую проблему. Мы получим ваше сообщение в Telegram и ответим в ближайшее время.
+              Опишите возникшую проблему. Наша команда разработчиков рассмотрит ваше обращение в кратчайшие сроки.
             </DialogDescription>
           </DialogHeader>
 

@@ -19,7 +19,7 @@ export default async function ITPortalLayout({ children }: { children: React.Rea
     // Primary: match by user.id (auth.users.id → employees.id via trigger)
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, email, role")
+      .select("id, full_name, position, email, role, room, phone, telegram, building, avatar_url")
       .eq("id", user.id)
       .single();
     employeeData = data;
@@ -29,7 +29,7 @@ export default async function ITPortalLayout({ children }: { children: React.Rea
     // Demo mode: use demo cookie employee ID
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, email, role")
+      .select("id, full_name, position, email, role, room, phone, telegram, building, avatar_url")
       .eq("id", demoEmployeeId)
       .single();
     employeeData = data;
@@ -39,7 +39,7 @@ export default async function ITPortalLayout({ children }: { children: React.Rea
   if (!employeeData) {
     const { data } = await dataClient
       .from("employees")
-      .select("id, full_name, position, email, role")
+      .select("id, full_name, position, email, role, room, phone, telegram, building, avatar_url")
       .eq("role", "it_specialist")
       .eq("is_active", true)
       .limit(1)
@@ -48,14 +48,15 @@ export default async function ITPortalLayout({ children }: { children: React.Rea
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-background text-foreground">
       <ITPortalHeader
         specialistName={employeeData?.full_name ?? "IT-специалист"}
         specialistPosition={employeeData?.position ?? "IT-специалист"}
+        employee={employeeData}
       />
       <RealtimeNotifications role="it_specialist" />
       <main className="pt-16">
-        <div className="max-w-5xl mx-auto p-6">
+        <div className="max-w-7xl mx-auto p-6">
           {children}
         </div>
       </main>

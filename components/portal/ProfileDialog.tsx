@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Camera, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,7 +25,7 @@ import { clearCache } from "@/lib/actions/revalidate";
 import { useRouter } from "next/navigation";
 import { BUILDING_ADDRESSES } from "@/lib/utils";
 
-interface EmployeeProfileData {
+export interface EmployeeProfileData {
   id: string;
   full_name: string;
   position: string | null;
@@ -34,6 +34,7 @@ interface EmployeeProfileData {
   telegram: string | null;
   room: string | null;
   building: string | null;
+  avatar_url?: string | null;
 }
 
 interface ProfileDialogProps {
@@ -55,10 +56,32 @@ export function ProfileDialog({
   const [room, setRoom] = useState(employee.room ?? "");
   const [building, setBuilding] = useState(employee.building ?? "");
 
+  const [avatarUrl, setAvatarUrl] = useState(employee.avatar_url ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState(employee.avatar_url ?? "");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [pending, setPending] = useState(false);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      const preview = URL.createObjectURL(file);
+      setAvatarPreview(preview);
+    }
+  };
+
+  const handleRemoveAvatar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAvatarFile(null);
+    setAvatarPreview("");
+    setAvatarUrl("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +93,56 @@ export function ProfileDialog({
     setPending(true);
     setError(null);
 
+    let uploadedAvatarUrl = avatarUrl;
+
+    if (avatarFile) {
+      try {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        
+        let fileToUpload = avatarFile;
+        try {
+          const compressionResult = await compressImageToTarget(avatarFile, { targetKB: 50 });
+          fileToUpload = compressionResult.file;
+        } catch (compressErr) {
+          console.warn("Compression failed, using original file:", compressErr);
+        }
+
+        const fileExt = fileToUpload.name.split(".").pop();
+        const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+          ? crypto.randomUUID() 
+          : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+        const fileName = `avatar_${uuid}.${fileExt}`;
+        const filePath = `avatars/${employee.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("ticket-attachments")
+          .upload(filePath, fileToUpload, {
+            contentType: fileToUpload.type,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error("Avatar upload error:", uploadError);
+          toast.error("Ошибка при загрузке аватарки");
+          setPending(false);
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("ticket-attachments")
+          .getPublicUrl(filePath);
+
+        uploadedAvatarUrl = publicUrl;
+      } catch (err) {
+        console.error("Avatar upload exception:", err);
+        toast.error("Не удалось сохранить аватарку");
+        setPending(false);
+        return;
+      }
+    }
+
     const formData = new FormData();
     formData.set("full_name", fullName.trim());
     formData.set("email", email.trim());
@@ -78,6 +151,7 @@ export function ProfileDialog({
     formData.set("telegram", telegram.trim());
     formData.set("room", room.trim());
     formData.set("building", building);
+    formData.set("avatar_url", uploadedAvatarUrl);
 
     const result = await updateEmployeeProfile(employee.id, formData);
 
@@ -89,6 +163,7 @@ export function ProfileDialog({
     }
 
     await clearCache("/portal");
+    await clearCache("/it-portal");
     toast.success("Профиль успешно обновлен");
     setPending(false);
     onOpenChange(false);
@@ -106,19 +181,21 @@ export function ProfileDialog({
       setTelegram(employee.telegram ?? "");
       setRoom(employee.room ?? "");
       setBuilding(employee.building ?? "");
+      setAvatarUrl(employee.avatar_url ?? "");
+      setAvatarPreview(employee.avatar_url ?? "");
+      setAvatarFile(null);
       setError(null);
       onOpenChange(false);
     }
   };
 
-  // Convert BUILDING_ADDRESSES to building items map for select component compatibility if it accepts items
   const buildingItems = Object.fromEntries(
     Object.keys(BUILDING_ADDRESSES).map((b) => [b, b])
   );
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6 overflow-y-auto max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Личный профиль</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -127,6 +204,49 @@ export function ProfileDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Avatar Upload Section */}
+          <div className="flex flex-col items-center justify-center pb-2">
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="relative w-20 h-20 rounded-full border-2 border-dashed border-gray-300 dark:border-slate-700 flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all duration-150 group overflow-hidden bg-gray-50 dark:bg-slate-800"
+              title="Нажмите, чтобы изменить аватарку"
+            >
+              {avatarPreview ? (
+                <>
+                  <img src={avatarPreview} alt="Аватарка" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-5 h-5 text-white" />
+                  </div>
+                </>
+              ) : (
+                <div className="text-center p-2 flex flex-col items-center justify-center">
+                  <User className="w-7 h-7 text-gray-400" />
+                  <span className="text-[10px] text-gray-500 mt-1">Добавить фото</span>
+                </div>
+              )}
+            </div>
+            
+            {avatarPreview && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                className="mt-1.5 text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer"
+                disabled={pending}
+              >
+                Удалить фото
+              </button>
+            )}
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleAvatarChange}
+              accept="image/*"
+              className="hidden"
+              disabled={pending}
+            />
+          </div>
+
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="profile-email" className="text-sm font-medium">

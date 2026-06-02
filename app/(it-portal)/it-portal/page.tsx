@@ -98,13 +98,24 @@ export default async function ITPortalPage() {
   // Count stats
   const allIncidents: IncidentRow[] = (incidents as IncidentRow[]) ?? [];
 
-  // Fetch messages for these incidents
-  const incidentIds = allIncidents.map((i) => i.id);
-  const { data: rawMessages } = await dataClient
-    .from("incident_messages")
-    .select("*, sender:employees!incident_messages_sender_id_fkey(full_name)")
-    .in("incident_id", incidentIds)
-    .order("created_at", { ascending: true });
+  // Fetch messages only for incidents assigned to this specialist
+  const assignedIncidentIds = allIncidents
+    .filter((i) => i.assigned_to === specialistId)
+    .map((i) => i.id);
+
+  let rawMessages: any[] = [];
+  if (assignedIncidentIds.length > 0) {
+    const { data, error: msgError } = await dataClient
+      .from("incident_messages")
+      .select("*, sender:employees!incident_messages_sender_id_fkey(full_name)")
+      .in("incident_id", assignedIncidentIds)
+      .order("created_at", { ascending: true });
+    if (msgError) {
+      console.error("[ITPortalPage] Error fetching messages:", msgError.message);
+    } else {
+      rawMessages = data ?? [];
+    }
+  }
 
   const initialMessagesMap: Record<string, Message[]> = {};
   (rawMessages ?? []).forEach((msg) => {

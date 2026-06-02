@@ -28,7 +28,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [isDemoPending, startDemoTransition] = useTransition();
-  const [activeDemoRole, setActiveDemoRole] = useState<"admin" | "employee" | "it_specialist" | "facilities" | null>(null);
+  const [activeDemoRole, setActiveDemoRole] = useState<"admin" | "employee" | "it_specialist" | "facilities" | "developer" | null>(null);
   const [resetMessage, setResetMessage] = useState<{ error?: string; success?: string; tempPassword?: string } | null>(null);
   const [resetPending, setResetPending] = useState(false);
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
     initialState
   );
 
-  const handleDemoLogin = (role: "admin" | "employee" | "it_specialist" | "facilities") => {
+  const handleDemoLogin = (role: "admin" | "employee" | "it_specialist" | "facilities" | "developer") => {
     setActiveDemoRole(role);
     startDemoTransition(async () => {
       await demoSignIn(role);
@@ -284,7 +284,19 @@ export default function LoginPage() {
               ) : (
                 <Wrench className="w-3.5 h-3.5 text-teal-500" />
               )}
-              {isDemoPending && activeDemoRole === "facilities" ? "Вход…" : "Войти как сотрудник АХЧ"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full h-10 rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
+              disabled={pending || isDemoPending}
+              onClick={() => handleDemoLogin("developer")}
+            >
+              {isDemoPending && activeDemoRole === "developer" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+              ) : (
+                <Wrench className="w-3.5 h-3.5 text-indigo-500" />
+              )}
+              {isDemoPending && activeDemoRole === "developer" ? "Вход…" : "Войти как Разработчик"}
             </Button>
           </div>
         </div>

@@ -35,7 +35,31 @@ export async function getCurrentEmployee() {
 }
 
 export async function getIncidentMessages(incidentId: string) {
+  const employee = await getCurrentEmployee();
+  if (!employee) {
+    return [];
+  }
+
   const supabase = createServiceClient();
+
+  // Enforce visibility check: only admin, ticket creator, or assigned specialist can access chat
+  if (employee.role !== "admin") {
+    const { data: incident, error: incError } = await supabase
+      .from("incidents")
+      .select("employee_id, assigned_to")
+      .eq("id", incidentId)
+      .single();
+
+    if (incError || !incident) {
+      console.error("[getIncidentMessages] Incident lookup failed:", incError);
+      return [];
+    }
+
+    if (incident.employee_id !== employee.id && incident.assigned_to !== employee.id) {
+      console.warn(`[getIncidentMessages] Access denied to user ${employee.id} for incident ${incidentId}`);
+      return [];
+    }
+  }
   
   const { data, error } = await supabase
     .from("incident_messages")
@@ -62,6 +86,23 @@ export async function sendMessage(incidentId: string, text: string) {
   }
 
   const supabase = createServiceClient();
+
+  // Enforce visibility check: only admin, ticket creator, or assigned specialist can send messages
+  if (employee.role !== "admin") {
+    const { data: incident, error: incError } = await supabase
+      .from("incidents")
+      .select("employee_id, assigned_to")
+      .eq("id", incidentId)
+      .single();
+
+    if (incError || !incident) {
+      return { error: "Инцидент не найден" };
+    }
+
+    if (incident.employee_id !== employee.id && incident.assigned_to !== employee.id) {
+      return { error: "У вас нет прав на отправку сообщений в этот чат" };
+    }
+  }
 
   const { error } = await supabase
     .from("incident_messages")

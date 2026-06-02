@@ -3,6 +3,7 @@
 import { useState } from "react";
 import FacilitiesSidebar from "../layout/FacilitiesSidebar";
 import { Menu, X, MonitorIcon } from "lucide-react";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 interface FacilitiesLayoutClientProps {
   openRequests: number;
@@ -18,7 +19,7 @@ export default function FacilitiesLayoutClient({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row">
       {/* Mobile Top Navigation Header */}
       <header className="lg:hidden flex items-center justify-between px-4 h-16 bg-[#1a2035] text-white border-b border-white/10 shrink-0 sticky top-0 z-40">
         <div className="flex items-center gap-3">
@@ -30,13 +31,16 @@ export default function FacilitiesLayoutClient({
             <span className="text-[10px] text-gray-400 block leading-none">АХЧ Портал</span>
           </div>
         </div>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-          aria-label="Toggle menu"
-        >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle className="text-gray-400 hover:text-white hover:bg-white/10" />
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Toggle menu"
+          >
+            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </header>
 
       {/* Desktop Fixed Sidebar (No animations or transforms that break position: fixed containing block context) */}
