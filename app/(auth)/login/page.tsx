@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useActionState, useTransition } from "react";
-import { signIn, demoSignIn, resetEmployeePassword } from "./actions";
+import { useState, useActionState, useTransition, useEffect } from "react";
+import { signIn, demoSignIn, resetPassword } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,12 +29,27 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [isDemoPending, startDemoTransition] = useTransition();
   const [activeDemoRole, setActiveDemoRole] = useState<"admin" | "employee" | "it_specialist" | "facilities" | "developer" | null>(null);
-  const [resetMessage, setResetMessage] = useState<{ error?: string; success?: string; tempPassword?: string } | null>(null);
+  const [resetMessage, setResetMessage] = useState<{ error?: string; success?: string } | null>(null);
   const [resetPending, setResetPending] = useState(false);
 
   const [logoClicks, setLogoClicks] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
   const [showDemoPanel, setShowDemoPanel] = useState(false);
+
+  const [paramsMessage, setParamsMessage] = useState<{ error?: string; success?: string } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const error = params.get("error");
+      const passwordReset = params.get("password_reset");
+      if (error === "invalid_link") {
+        setParamsMessage({ error: "Ссылка для сброса пароля недействительна или устарела." });
+      } else if (passwordReset === "success") {
+        setParamsMessage({ success: "Пароль успешно изменен. Войдите с новым паролем." });
+      }
+    }
+  }, []);
 
   const handleLogoClick = () => {
     const now = Date.now();
@@ -59,7 +74,7 @@ export default function LoginPage() {
     setResetPending(true);
     setResetMessage(null);
     try {
-      const res = await resetEmployeePassword(email);
+      const res = await resetPassword(email);
       setResetMessage(res);
     } catch (e: unknown) {
       const errMsg = e instanceof Error ? e.message : "Произошла неизвестная ошибка при сбросе пароля";
@@ -181,30 +196,19 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Params Message */}
+          {paramsMessage && (
+            <div className={`text-sm px-3 py-2 rounded-lg ${paramsMessage.error ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50 border border-green-200'}`}>
+              {paramsMessage.error && <p>{paramsMessage.error}</p>}
+              {paramsMessage.success && <p className="font-semibold">{paramsMessage.success}</p>}
+            </div>
+          )}
+
           {/* Reset Message */}
           {resetMessage && (
             <div className={`text-sm px-3 py-2 rounded-lg ${resetMessage.error ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50 border border-green-200'}`}>
               {resetMessage.error && <p>{resetMessage.error}</p>}
-              {resetMessage.success && (
-                <div className="space-y-1.5">
-                  <p className="font-semibold">{resetMessage.success}</p>
-                  {resetMessage.tempPassword && (
-                    <div className="flex flex-col gap-1 bg-white p-2 rounded border border-green-200">
-                      <span className="text-[11px] text-gray-500 font-normal">Временный пароль (нажмите, чтобы скопировать):</span>
-                      <code 
-                        onClick={() => {
-                          if (resetMessage.tempPassword) {
-                            navigator.clipboard.writeText(resetMessage.tempPassword);
-                          }
-                        }}
-                        className="font-mono text-base font-bold text-center block select-all cursor-pointer bg-gray-50 p-1 hover:bg-gray-100 rounded border transition-colors"
-                      >
-                        {resetMessage.tempPassword}
-                      </code>
-                    </div>
-                  )}
-                </div>
-              )}
+              {resetMessage.success && <p className="font-semibold">{resetMessage.success}</p>}
             </div>
           )}
 
