@@ -34,24 +34,15 @@ export default function ResetPasswordPage() {
       
       if (activeToken) {
         if (!exchangePromise) {
-          if (activeToken.startsWith("pkce_")) {
-            // It's a PKCE code! Use exchangeCodeForSession
-            exchangePromise = supabase.auth.exchangeCodeForSession(activeToken).then((res) => {
-              // Immediately remove token parameters from the URL once verified successfully
-              window.history.replaceState({}, document.title, window.location.pathname);
-              return res;
-            });
-          } else {
-            // It's a standard token_hash! Use verifyOtp
-            exchangePromise = supabase.auth.verifyOtp({
-              token_hash: activeToken,
-              type: "recovery",
-            }).then((res) => {
-              // Immediately remove token parameters from the URL once verified successfully
-              window.history.replaceState({}, document.title, window.location.pathname);
-              return res;
-            });
-          }
+          // Always use verifyOtp for recovery to avoid code_verifier issues across devices/environments
+          exchangePromise = supabase.auth.verifyOtp({
+            token_hash: activeToken,
+            type: "recovery",
+          }).then((res) => {
+            // Immediately remove token parameters from the URL once verified successfully
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return res;
+          });
         }
         
         try {
