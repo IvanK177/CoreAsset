@@ -787,13 +787,17 @@ export default function ITPortalClientView({
                           {/* Status icon */}
                           <div className={cn(
                             "flex items-center justify-center w-9 h-9 rounded-full shrink-0",
-                            isOpen ? "bg-yellow-100" : isInProgress ? "bg-blue-100" : "bg-emerald-100"
+                            isOpen 
+                              ? "bg-amber-500/10 dark:bg-amber-500/20" 
+                              : isInProgress 
+                                ? "bg-sky-500/10 dark:bg-sky-500/20" 
+                                : "bg-emerald-500/10 dark:bg-emerald-500/20"
                           )}>
                             {isOpen
-                              ? <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                              ? <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
                               : isInProgress
-                                ? <Clock className="w-4 h-4 text-blue-600" />
-                                : <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                ? <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                                : <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             }
                           </div>
 

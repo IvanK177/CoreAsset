@@ -112,10 +112,10 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  open: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  in_progress: "bg-blue-100 text-blue-700 border-blue-200",
-  resolved: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  cancelled: "bg-gray-100 text-gray-600 border-gray-200",
+  open: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20",
+  in_progress: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20",
+  resolved: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20",
+  cancelled: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20",
 };
 
 function formatDate(dateStr: string): string {
@@ -342,7 +342,9 @@ export default function PortalClientView({
                     {/* Status/Type icon */}
                     <div className={cn(
                       "flex items-center justify-center w-8 h-8 rounded-full shrink-0",
-                      isOpen ? "bg-yellow-100 text-yellow-600" : "bg-emerald-100 text-emerald-600"
+                      isOpen 
+                        ? "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400" 
+                        : "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
                     )}>
                       {isIT ? (
                         isOpen ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />
@@ -415,8 +417,8 @@ export default function PortalClientView({
                       <PriorityBadge priority={(item as IncidentData).priority as "low" | "medium" | "high" | "critical"} />
                     )}
                     {!isIT && (
-                      <Badge variant="outline" className={cn("text-xs font-semibold px-2 py-0.5", item.type === "ремонт" ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-indigo-50 text-indigo-700 border-indigo-200")}>
-                        {item.type === "ремонт" ? "Ремонт" : "Оснащение"}
+                      <Badge variant="outline" className={cn("text-xs font-semibold px-2 py-0.5", item.type?.toLowerCase() === "ремонт" ? "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20" : "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20")}>
+                        {item.type?.toLowerCase() === "ремонт" ? "Ремонт" : "Оснащение"}
                       </Badge>
                     )}
                     <Badge variant="outline" className={cn("text-xs font-medium px-2 py-0.5", statusColors[item.status] || "bg-gray-100")}>
@@ -517,10 +519,10 @@ export default function PortalClientView({
                   <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
                     #R{selectedRoomRequest.id.substring(0, 4).toUpperCase()}
                   </span>
-                  <Badge variant="outline" className={cn("text-xs font-semibold px-2 py-0.5", selectedRoomRequest.type === "ремонт" ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-indigo-50 text-indigo-700 border-indigo-200")}>
-                    {selectedRoomRequest.type === "ремонт" ? "Ремонт" : "Оснащение"}
+                  <Badge variant="outline" className={cn("text-xs font-semibold px-2 py-0.5", selectedRoomRequest.type?.toLowerCase() === "ремонт" ? "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20" : "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20")}>
+                    {selectedRoomRequest.type?.toLowerCase() === "ремонт" ? "Ремонт" : "Оснащение"}
                   </Badge>
-                  <Badge variant="outline" className={cn("text-xs font-medium px-2 py-0.5", selectedRoomRequest.status === "open" ? "bg-yellow-100 text-yellow-700 border-yellow-200" : selectedRoomRequest.status === "in_progress" ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-emerald-100 text-emerald-700 border-emerald-200")}>
+                  <Badge variant="outline" className={cn("text-xs font-medium px-2 py-0.5", selectedRoomRequest.status === "open" ? "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20" : selectedRoomRequest.status === "in_progress" ? "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20" : "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20")}>
                     {selectedRoomRequest.status === "open" ? "Открыта" : selectedRoomRequest.status === "in_progress" ? "В работе" : "Решена"}
                   </Badge>
                 </div>

@@ -47,9 +47,9 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  open: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  in_progress: "bg-blue-100 text-blue-700 border-blue-200",
-  resolved: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  open: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20",
+  in_progress: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20",
+  resolved: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20",
 };
 
 const typeLabels: Record<string, string> = {
@@ -58,8 +58,8 @@ const typeLabels: Record<string, string> = {
 };
 
 const typeColors: Record<string, string> = {
-  ремонт: "bg-orange-50 text-orange-700 border-orange-200",
-  оснащение: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  ремонт: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20",
+  оснащение: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20",
 };
 
 function getShortId(id: string) {
@@ -288,8 +288,8 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs text-muted-foreground font-mono">{getShortId(req.id)}</span>
-                  <Badge variant="outline" className={cn("text-[10px] font-semibold", typeColors[req.type])}>
-                    {typeLabels[req.type] || req.type}
+                  <Badge variant="outline" className={cn("text-[10px] font-semibold", typeColors[req.type.toLowerCase()])}>
+                    {typeLabels[req.type.toLowerCase()] || req.type}
                   </Badge>
                   <Badge variant="outline" className={cn("text-[10px] font-medium", statusColors[req.status])}>
                     {statusLabels[req.status] || req.status}
@@ -306,8 +306,8 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">{getShortId(selectedRequest.id)}</span>
-                <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[selectedRequest.type])}>
-                  {typeLabels[selectedRequest.type] || selectedRequest.type}
+                <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[selectedRequest.type.toLowerCase()])}>
+                  {typeLabels[selectedRequest.type.toLowerCase()] || selectedRequest.type}
                 </Badge>
                 <Badge variant="outline" className={cn("text-xs font-medium", statusColors[selectedRequest.status])}>
                   {statusLabels[selectedRequest.status] || selectedRequest.status}
@@ -712,8 +712,8 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
 
                       {/* Badges */}
                       <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap pl-12 sm:pl-0">
-                        <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[req.type])}>
-                          {typeLabels[req.type] || req.type}
+                        <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[req.type.toLowerCase()])}>
+                          {typeLabels[req.type.toLowerCase()] || req.type}
                         </Badge>
                         <Badge variant="outline" className={cn("text-xs font-medium", statusColors[req.status])}>
                           {statusLabels[req.status] || req.status}
