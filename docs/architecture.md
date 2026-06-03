@@ -4,7 +4,7 @@
 
 ## Обзор
 
-CoreAsset — **API-first** монолит на Next.js с Supabase в роли BaaS.  
+CoreAsset — **API-first** монолит на Next.js 16 (Turbopack) с Supabase в роли BaaS.  
 Нет отдельного бэкенд-сервера — вся серверная логика живёт в **Next.js Server Actions / Route Handlers** и **Supabase Edge Functions** (при необходимости).
 
 ```
@@ -35,9 +35,9 @@ CoreAsset/
 │   ├── (dashboard)/
 │   │   ├── layout.tsx            — sidebar + header
 │   │   ├── page.tsx              — дашборд (главная)
-│   │   ├── computers/
-│   │   │   ├── page.tsx          — список компьютеров
-│   │   │   ├── [id]/page.tsx     — карточка компьютера
+│   │   ├── devices/
+│   │   │   ├── page.tsx          — список устройств
+│   │   │   ├── [id]/page.tsx     — карточка устройства
 │   │   │   └── new/page.tsx      — форма добавления
 │   │   ├── employees/
 │   │   │   ├── page.tsx
@@ -52,14 +52,14 @@ CoreAsset/
 │   ├── api/
 │   │   └── [...supabase]/route.ts  — Supabase Auth callback
 │   ├── layout.tsx
-│   └── globals.css
+│   └── globals.css               — глобальные стили Tailwind CSS v4
 │
 ├── components/
 │   ├── ui/                        — shadcn/ui компоненты
-│   ├── computers/
-│   │   ├── ComputerTable.tsx
-│   │   ├── ComputerCard.tsx
-│   │   └── ComputerForm.tsx
+│   ├── devices/
+│   │   ├── DeviceTable.tsx
+│   │   ├── DeviceCard.tsx
+│   │   └── DeviceForm.tsx
 │   ├── employees/
 │   ├── licenses/
 │   │   └── LicensePoolBadge.tsx   — индикатор баланса / алерт истечения
@@ -73,7 +73,7 @@ CoreAsset/
 │   │   ├── client.ts              — createBrowserClient()
 │   │   └── server.ts              — createServerClient() (cookies)
 │   ├── schemas/                   — Zod схемы (валидация форм)
-│   │   ├── computer.schema.ts
+│   │   ├── device.schema.ts
 │   │   ├── employee.schema.ts
 │   │   ├── license.schema.ts
 │   │   └── incident.schema.ts
@@ -88,7 +88,7 @@ CoreAsset/
 │   └── migrations/                — SQL-миграции
 ├── .env.local                     — переменные окружения (не коммитить)
 ├── next.config.ts
-├── tailwind.config.ts
+├── postcss.config.mjs             — конфигурация PostCSS (для Tailwind v4)
 └── tsconfig.json
 ```
 
@@ -100,22 +100,22 @@ CoreAsset/
 |----------|--------|
 | Auth provider | Supabase Auth (email + password) |
 | Сессия | JWT в httpOnly cookie через `@supabase/ssr` |
-| Middleware | `middleware.ts` — проверка сессии на каждый запрос к `(dashboard)` |
-| RBAC | Роль хранится в `auth.users.app_metadata.role` (admin / tech / readonly) |
+| Middleware | Проверка сессии на каждый запрос к `(dashboard)` |
+| RBAC | Роль хранится в `auth.users.app_metadata.role` (admin / employee / it_specialist / facilities / developer) |
 | RLS | Политики на каждой таблице, читают `auth.uid()` и `auth.jwt() → role` |
 
 ---
 
-## Поток данных (пример: добавление компьютера)
+## Поток данных (пример: добавление устройства)
 
 ```
-1. Client: заполняет ComputerForm (React Hook Form + Zod)
-2. Client: вызывает Server Action createComputer(formData)
+1. Client: заполняет DeviceForm (React Hook Form + Zod)
+2. Client: вызывает Server Action createDevice(formData)
 3. Server Action: повторная валидация через Zod
-4. Server Action: supabase.from('computers').insert(data)
-5. Supabase: проверяет RLS (роль = admin / tech?)
+4. Server Action: supabase.from('devices').insert(data)
+5. Supabase: проверяет RLS (роль = admin / it_specialist / facilities)
 6. PostgreSQL: INSERT + обновление индексов
-7. Server Action: revalidatePath('/computers')
+7. Server Action: revalidatePath('/devices')
 8. Client: таблица обновляется (RSC refetch)
 ```
 

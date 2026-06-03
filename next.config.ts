@@ -1,15 +1,15 @@
 import type { NextConfig } from "next";
-import dns from "dns";
 
-// Override DNS resolution to bypass slow/broken local system DNS (e.g. xbox-dns.ru)
-try {
-  dns.setServers(["8.8.8.8", "1.1.1.1"]);
-} catch (e) {
-  console.warn("Failed to set DNS servers:", e);
+// Local development network workarounds (bypasses DNS issues & SSL decryption firewalls in RU networks)
+if (process.env.NODE_ENV === "development") {
+  const dns = require("dns");
+  try {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+  } catch (e) {
+    console.warn("Failed to set DNS servers:", e);
+  }
+  process.env.NODE_USE_SYSTEM_CA = "1";
 }
-
-// Use the Windows System Certificate Store to trust local/corporate CA certificates (prevents ECONNRESET from firewalls/inspectors)
-process.env.NODE_USE_SYSTEM_CA = "1";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -22,6 +22,14 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/supabase-proxy/:path*",
+        destination: "https://tmivtbessykjksntdcwl.supabase.co/:path*",
+      },
+    ];
   },
 };
 

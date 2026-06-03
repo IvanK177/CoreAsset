@@ -9,7 +9,7 @@
 
 **CoreAsset** — веб-приложение для ИТ-отделов и системных администраторов:
 - Реестр сотрудников и рабочих мест
-- Инвентаризация оборудования и характеристик
+- Инвентаризация устройств и их характеристик
 - Управление пулами лицензий ПО с контролем баланса
 - Service Desk: журнал неисправностей и тикеты
 - Дашборд с аналитикой
@@ -20,10 +20,8 @@
 | Файл | Содержание |
 |------|-----------|
 | [docs/specification.md](docs/specification.md) | Спецификация ПО: функциональные и нефункциональные требования (КТ-1) |
-| [docs/features.md](docs/features.md) | Описание модулей и функций системы |
-| [docs/database.md](docs/database.md) | Схема БД, таблицы, индексы (КТ-2) |
-| [docs/ui-mockups-and-algorithms.md](docs/ui-mockups-and-algorithms.md) | Макеты UI (7 экранов), схема навигации, алгоритмы (КТ-2) |
-| [docs/architecture.md](docs/architecture.md) | Архитектура приложения, структура проекта |
+| [docs/architecture.md](docs/architecture.md) | Архитектура приложения, структура проекта (КТ-2) |
+| [docs/completed_features.md](docs/completed_features.md) | Реализованный функционал проекта |
 | [docs/roadmap.md](docs/roadmap.md) | Календарный план (20 рабочих дней практики) |
 | [docs/user-guide.md](docs/user-guide.md) | Руководство пользователя |
 
@@ -33,9 +31,9 @@
 
 | Слой | Технология |
 |------|-----------|
-| Фреймворк | Next.js 15 (App Router) |
+| Фреймворк | Next.js 16 (App Router, Turbopack) |
 | Язык | TypeScript |
-| Стилизация | Tailwind CSS + shadcn/ui |
+| Стилизация | Tailwind CSS v4 + shadcn/ui |
 | Формы / Валидация | React Hook Form + Zod |
 | База данных | Supabase (PostgreSQL) |
 | Supabase SDK | `@supabase/supabase-js` + `@supabase/ssr` |
@@ -106,10 +104,8 @@ npm run dev
 CoreAsset/
 ├── docs/                          — проектная документация
 │   ├── specification.md           — спецификация ПО (КТ-1)
-│   ├── features.md                — описание функций по модулям
-│   ├── database.md                — схема БД (КТ-2)
-│   ├── ui-mockups-and-algorithms.md — макеты и алгоритмы (КТ-2)
-│   ├── architecture.md            — архитектура приложения
+│   ├── architecture.md            — архитектура приложения (КТ-2)
+│   ├── completed_features.md      — реализованный функционал
 │   ├── roadmap.md                 — план 20 дней практики
 │   └── user-guide.md              — руководство пользователя
 ├── college_assignments/           — задания колледжа (исходники)
@@ -120,6 +116,6 @@ CoreAsset/
 
 ## Авторы
 
-Миняев Иван(документация), Копаев Иван(разработчик) 
+Миняев Иван (документация), Копаев Иван (разработчик) 
 
 Главные инструменты: Claude Sonnet 4.6, Gemini, GLM-5.1, VS Code
