@@ -118,16 +118,16 @@ export function IncidentDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6 border-none shadow-2xl">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto rounded-2xl p-5 sm:p-6 shadow-2xl">
         <DialogHeader className="space-y-1.5">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+            <span className="text-xs font-semibold text-blue-600 bg-blue-500/10 px-2.5 py-1 rounded-full border border-blue-500/20">
               #T{shortId}
             </span>
             <IncidentStatusBadge status={incident.status as "open" | "in_progress" | "resolved"} />
             <PriorityBadge priority={incident.priority as "low" | "medium" | "high" | "critical"} />
           </div>
-          <DialogTitle className="text-xl font-bold text-gray-900 leading-snug">
+          <DialogTitle className="text-xl font-bold text-foreground leading-snug">
             {title}
           </DialogTitle>
           <DialogDescription className="hidden">
@@ -137,18 +137,18 @@ export function IncidentDetailsDialog({
 
         <div className="mt-4 space-y-5">
           {/* Metadata Grid */}
-          <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50/70 border border-gray-100/80 text-sm">
+          <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-muted/30 border border-border text-sm">
             <div className="space-y-1">
-              <span className="text-xs font-medium text-gray-400 block">Тип проблемы</span>
-              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+              <span className="text-xs font-medium text-muted-foreground block">Тип проблемы</span>
+              <div className="flex items-center gap-1.5 font-medium text-foreground/90">
                 <Wrench className="w-4 h-4 text-blue-500 shrink-0" />
                 <span>{typeLabel}</span>
               </div>
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs font-medium text-gray-400 block">Дата создания</span>
-              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+              <span className="text-xs font-medium text-muted-foreground block">Дата создания</span>
+              <div className="flex items-center gap-1.5 font-medium text-foreground/90">
                 <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
                 <span>{formatDateTimeRu(incident.created_at)}</span>
               </div>
@@ -156,19 +156,19 @@ export function IncidentDetailsDialog({
 
             {incident.status === "resolved" && (
               <div className="space-y-1">
-                <span className="text-xs font-medium text-gray-400 block">Решено кем</span>
-                <div className="flex items-center gap-1.5 font-medium text-gray-700">
+                <span className="text-xs font-medium text-muted-foreground block">Решено кем</span>
+                <div className="flex items-center gap-1.5 font-medium text-foreground/90">
                   <User className="w-4 h-4 text-violet-500 shrink-0" />
                   <span>{resolvedBy}</span>
                 </div>
               </div>
             )}
 
-            <div className="col-span-2 space-y-1 pt-1 border-t border-gray-100">
-              <span className="text-xs font-medium text-gray-400 block">Устройство / Оборудование</span>
-              <div className="flex items-center gap-1.5 font-medium text-gray-700">
+            <div className="col-span-2 space-y-1 pt-1 border-t border-border">
+              <span className="text-xs font-medium text-muted-foreground block">Устройство / Оборудование</span>
+              <div className="flex items-center gap-1.5 font-medium text-foreground/90">
                 <Monitor className="w-4 h-4 text-indigo-500 shrink-0" />
-                <span className={deviceInfo ? "font-medium" : "text-gray-400"}>
+                <span className={deviceInfo ? "font-medium" : "text-muted-foreground"}>
                   {deviceInfo ?? "Устройство не привязано"}
                 </span>
               </div>
@@ -177,19 +177,19 @@ export function IncidentDetailsDialog({
 
           {/* Description Section */}
           <div className="space-y-2">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
               <FileText className="w-3.5 h-3.5" />
               Описание инцидента
             </span>
-            <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 max-h-[220px] overflow-y-auto shadow-inner-sm">
-              <DecompressedText text={incident.description} className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed" />
+            <div className="p-4 rounded-xl bg-muted/50 border border-border max-h-[220px] overflow-y-auto shadow-inner-sm">
+              <DecompressedText text={incident.description} className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed" />
             </div>
           </div>
 
           {/* Attached Photos */}
           {incident.photo_urls && incident.photo_urls.length > 0 && (
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Фотографии ({incident.photo_urls.length})
               </span>
               <div className="flex flex-wrap gap-2">
@@ -198,7 +198,7 @@ export function IncidentDetailsDialog({
                     key={idx}
                     type="button"
                     onClick={() => setPreviewImageUrl(url)}
-                    className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
+                    className="relative w-20 h-20 rounded-lg overflow-hidden border border-border block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
                   >
                     <img
                       src={url}
@@ -218,8 +218,8 @@ export function IncidentDetailsDialog({
                 <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
                 Что было сделано (Решение)
               </span>
-              <div className="p-4 rounded-xl bg-emerald-50/40 border border-emerald-100 max-h-[220px] overflow-y-auto">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 max-h-[220px] overflow-y-auto">
+                <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
                   {incident.resolution}
                 </p>
               </div>
@@ -233,13 +233,13 @@ export function IncidentDetailsDialog({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+        <div className="flex justify-between items-center pt-3 border-t border-border">
           <div>
             {incident.status === "open" && (
               <button
                 onClick={handleCancel}
                 disabled={isPending}
-                className="h-10 px-4 rounded-lg bg-red-50 text-red-600 border border-red-100 font-medium text-sm hover:bg-red-100 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                className="h-10 px-4 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 font-medium text-sm hover:bg-red-500/20 transition-colors flex items-center gap-1.5 disabled:opacity-50"
               >
                 {isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin animate-infinite" />
@@ -252,7 +252,7 @@ export function IncidentDetailsDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="h-10 px-5 rounded-lg border border-gray-200 text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors"
+            className="h-10 px-5 rounded-lg border border-border text-foreground font-medium text-sm hover:bg-muted transition-colors"
           >
             Закрыть
           </button>

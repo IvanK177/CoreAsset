@@ -46,7 +46,7 @@ const priorityOptions: { value: PriorityLevel; label: string; activeClassName: s
   {
     value: "low",
     label: "Не срочно",
-    activeClassName: "border-gray-300 text-gray-600 bg-gray-50",
+    activeClassName: "border-border text-foreground bg-muted",
   },
   {
     value: "medium",
@@ -56,12 +56,12 @@ const priorityOptions: { value: PriorityLevel; label: string; activeClassName: s
   {
     value: "high",
     label: "Срочно",
-    activeClassName: "border-orange-400 text-orange-600 bg-orange-50",
+    activeClassName: "border-orange-500/30 text-orange-600 dark:text-orange-400 bg-orange-500/10",
   },
   {
     value: "critical",
     label: "Критично",
-    activeClassName: "border-red-400 text-red-600 bg-red-50",
+    activeClassName: "border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/10",
   },
 ];
 
@@ -284,7 +284,7 @@ export function NewTicketDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto rounded-2xl p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Новая заявка</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -303,13 +303,13 @@ export function NewTicketDialog({
               placeholder="Например: не работает интернет"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
+              className="h-11 rounded-lg border-border bg-background"
             />
           </div>
 
           {/* Templates */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Шаблоны заявок (нажмите для автозаполнения)
             </Label>
             <div className="flex flex-wrap gap-1.5">
@@ -323,7 +323,7 @@ export function NewTicketDialog({
                     setPriority(tmpl.priority);
                     setIncidentType(tmpl.type);
                   }}
-                  className="px-2.5 py-1 text-xs font-medium bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full cursor-pointer transition-colors"
+                  className="px-2.5 py-1 text-xs font-medium bg-muted hover:bg-muted/80 border border-border text-muted-foreground hover:text-foreground rounded-full cursor-pointer transition-colors"
                 >
                   {tmpl.title}
                 </button>
@@ -342,7 +342,7 @@ export function NewTicketDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="rounded-lg border-gray-200 resize-none"
+              className="rounded-lg border-border bg-background resize-none"
             />
           </div>
 
@@ -358,7 +358,7 @@ export function NewTicketDialog({
               onValueChange={(v) => setDeviceId(v ?? "")}
               items={deviceItems}
             >
-              <SelectTrigger className="h-11 rounded-lg border-gray-200 w-full">
+              <SelectTrigger className="h-11 rounded-lg border-border bg-background w-full">
                 <SelectValue placeholder={devices.length > 0 ? "Выберите устройство" : "Нет доступных устройств"} />
               </SelectTrigger>
               <SelectContent>
@@ -392,7 +392,7 @@ export function NewTicketDialog({
                     "h-9 rounded-lg text-xs xs:text-sm font-medium transition-all duration-150 border w-full",
                     priority === opt.value
                       ? opt.activeClassName
-                      : "border-gray-200 text-gray-400 hover:bg-gray-50"
+                      : "border-border text-muted-foreground hover:bg-muted"
                   )}
                 >
                   {opt.label}
@@ -404,11 +404,11 @@ export function NewTicketDialog({
           {/* Attach Photos */}
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-1.5">
-              <Camera className="w-4 h-4 text-gray-500" />
+              <Camera className="w-4 h-4 text-muted-foreground" />
               Прикрепить фото
             </Label>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex items-center justify-center border border-dashed border-border rounded-lg p-4 cursor-pointer hover:bg-muted transition-colors">
                 <input
                   type="file"
                   multiple
@@ -418,15 +418,15 @@ export function NewTicketDialog({
                   disabled={pending}
                 />
                 <div className="text-center space-y-1">
-                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto" />
-                  <span className="text-xs text-gray-500 block">Нажмите, чтобы выбрать изображения</span>
+                  <ImageIcon className="w-6 h-6 text-muted-foreground mx-auto" />
+                  <span className="text-xs text-muted-foreground block">Нажмите, чтобы выбрать изображения</span>
                 </div>
               </label>
 
               {photoPreviews.length > 0 && (
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {photoPreviews.map((preview, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                    <div key={index} className="relative aspect-square rounded-lg border border-border overflow-hidden group">
                       <img src={preview} alt="Превью" className="object-cover w-full h-full" />
                       <button
                         type="button"
@@ -446,7 +446,7 @@ export function NewTicketDialog({
 
           {/* Error */}
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+            <p className="text-sm text-red-600 bg-red-500/10 px-3 py-2 rounded-lg">
               {error}
             </p>
           )}
@@ -456,7 +456,7 @@ export function NewTicketDialog({
             <Button
               type="button"
               variant="outline"
-              className="flex-1 h-10 rounded-lg border-gray-200 text-gray-700"
+              className="flex-1 h-10 rounded-lg border-border text-foreground hover:bg-muted"
               onClick={handleClose}
               disabled={pending}
             >

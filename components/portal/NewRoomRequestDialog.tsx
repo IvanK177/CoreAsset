@@ -217,7 +217,7 @@ export function NewRoomRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto rounded-2xl p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Заявка в АХЧ</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -236,7 +236,7 @@ export function NewRoomRequestDialog({
               placeholder="Например: 204"
               value={room}
               onChange={(e) => setRoom(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
+              className="h-11 rounded-lg border-border bg-background"
               required
             />
           </div>
@@ -252,7 +252,7 @@ export function NewRoomRequestDialog({
                 оснащение: "Оснащение",
               }}
             >
-              <SelectTrigger className="h-11 rounded-lg border-gray-200 w-full bg-white">
+              <SelectTrigger className="h-11 rounded-lg border-border w-full bg-background">
                 <SelectValue placeholder="Выберите тип" />
               </SelectTrigger>
               <SelectContent>
@@ -275,7 +275,7 @@ export function NewRoomRequestDialog({
                 critical: "Критический",
               }}
             >
-              <SelectTrigger className="h-11 rounded-lg border-gray-200 w-full bg-white">
+              <SelectTrigger className="h-11 rounded-lg border-border w-full bg-background">
                 <SelectValue placeholder="Выберите приоритет" />
               </SelectTrigger>
               <SelectContent>
@@ -289,7 +289,7 @@ export function NewRoomRequestDialog({
 
           {/* Templates */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Шаблоны заявок (нажмите для автозаполнения)
             </Label>
             <div className="flex flex-wrap gap-1.5">
@@ -301,7 +301,7 @@ export function NewRoomRequestDialog({
                     setType(tmpl.type);
                     setDescription(tmpl.description);
                   }}
-                  className="px-2.5 py-1 text-xs font-medium bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full cursor-pointer transition-colors"
+                  className="px-2.5 py-1 text-xs font-medium bg-muted hover:bg-muted/80 border border-border text-muted-foreground hover:text-foreground rounded-full cursor-pointer transition-colors"
                 >
                   {tmpl.title}
                 </button>
@@ -320,7 +320,7 @@ export function NewRoomRequestDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className="rounded-lg border-gray-200 resize-none"
+              className="rounded-lg border-border bg-background resize-none"
               required
             />
           </div>
@@ -328,11 +328,11 @@ export function NewRoomRequestDialog({
           {/* Attach Photos */}
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-1.5">
-              <Camera className="w-4 h-4 text-gray-500" />
+              <Camera className="w-4 h-4 text-muted-foreground" />
               Прикрепить фото
             </Label>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex items-center justify-center border border-dashed border-border rounded-lg p-4 cursor-pointer hover:bg-muted transition-colors">
                 <input
                   type="file"
                   multiple
@@ -342,15 +342,15 @@ export function NewRoomRequestDialog({
                   disabled={pending}
                 />
                 <div className="text-center space-y-1">
-                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto" />
-                  <span className="text-xs text-gray-500 block">Нажмите, чтобы выбрать изображения</span>
+                  <ImageIcon className="w-6 h-6 text-muted-foreground mx-auto" />
+                  <span className="text-xs text-muted-foreground block">Нажмите, чтобы выбрать изображения</span>
                 </div>
               </label>
 
               {photoPreviews.length > 0 && (
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {photoPreviews.map((preview, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                    <div key={index} className="relative aspect-square rounded-lg border border-border overflow-hidden group">
                       <img src={preview} alt="Превью" className="object-cover w-full h-full" />
                       <button
                         type="button"
@@ -370,7 +370,7 @@ export function NewRoomRequestDialog({
 
           {/* Error */}
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+            <p className="text-sm text-red-600 bg-red-500/10 px-3 py-2 rounded-lg">
               {error}
             </p>
           )}
@@ -380,7 +380,7 @@ export function NewRoomRequestDialog({
             <Button
               type="button"
               variant="outline"
-              className="flex-1 h-10 rounded-lg border-gray-200 text-gray-700"
+              className="flex-1 h-10 rounded-lg border-border text-foreground hover:bg-muted"
               onClick={handleClose}
               disabled={pending}
             >

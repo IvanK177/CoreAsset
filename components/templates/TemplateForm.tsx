@@ -50,7 +50,7 @@ export default function TemplateForm({ template, action }: TemplateFormProps) {
   const isMonitor = deviceType === "monitor";
 
   return (
-    <form action={formAction} className="space-y-5 max-w-lg bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+    <form action={formAction} className="space-y-5 max-w-lg bg-card p-6 rounded-2xl border border-border shadow-sm">
       <div className="space-y-2">
         <Label htmlFor="name">Название шаблона *</Label>
         <Input id="name" name="name" defaultValue={template?.name} placeholder="Например: ПК Разработчика или Монитор 24''" required />
@@ -123,8 +123,8 @@ export default function TemplateForm({ template, action }: TemplateFormProps) {
       )}
 
       {!isComputer && !isMonitor && (
-        <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 text-center">
-          <p className="text-xs text-gray-500">
+        <div className="rounded-xl bg-muted/40 border border-border p-4 text-center">
+          <p className="text-xs text-muted-foreground">
             Для данного типа периферии не требуются дополнительные технические характеристики.
           </p>
         </div>
@@ -151,10 +151,10 @@ function SeparatorTitle({ title }: { title: string }) {
   return (
     <div className="relative py-2">
       <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-full border-t border-gray-200" />
+        <div className="w-full border-t border-border" />
       </div>
       <div className="relative flex justify-start">
-        <span className="bg-white pr-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{title}</span>
+        <span className="bg-card pr-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</span>
       </div>
     </div>
   );

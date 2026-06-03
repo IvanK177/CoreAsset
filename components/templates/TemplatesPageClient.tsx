@@ -49,12 +49,12 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
       />
 
       {templates.length === 0 ? (
-        <div className="rounded-2xl bg-white p-12 shadow-sm border border-gray-100 text-center">
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mx-auto mb-4 text-[#2563eb]">
+        <div className="rounded-2xl bg-card p-12 shadow-sm border border-border text-center">
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 mx-auto mb-4 text-blue-500">
             <ClipboardList className="w-8 h-8" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Нет созданных шаблонов</h3>
-          <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">
+          <h3 className="text-lg font-semibold text-foreground mb-1">Нет созданных шаблонов</h3>
+          <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
             Создайте шаблон, чтобы стандартизировать конфигурации устройств и быстро заполнять характеристики при добавлении оборудования.
           </p>
           <Link href="/templates/new">
@@ -69,11 +69,11 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
             const isMonitor = tpl.computer_type === "monitor";
 
             return (
-              <div key={tpl.id} className="rounded-2xl bg-white p-5 border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div key={tpl.id} className="rounded-2xl bg-card p-5 border border-border shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div>
-                      <h3 className="font-bold text-gray-900 text-base">{tpl.name}</h3>
+                      <h3 className="font-bold text-foreground text-base">{tpl.name}</h3>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {tpl.computer_type === "desktop" ? (
                           <>
@@ -84,20 +84,20 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
                         )}
                       </p>
                     </div>
-                    <Badge variant="secondary" className="bg-blue-50 text-blue-700 border border-blue-200 font-medium">
+                    <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border border-blue-500/20 font-medium">
                       Шаблон
                     </Badge>
                   </div>
 
                   {tpl.description && (
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-4">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                       {tpl.description}
                     </p>
                   )}
 
                   {/* Hardware details grid */}
                   {isComputer && (
-                    <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-600">
+                    <div className="grid grid-cols-2 gap-2 bg-muted/40 rounded-xl p-3 mb-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Cpu className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                         <span className="truncate" title={hw.cpu}>{hw.cpu || "—"}</span>
@@ -118,7 +118,7 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
                   )}
 
                   {isMonitor && (
-                    <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-600">
+                    <div className="grid grid-cols-2 gap-2 bg-muted/40 rounded-xl p-3 mb-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-400 shrink-0">Диагональ:</span>
                         <span className="truncate" title={hw.diagonal}>{hw.diagonal || "—"}</span>
@@ -131,16 +131,16 @@ export default function TemplatesPageClient({ templates }: TemplatesPageClientPr
                   )}
 
                   {!isComputer && !isMonitor && (
-                    <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-500 italic text-center">
+                    <div className="bg-muted/40 rounded-xl p-3 mb-4 text-xs text-muted-foreground italic text-center">
                       Простой шаблон без спецификаций железа
                     </div>
                   )}
                 </div>
 
                 {/* Footer actions */}
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                   <Link href={`/templates/${tpl.id}/edit`}>
-                    <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900 gap-1.5 h-9 rounded-lg">
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-muted gap-1.5 h-9 rounded-lg">
                       <Edit className="w-4 h-4" />
                       Изменить
                     </Button>

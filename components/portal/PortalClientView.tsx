@@ -199,13 +199,13 @@ export default function PortalClientView({
       </div>
 
       {/* ===== Block 2: My Devices ===== */}
-      <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="rounded-2xl bg-card p-6 shadow-sm border border-border">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
           Мои устройства ({devices.length})
         </h2>
 
         {devices.length === 0 ? (
-          <p className="text-sm text-gray-500 py-4 text-center">
+          <p className="text-sm text-muted-foreground py-4 text-center">
             Нет привязанных устройств
           </p>
         ) : (
@@ -217,21 +217,21 @@ export default function PortalClientView({
               return (
                 <div
                   key={comp.id}
-                  className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100"
+                  className="flex items-start gap-4 p-4 rounded-xl bg-muted/30 border border-border"
                 >
                   {/* Icon */}
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100 shrink-0">
-                    <IconComponent className="w-5 h-5 text-blue-600" />
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-500/10 shrink-0">
+                    <IconComponent className="w-5 h-5 text-blue-500" />
                   </div>
 
                   {/* Main info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-semibold text-gray-900 text-sm">
+                      <span className="font-semibold text-foreground text-sm">
                         {comp.inventory_number}
                       </span>
                       <DeviceStatusBadge status={comp.lifecycle_status as "active" | "repair" | "decommissioned" | "storage"} />
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         [{typeLabel}] {comp.computer_type ?? "—"}
                         {comp.room && ` · каб. ${comp.room}`}
                       </span>
@@ -285,18 +285,18 @@ export default function PortalClientView({
       </div>
 
       {/* ===== Block 3: My Tickets & AHO Requests ===== */}
-      <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
+      <div className="rounded-2xl bg-card p-6 shadow-sm border border-border">
         {/* Tab switcher header */}
-        <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 flex-wrap gap-2">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between mb-4 border-b border-border pb-3 flex-wrap gap-2">
+          <h2 className="text-lg font-semibold text-foreground">
             Мои заявки ({activeItems.length + archivedItems.length})
           </h2>
-          <div className="flex bg-gray-100 p-0.5 rounded-lg">
+          <div className="flex bg-muted p-0.5 rounded-lg">
             <button
               onClick={() => setPortalTab("active")}
               className={cn(
                 "px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
-                portalTab === "active" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                portalTab === "active" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
               Активные ({activeItems.length})
@@ -305,7 +305,7 @@ export default function PortalClientView({
               onClick={() => setPortalTab("archive")}
               className={cn(
                 "px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
-                portalTab === "archive" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                portalTab === "archive" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
               Архив ({archivedItems.length})
@@ -314,7 +314,7 @@ export default function PortalClientView({
         </div>
 
         {currentItems.length === 0 ? (
-          <p className="text-sm text-gray-500 py-8 text-center bg-gray-50/50 rounded-xl border border-gray-100 border-dashed">
+          <p className="text-sm text-muted-foreground py-8 text-center bg-muted/20 rounded-xl border border-border border-dashed">
             {portalTab === "active" ? "Нет активных заявок" : "Архив пуст"}
           </p>
         ) : (
@@ -334,8 +334,8 @@ export default function PortalClientView({
                     }
                   }}
                   className={cn(
-                    "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-blue-300 hover:bg-blue-50/10 cursor-pointer transition-all duration-150",
-                    portalTab === "archive" && "p-3 bg-gray-50/30"
+                    "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/20 border border-border hover:border-blue-500/30 hover:bg-blue-500/5 cursor-pointer transition-all duration-150",
+                    portalTab === "archive" && "p-3 bg-muted/10"
                   )}
                 >
                   <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -354,10 +354,10 @@ export default function PortalClientView({
                     {/* Request info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-mono text-gray-400">
+                        <span className="text-xs font-mono text-muted-foreground">
                           {isIT ? getIncidentNumber(item as IncidentData) : `#R${item.id.substring(0, 4).toUpperCase()}`}
                         </span>
-                        <span className="font-semibold text-sm text-gray-900 truncate">
+                        <span className="font-semibold text-sm text-foreground truncate">
                           {isIT ? getIncidentTitle(item as IncidentData) : `Заявка АХЧ: каб. ${item.room}`}
                         </span>
                         {isIT && (() => {
@@ -374,15 +374,15 @@ export default function PortalClientView({
                           };
                           const typeLabel = deviceTypeRussianLabels[deviceType] || "Устройство";
                           return (
-                            <span className="text-[11px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded flex items-center gap-1 font-medium select-none border border-blue-100 shrink-0">
+                            <span className="text-[11px] bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded flex items-center gap-1 font-medium select-none border border-blue-500/20 shrink-0">
                               <span>{emojiMap[deviceType] || "🔌"}</span>
                               <span>{typeLabel}</span>
                             </span>
                           );
                         })()}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1 flex items-center gap-1.5 flex-wrap">
-                        <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+                      <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span className="bg-muted text-muted-foreground px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
                           {isIT ? "IT инцидент" : "АХЧ"}
                         </span>
                         <span>·</span>
@@ -448,7 +448,7 @@ export default function PortalClientView({
 
       {/* ===== Request Type Choice Dialog ===== */}
       <Dialog open={typeChoiceOpen} onOpenChange={setTypeChoiceOpen}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto rounded-2xl p-5 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-center">Создать заявку</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground text-center">
@@ -463,14 +463,14 @@ export default function PortalClientView({
                 setTypeChoiceOpen(false);
                 setTicketDialogOpen(true);
               }}
-              className="flex items-start gap-4 p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50/20 text-left transition-all duration-150 group cursor-pointer"
+              className="flex items-start gap-4 p-4 rounded-xl border border-border hover:border-blue-500/30 hover:bg-blue-500/5 text-left transition-all duration-150 group cursor-pointer"
             >
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
                 <Laptop className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 text-sm mb-1">Проблемы с IT-оборудованием</h4>
-                <p className="text-xs text-gray-500 leading-normal">
+                <h4 className="font-semibold text-foreground text-sm mb-1">Проблемы с IT-оборудованием</h4>
+                <p className="text-xs text-muted-foreground leading-normal">
                   Не работает ПК, монитор, клавиатура, ПО, интернет, принтер или телефония.
                 </p>
               </div>
@@ -482,14 +482,14 @@ export default function PortalClientView({
                 setTypeChoiceOpen(false);
                 setRoomRequestDialogOpen(true);
               }}
-              className="flex items-start gap-4 p-4 rounded-xl border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/20 text-left transition-all duration-150 group cursor-pointer"
+              className="flex items-start gap-4 p-4 rounded-xl border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-left transition-all duration-150 group cursor-pointer"
             >
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
                 <Wrench className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 text-sm mb-1">Ремонт или оснащение кабинета</h4>
-                <p className="text-xs text-gray-500 leading-normal">
+                <h4 className="font-semibold text-foreground text-sm mb-1">Ремонт или оснащение кабинета</h4>
+                <p className="text-xs text-muted-foreground leading-normal">
                   Сломалась мебель, перегорела лампа, розетка, нужен ремонт или доп. оснащение.
                 </p>
               </div>
@@ -509,12 +509,12 @@ export default function PortalClientView({
 
       {/* ===== Room Request Details Dialog ===== */}
       <Dialog open={!!selectedRoomRequest} onOpenChange={(open) => !open && setSelectedRoomRequest(null)}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto rounded-2xl p-5 sm:p-6">
           {selectedRoomRequest && (
             <>
               <DialogHeader className="space-y-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-0.5 rounded">
+                  <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
                     #R{selectedRoomRequest.id.substring(0, 4).toUpperCase()}
                   </span>
                   <Badge variant="outline" className={cn("text-xs font-semibold px-2 py-0.5", selectedRoomRequest.type === "ремонт" ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-indigo-50 text-indigo-700 border-indigo-200")}>
@@ -524,23 +524,23 @@ export default function PortalClientView({
                     {selectedRoomRequest.status === "open" ? "Открыта" : selectedRoomRequest.status === "in_progress" ? "В работе" : "Решена"}
                   </Badge>
                 </div>
-                <DialogTitle className="text-lg font-bold text-gray-900">
+                <DialogTitle className="text-lg font-bold text-foreground">
                   Заявка АХЧ: Кабинет {selectedRoomRequest.room}
                 </DialogTitle>
-                <DialogDescription className="text-xs text-gray-400">
+                <DialogDescription className="text-xs text-muted-foreground">
                   Создана: {formatDate(selectedRoomRequest.created_at)}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="py-4 space-y-4">
-                <div className="space-y-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Описание проблемы</h4>
-                  <DecompressedText text={selectedRoomRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
+                <div className="space-y-1 bg-muted/40 p-4 rounded-xl border border-border">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Описание проблемы</h4>
+                  <DecompressedText text={selectedRoomRequest.description} className="text-sm text-foreground whitespace-pre-wrap leading-relaxed" />
                 </div>
 
                 {selectedRoomRequest.photo_urls && selectedRoomRequest.photo_urls.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Прикрепленные фото ({selectedRoomRequest.photo_urls.length})
                     </h4>
                     <div className="grid grid-cols-3 gap-2">
@@ -549,7 +549,7 @@ export default function PortalClientView({
                           key={idx}
                           type="button"
                           onClick={() => setPreviewImageUrl(url)}
-                          className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none"
+                          className="relative aspect-video rounded-lg overflow-hidden border border-border hover:opacity-90 transition-opacity cursor-pointer focus:outline-none"
                         >
                           <img
                             src={url}
@@ -563,7 +563,7 @@ export default function PortalClientView({
                 )}
 
                 {selectedRoomRequest.status === "resolved" && (
-                  <div className="space-y-1 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                  <div className="space-y-1 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
                     <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Выполненная работа</h4>
                     {selectedRoomRequest.resolution && (
                       <p className="text-sm text-emerald-900 dark:text-emerald-100 whitespace-pre-wrap mb-2">{selectedRoomRequest.resolution}</p>
@@ -572,8 +572,8 @@ export default function PortalClientView({
                       const assignee = extractJoinObject(selectedRoomRequest.assignee) as { full_name: string | null } | null;
                       if (assignee?.full_name) {
                         return (
-                          <p className="text-xs text-gray-500">
-                            Исполнитель: <span className="font-semibold text-gray-700">{assignee.full_name}</span>
+                          <p className="text-xs text-muted-foreground">
+                            Исполнитель: <span className="font-semibold text-foreground">{assignee.full_name}</span>
                           </p>
                         );
                       }
@@ -610,7 +610,7 @@ export default function PortalClientView({
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setSelectedRoomRequest(null)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors cursor-pointer"
                 >
                   Закрыть
                 </button>

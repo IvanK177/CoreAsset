@@ -108,10 +108,10 @@ export function LicensesClientView({
     <div className="space-y-4">
       {/* Expiring licenses alert banner */}
       {filteredExpiring.length > 0 && (
-        <div className="border border-red-200 bg-red-50 rounded-xl p-3">
+        <div className="border border-red-500/20 bg-red-500/10 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-4 h-4 text-red-500 shrink-0" />
-            <span className="text-sm font-semibold text-red-700">
+            <span className="text-sm font-semibold text-red-600 dark:text-red-400">
               Истекают подписки ({filteredExpiring.length})
             </span>
           </div>
@@ -119,7 +119,7 @@ export function LicensesClientView({
             {filteredExpiring.map((l) => {
               const days = daysUntilExpiry(l.expires_at);
               return (
-                <Badge key={l.id} variant="outline" className="text-xs bg-white border-red-200 text-red-700">
+                <Badge key={l.id} variant="outline" className="text-xs bg-card border-red-500/20 text-red-600 dark:text-red-400">
                   {l.software_name ?? "—"} · {days} дн.
                 </Badge>
               );
@@ -129,13 +129,13 @@ export function LicensesClientView({
       )}
 
       {/* Building Filter Bar */}
-      <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <Building className="w-4 h-4 text-gray-400 shrink-0" />
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Корпус:</span>
+      <div className="flex items-center gap-2 bg-card p-4 rounded-xl border border-border shadow-sm">
+        <Building className="w-4 h-4 text-muted-foreground shrink-0" />
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Корпус:</span>
         <select
           value={buildingFilter}
           onChange={(e) => onBuildingFilterChange(e.target.value)}
-          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
         >
           <option value="all">Все корпуса</option>
           {Object.keys(BUILDING_ADDRESSES).map((b) => (
@@ -145,15 +145,15 @@ export function LicensesClientView({
       </div>
 
       {/* Table with expandable rows */}
-      <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Программа</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Тип</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Использование</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Стоимость</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Истекает</th>
+            <tr className="bg-muted/40 border-b border-border">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Программа</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Тип</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Использование</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Стоимость</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Истекает</th>
               <th className="px-4 py-3 w-12" />
             </tr>
           </thead>
@@ -169,15 +169,15 @@ export function LicensesClientView({
               return (
                 <Fragment key={lic.id}>
                   <tr
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="border-b border-border hover:bg-muted/40 transition-colors cursor-pointer"
                     onClick={() => toggleExpanded(lic.id)}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Key className="w-4 h-4 text-[#2563eb] shrink-0" />
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{lic.software_name}</p>
-                          <p className="text-xs text-gray-500">{lic.vendor ?? "—"}{lic.version ? ` · v${lic.version}` : ""}</p>
+                          <p className="text-sm font-semibold text-foreground">{lic.software_name}</p>
+                          <p className="text-xs text-muted-foreground">{lic.vendor ?? "—"}{lic.version ? ` · v${lic.version}` : ""}</p>
                         </div>
                       </div>
                     </td>
@@ -188,7 +188,7 @@ export function LicensesClientView({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                           <div
                             className={cn(
                               "h-full rounded-full",
@@ -197,11 +197,11 @@ export function LicensesClientView({
                             style={{ width: `${Math.min(pct, 100)}%` }}
                           />
                         </div>
-                        <span className="text-sm text-gray-700">{usedSeats} / {lic.total_seats}</span>
+                        <span className="text-sm text-muted-foreground">{usedSeats} / {lic.total_seats}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-muted-foreground">
                         {(lic.price_per_unit ?? 0) > 0 ? `${(lic.price_per_unit ?? 0).toLocaleString("ru-RU")} ₽/ед.` : "—"}
                       </span>
                     </td>
@@ -209,7 +209,7 @@ export function LicensesClientView({
                       {lic.expires_at ? (
                         <div className="flex items-center gap-1">
                           {isExpiring && <Clock className="w-3.5 h-3.5 text-red-500" />}
-                          <span className={cn("text-sm", isExpiring ? "text-red-600 font-medium" : "text-gray-500")}>
+                          <span className={cn("text-sm", isExpiring ? "text-red-600 font-medium" : "text-muted-foreground")}>
                             {formatDate(lic.expires_at)}
                             {isExpiring && ` (${days} дн.)`}
                           </span>
@@ -217,28 +217,28 @@ export function LicensesClientView({
                       ) : (
                         <div className="flex items-center gap-1">
                           <CheckCircle className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-sm text-gray-500">Бессрочно</span>
+                          <span className="text-sm text-muted-foreground">Бессрочно</span>
                         </div>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                     </td>
                   </tr>
 
                   {/* Expanded row */}
                   {isExpanded && (
-                    <tr key={`expanded-${lic.id}`} className="bg-gray-50">
+                    <tr key={`expanded-${lic.id}`} className="bg-muted/20 border-b border-border">
                       <td colSpan={6} className="px-4 py-3">
                         <div className="pl-6 flex items-start justify-between">
                           <div className="space-y-4">
                             {lic.license_key && (
                               <div>
-                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                                   Лицензионный ключ
                                 </p>
                                 <div className="flex items-center gap-2">
-                                  <code className="text-sm bg-white px-2.5 py-1 rounded border border-gray-200 font-mono text-gray-800 font-semibold">
+                                  <code className="text-sm bg-card px-2.5 py-1 rounded border border-border font-mono text-foreground font-semibold">
                                     {showKeys.has(lic.id) ? lic.license_key : "••••-••••-••••-••••"}
                                   </code>
                                   <button
@@ -246,7 +246,7 @@ export function LicensesClientView({
                                       e.stopPropagation();
                                       toggleShowKey(lic.id);
                                     }}
-                                    className="p-1.5 rounded hover:bg-gray-200/50 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                     title={showKeys.has(lic.id) ? "Скрыть" : "Показать"}
                                   >
                                     {showKeys.has(lic.id) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -257,7 +257,7 @@ export function LicensesClientView({
                                       navigator.clipboard.writeText(lic.license_key || "");
                                       toast.success("Ключ скопирован в буфер обмена");
                                     }}
-                                    className="p-1.5 rounded hover:bg-gray-200/50 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                     title="Копировать"
                                   >
                                     <Copy className="w-4 h-4" />
@@ -267,7 +267,7 @@ export function LicensesClientView({
                             )}
 
                             <div>
-                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                                 Установлено на {licInstalls.length} устройствах:
                               </p>
                               {licInstalls.length > 0 ? (
@@ -275,14 +275,14 @@ export function LicensesClientView({
                                   {licInstalls.map((inst) => {
                                     const device = (Array.isArray(inst.devices) ? inst.devices[0] : inst.devices) as { inventory_number: string } | null;
                                     return (
-                                      <Badge key={inst.id} variant="outline" className="text-xs bg-white border-gray-200 text-gray-700">
+                                      <Badge key={inst.id} variant="outline" className="text-xs bg-card border-border text-foreground">
                                         {device?.inventory_number ?? "—"} с {formatDate(inst.installed_at)}
                                       </Badge>
                                     );
                                   })}
                                 </div>
                               ) : (
-                                <p className="text-sm text-gray-400">Нет установок</p>
+                                <p className="text-sm text-muted-foreground">Нет установок</p>
                               )}
                             </div>
                           </div>

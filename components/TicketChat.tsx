@@ -230,11 +230,11 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
   };
 
   return (
-    <div className="flex flex-col h-[400px] border border-gray-100 rounded-xl bg-white shadow-inner-sm overflow-hidden">
+    <div className="flex flex-col h-[400px] border border-border rounded-xl bg-card text-card-foreground shadow-sm overflow-hidden">
       {/* Messages Header */}
-      <div className="bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Чат по инциденту</span>
-        <span className="text-[10px] text-gray-400 bg-gray-200/50 px-2 py-0.5 rounded-full">
+      <div className="bg-muted/50 border-b border-border px-4 py-2 flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Чат по инциденту</span>
+        <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
           {messages.length} сообщ.
         </span>
       </div>
@@ -242,7 +242,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
       {/* Messages List */}
       <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-3 custom-scrollbar">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-sm text-gray-400">
+          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
             Нет сообщений. Напишите первое сообщение!
           </div>
         ) : (
@@ -254,11 +254,11 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
             return (
               <div key={msg.id} className={`flex items-start gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
                 {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-slate-700 shrink-0 overflow-hidden flex items-center justify-center border border-gray-100">
+                <div className="w-8 h-8 rounded-full bg-muted shrink-0 overflow-hidden flex items-center justify-center border border-border">
                   {senderInfo?.avatarUrl ? (
                     <img src={senderInfo.avatarUrl} alt={senderName} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
                       {senderName.substring(0, 2).toUpperCase()}
                     </span>
                   )}
@@ -267,7 +267,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
                 {/* Message Bubble Column */}
                 <div className={`flex flex-col max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
                   {!isOwn && (
-                    <span className="text-[10px] font-semibold text-gray-400 mb-0.5 ml-1">
+                    <span className="text-[10px] font-semibold text-muted-foreground mb-0.5 ml-1">
                       {senderName}
                     </span>
                   )}
@@ -275,7 +275,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
                     className={`px-3.5 py-2 rounded-2xl text-sm ${
                       isOwn
                         ? "bg-blue-500 text-white rounded-tr-none"
-                        : "bg-gray-100 dark:bg-slate-800 text-gray-800 rounded-tl-none"
+                        : "bg-muted text-foreground rounded-tl-none"
                     }`}
                   >
                     {msg.text && (
@@ -287,7 +287,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
                           <div 
                             key={idx} 
                             onClick={() => setPreviewImageUrl(url)}
-                            className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden border border-black/10 cursor-pointer hover:opacity-90 transition-opacity bg-white"
+                            className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden border border-border/30 cursor-pointer hover:opacity-90 transition-opacity bg-card"
                           >
                             <img src={url} alt={`Вложение ${idx + 1}`} className="w-full h-full object-cover" />
                           </div>
@@ -311,9 +311,9 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
 
       {/* Selected Photos Preview */}
       {photoPreviews.length > 0 && (
-        <div className="border-t border-gray-100 p-2 bg-gray-50/50 flex flex-wrap gap-2">
+        <div className="border-t border-border p-2 bg-muted/20 flex flex-wrap gap-2">
           {photoPreviews.map((preview, index) => (
-            <div key={index} className="relative w-14 h-14 rounded-lg border overflow-hidden bg-white shrink-0">
+            <div key={index} className="relative w-14 h-14 rounded-lg border border-border overflow-hidden bg-card shrink-0">
               <img src={preview} alt="Превью" className="object-cover w-full h-full" />
               <button
                 type="button"
@@ -330,7 +330,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
       )}
 
       {/* Message Input Form */}
-      <form onSubmit={handleSend} className="border-t border-gray-100 p-2 bg-gray-50 flex gap-2">
+      <form onSubmit={handleSend} className="border-t border-border p-2 bg-muted/30 flex gap-2">
         <input
           type="file"
           ref={fileInputRef}
@@ -344,7 +344,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={sending}
-          className="h-8 w-8 shrink-0 flex items-center justify-center bg-gray-200/60 hover:bg-gray-200 text-gray-500 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+          className="h-8 w-8 shrink-0 flex items-center justify-center bg-muted hover:bg-muted/80 text-muted-foreground rounded-lg transition-colors cursor-pointer disabled:opacity-50"
           title="Прикрепить фото"
         >
           <Camera className="w-4 h-4" />
@@ -354,13 +354,13 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Напишите сообщение..."
-          className="flex-1 px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="flex-1 px-3 py-1.5 text-sm bg-background border border-input text-foreground rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           disabled={sending}
         />
         <button
           type="submit"
           disabled={sending || (!inputText.trim() && photos.length === 0)}
-          className="h-8 w-8 shrink-0 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors cursor-pointer"
+          className="h-8 w-8 shrink-0 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-muted disabled:text-muted-foreground text-white rounded-lg transition-colors cursor-pointer"
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>

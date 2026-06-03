@@ -110,7 +110,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6">
+      <DialogContent className="sm:max-w-[580px] rounded-2xl p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Добавить сотрудника</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -202,9 +202,9 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
           </div>
 
           {/* Info block */}
-          <div className="w-full rounded-lg bg-blue-50 px-4 py-3 flex items-start gap-3">
+          <div className="w-full rounded-lg bg-blue-500/10 border border-blue-500/20 px-4 py-3 flex items-start gap-3">
             <Key className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-            <p className="text-sm text-blue-600">
+            <p className="text-sm text-blue-600 dark:text-blue-400">
               После создания система автоматически сгенерирует надёжный пароль и покажет его вам.
             </p>
           </div>

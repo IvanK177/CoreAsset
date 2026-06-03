@@ -346,26 +346,26 @@ export default function ITPortalClientView({
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left: Quick navigation list */}
-          <div className="hidden lg:block w-full lg:w-1/3 space-y-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100/50 max-h-[600px] overflow-y-auto">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">Заявки в списке</h3>
+          <div className="hidden lg:block w-full lg:w-1/3 space-y-3 bg-muted/20 p-3 rounded-xl border border-border max-h-[600px] overflow-y-auto">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">Заявки в списке</h3>
             {displayIncidents.map((inc) => (
               <button
                 key={inc.id}
                 onClick={() => setSelectedIncident(inc)}
                 className={cn(
-                  "w-full text-left p-3 rounded-xl border transition-all duration-150 flex flex-col gap-1 cursor-pointer bg-white",
+                  "w-full text-left p-3 rounded-xl border transition-all duration-150 flex flex-col gap-1 cursor-pointer bg-card",
                   selectedIncident.id === inc.id
-                    ? "border-blue-400 bg-blue-50/10 shadow-sm"
-                    : "border-gray-100 hover:border-gray-300"
+                    ? "border-blue-400 bg-blue-500/10 shadow-sm"
+                    : "border-border hover:border-muted-foreground/30"
                 )}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-gray-400 font-mono">{getIncidentNumber(inc)}</span>
+                  <span className="text-xs text-muted-foreground font-mono">{getIncidentNumber(inc)}</span>
                   <PriorityBadge priority={inc.priority as "low" | "medium" | "high" | "critical"} />
                   <IncidentStatusBadge status={inc.status as "open" | "in_progress" | "resolved" | "cancelled"} />
                 </div>
-                <p className="text-sm font-medium text-gray-900 truncate">{getIncidentTitle(inc)}</p>
-                <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mt-0.5">
+                <p className="text-sm font-medium text-foreground truncate">{getIncidentTitle(inc)}</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap mt-0.5">
                   <span>{getDeviceInfo(inc) || "—"}</span>
                 </p>
               </button>
@@ -373,17 +373,17 @@ export default function ITPortalClientView({
           </div>
 
           {/* Right: Detail panel */}
-          <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-5">
+          <div className="w-full lg:w-2/3 rounded-xl bg-card border border-border shadow-sm p-4 md:p-6 space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">{getIncidentNumber(selectedIncident)}</span>
+                <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">{getIncidentNumber(selectedIncident)}</span>
                 {(() => {
                   const dev = Array.isArray(selectedIncident.device) ? selectedIncident.device[0] : selectedIncident.device;
                   if (!dev?.device_type) return null;
                   const typeLabel = deviceTypeRussianLabels[dev.device_type] || "Устройство";
                   const emoji = deviceTypeEmojis[dev.device_type] || "🔌";
                   return (
-                    <Badge variant="outline" className="text-xs font-semibold bg-slate-50 text-slate-700 border-slate-200">
+                    <Badge variant="outline" className="text-xs font-semibold bg-muted text-foreground border-border">
                       {emoji} {typeLabel}
                     </Badge>
                   );
@@ -393,49 +393,49 @@ export default function ITPortalClientView({
               </div>
               <button
                 onClick={() => setSelectedIncident(null)}
-                className="p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                className="p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{getIncidentTitle(selectedIncident)}</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-xl font-bold text-foreground">{getIncidentTitle(selectedIncident)}</h2>
+              <p className="text-sm text-muted-foreground mt-1">
                 Создано: {formatDate(selectedIncident.created_at)}
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Описание</h4>
-                <DecompressedText text={selectedIncident.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
+              <div className="bg-muted/40 p-4 rounded-xl border border-border">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Описание</h4>
+                <DecompressedText text={selectedIncident.description} className="text-sm text-foreground whitespace-pre-wrap leading-relaxed" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Заявитель</h4>
+                <div className="bg-muted/20 p-4 rounded-xl border border-border">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Заявитель</h4>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-gray-800">{getEmployeeName(selectedIncident)}</p>
-                    <p className="text-xs text-gray-500">Корпус: {(() => {
+                    <p className="text-sm font-semibold text-foreground">{getEmployeeName(selectedIncident)}</p>
+                    <p className="text-xs text-muted-foreground">Корпус: {(() => {
                       const emp = Array.isArray(selectedIncident.employee) ? selectedIncident.employee[0] : selectedIncident.employee;
                       return emp?.building ?? "—";
                     })()}</p>
                   </div>
                 </div>
 
-                <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Устройство</h4>
+                <div className="bg-muted/20 p-4 rounded-xl border border-border">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Устройство</h4>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-gray-800">{getDeviceInfo(selectedIncident) || "Нет привязанного устройства"}</p>
+                    <p className="text-sm font-semibold text-foreground">{getDeviceInfo(selectedIncident) || "Нет привязанного устройства"}</p>
                   </div>
                 </div>
               </div>
 
               {/* Attached Photos */}
               {selectedIncident.photo_urls && selectedIncident.photo_urls.length > 0 && (
-                <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100/50 space-y-2">
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <div className="bg-muted/20 p-4 rounded-xl border border-border space-y-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Фотографии ({selectedIncident.photo_urls.length})
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -444,7 +444,7 @@ export default function ITPortalClientView({
                         key={idx}
                         type="button"
                         onClick={() => setPreviewImageUrl(url)}
-                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
+                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-border block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
                       >
                         <img
                           src={url}
@@ -459,11 +459,11 @@ export default function ITPortalClientView({
 
               {/* IT Specialist Resolution */}
               {selectedIncident.status === "resolved" && selectedIncident.resolution && (
-                <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100 space-y-2">
-                  <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 space-y-2">
+                  <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">
                     Что было сделано (Решение)
                   </h4>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                     {selectedIncident.resolution}
                   </p>
                 </div>
@@ -471,8 +471,8 @@ export default function ITPortalClientView({
 
               {/* IT Specialist Resolution Photos */}
               {selectedIncident.status === "resolved" && selectedIncident.resolution_photo_urls && selectedIncident.resolution_photo_urls.length > 0 && (
-                <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100 space-y-2">
-                  <h4 className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 space-y-2">
+                  <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">
                     Фотоотчет выполненной работы ({selectedIncident.resolution_photo_urls.length})
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -481,7 +481,7 @@ export default function ITPortalClientView({
                         key={idx}
                         type="button"
                         onClick={() => setPreviewImageUrl(url)}
-                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-emerald-100 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
+                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-emerald-500/20 block hover:opacity-85 transition-opacity cursor-pointer focus:outline-none"
                       >
                         <img
                           src={url}
@@ -498,10 +498,10 @@ export default function ITPortalClientView({
                 {selectedIncident.assigned_to === specialistId ? (
                   <TicketChat key={selectedIncident.id} incidentId={selectedIncident.id} currentUserId={specialistId} initialMessages={initialMessagesMap[selectedIncident.id] ?? []} />
                 ) : (
-                  <div className="flex flex-col items-center justify-center p-6 border border-dashed border-gray-200 rounded-xl bg-gray-50 text-center">
-                    <MessageSquare className="w-8 h-8 text-gray-400 mb-2" />
-                    <p className="text-sm font-medium text-gray-500">Чат недоступен</p>
-                    <p className="text-xs text-gray-400 mt-1 max-w-[280px]">
+                  <div className="flex flex-col items-center justify-center p-6 border border-dashed border-border rounded-xl bg-muted/40 text-center">
+                    <MessageSquare className="w-8 h-8 text-muted-foreground mb-2" />
+                    <p className="text-sm font-medium text-muted-foreground">Чат недоступен</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-[280px]">
                       Вы сможете общаться с сотрудником после того, как примете эту заявку в работу.
                     </p>
                   </div>
@@ -642,14 +642,14 @@ export default function ITPortalClientView({
       </div>
 
       {/* View Mode Tabs (List vs Calendar) */}
-      <div className="flex border-b border-gray-200 dark:border-slate-800 mb-2">
+      <div className="flex border-b border-border mb-2">
         <button
           onClick={() => setActiveViewTab("list")}
           className={cn(
             "px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2",
             activeViewTab === "list"
               ? "border-blue-500 text-blue-600 dark:text-blue-400 font-bold"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           )}
         >
           📋 Список заявок
@@ -660,7 +660,7 @@ export default function ITPortalClientView({
             "px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2",
             activeViewTab === "calendar"
               ? "border-blue-500 text-blue-600 dark:text-blue-400 font-bold"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           )}
         >
           📅 SLA Календарь
@@ -672,13 +672,13 @@ export default function ITPortalClientView({
         {/* Filters Bar */}
         <div className="flex flex-wrap items-center gap-4">
           {/* Building Filter */}
-          <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex-1 min-w-[200px]">
-            <Building className="w-4 h-4 text-gray-400 shrink-0" />
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Корпус:</span>
+          <div className="flex items-center gap-2 bg-card p-4 rounded-xl border border-border shadow-sm flex-1 min-w-[200px]">
+            <Building className="w-4 h-4 text-muted-foreground shrink-0" />
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Корпус:</span>
             <select
               value={buildingFilter}
               onChange={(e) => handleBuildingChange(e.target.value)}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none w-full truncate cursor-pointer"
+              className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:border-blue-500 focus:outline-none w-full truncate cursor-pointer"
             >
               <option value="all">Все корпуса</option>
               {Object.keys(BUILDING_ADDRESSES).map((b) => (
@@ -689,12 +689,12 @@ export default function ITPortalClientView({
 
           {/* Status Filter */}
           {!isMyTasks && (
-            <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex-1 min-w-[200px]">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Статус:</span>
+            <div className="flex items-center gap-2 bg-card p-4 rounded-xl border border-border shadow-sm flex-1 min-w-[200px]">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Статус:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none w-full truncate cursor-pointer"
+                className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:border-blue-500 focus:outline-none w-full truncate cursor-pointer"
               >
                 <option value="all">Все статусы</option>
                 {isArchive ? (
@@ -716,30 +716,30 @@ export default function ITPortalClientView({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Column 1: SLA Deadlines Card */}
           <div className="lg:col-span-3 space-y-4 self-start order-2 lg:order-1">
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
               <div>
-                <h3 className="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">
+                <h3 className="font-bold text-foreground text-sm tracking-tight flex items-center gap-2">
                   <Clock className="w-4 h-4 text-blue-600" />
                   Сроки решения
                 </h3>
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
               </div>
               <div className="space-y-2.5">
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-red-50/70 border border-red-100/50">
-                  <span className="font-semibold text-red-700">Критический</span>
-                  <span className="font-bold text-red-800">1 день</span>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
+                  <span className="font-semibold text-red-600 dark:text-red-400">Критический</span>
+                  <span className="font-bold text-red-700 dark:text-red-300">1 день</span>
                 </div>
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-orange-50/70 border border-orange-100/50">
-                  <span className="font-semibold text-orange-700">Высокий</span>
-                  <span className="font-bold text-orange-800">1–2 дня</span>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
+                  <span className="font-semibold text-orange-600 dark:text-orange-400">Высокий</span>
+                  <span className="font-bold text-orange-700 dark:text-orange-300">1–2 дня</span>
                 </div>
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-blue-50/70 border border-blue-100/50">
-                  <span className="font-semibold text-blue-700">Средний</span>
-                  <span className="font-bold text-blue-800">3–5 дней</span>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">Средний</span>
+                  <span className="font-bold text-blue-700 dark:text-blue-300">3–5 дней</span>
                 </div>
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-gray-50/70 border border-gray-100/50">
-                  <span className="font-semibold text-gray-600">Низкий</span>
-                  <span className="font-bold text-gray-700">5–7 дней</span>
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-muted border border-border">
+                  <span className="font-semibold text-muted-foreground">Низкий</span>
+                  <span className="font-bold text-foreground">5–7 дней</span>
                 </div>
               </div>
             </div>
@@ -748,14 +748,14 @@ export default function ITPortalClientView({
           {/* Column 2: ticket listing or empty state */}
           <div className="lg:col-span-6 order-1 lg:order-2">
             {displayIncidents.length === 0 ? (
-              <div className="rounded-2xl bg-white p-12 shadow-sm border border-gray-100 text-center">
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mx-auto mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-gray-400" />
+              <div className="rounded-2xl bg-card p-12 shadow-sm border border-border text-center">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                <h3 className="text-lg font-semibold text-foreground mb-1">
                   {isMyTasks ? "Нет задач в работе" : isArchive ? "Архив пуст" : "Нет заявок"}
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {isMyTasks
                      ? "В работе нет заявок. Перейдите в \"Заявки\", чтобы начать."
                      : isArchive
@@ -777,8 +777,8 @@ export default function ITPortalClientView({
                       key={incident.id}
                       onClick={() => setSelectedIncident(incident)}
                       className={cn(
-                        "rounded-2xl bg-white p-5 shadow-sm border transition-all duration-150 cursor-pointer hover:shadow-md hover:border-slate-300",
-                        isOpen ? "border-yellow-200" : isInProgress ? "border-blue-200" : "border-emerald-200"
+                        "rounded-2xl bg-card p-5 shadow-sm border border-border transition-all duration-150 cursor-pointer hover:shadow-md hover:border-slate-300",
+                        isOpen ? "border-yellow-500/30" : isInProgress ? "border-blue-500/30" : "border-emerald-500/30"
                       )}
                     >
                       {/* Top row: number + title + badges */}
@@ -800,29 +800,29 @@ export default function ITPortalClientView({
                           {/* Title + meta */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <span className="text-xs font-medium text-gray-400">
+                              <span className="text-xs font-medium text-muted-foreground">
                                 {getIncidentNumber(incident)}
                               </span>
-                              <span className="font-semibold text-sm text-gray-900 truncate">
+                              <span className="font-semibold text-sm text-foreground truncate">
                                 {getIncidentTitle(incident)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                               {/* Author */}
                               <span className="flex items-center gap-1">
-                                <User className="w-3 h-3 text-gray-400" />
+                                <User className="w-3 h-3 text-muted-foreground" />
                                 {getEmployeeName(incident)}
                               </span>
                               {/* Device */}
                               {getDeviceInfo(incident) && (
                                 <span className="flex items-center gap-1 font-mono">
-                                  <Monitor className="w-3 h-3 text-gray-400" />
+                                  <Monitor className="w-3 h-3 text-muted-foreground" />
                                   {getDeviceInfo(incident)}
                                 </span>
                               )}
                               {/* Type */}
                               <span className="flex items-center gap-1">
-                                <Wrench className="w-3 h-3 text-gray-400" />
+                                <Wrench className="w-3 h-3 text-muted-foreground" />
                                 {incidentTypeLabels[incident.incident_type] ?? incident.incident_type}
                               </span>
                               {/* Date */}
@@ -839,7 +839,7 @@ export default function ITPortalClientView({
                             const typeLabel = deviceTypeRussianLabels[dev.device_type] || "Устройство";
                             const emoji = deviceTypeEmojis[dev.device_type] || "🔌";
                             return (
-                              <Badge variant="outline" className="text-xs font-semibold bg-slate-50 text-slate-700 border-slate-200">
+                              <Badge variant="outline" className="text-xs font-semibold bg-muted text-foreground border-border">
                                 {emoji} {typeLabel}
                               </Badge>
                             );
@@ -847,7 +847,7 @@ export default function ITPortalClientView({
                           <PriorityBadge priority={incident.priority as "low" | "medium" | "high" | "critical"} />
                           <IncidentStatusBadge status={incident.status as "open" | "in_progress" | "resolved" | "cancelled"} />
                           {isInProgress && incident.assigned_to && (
-                            <Badge variant="outline" className="text-xs font-medium bg-blue-50 text-blue-700 border-blue-200">
+                            <Badge variant="outline" className="text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">
                               {isAssignedToMe ? "Моя задача" : "В работе у другого"}
                             </Badge>
                           )}
@@ -856,7 +856,7 @@ export default function ITPortalClientView({
 
                       {/* Description preview */}
                       {incident.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2 pl-12">
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 pl-12">
                           <DecompressedText text={incident.description} truncate={150} />
                         </p>
                       )}
@@ -912,28 +912,28 @@ export default function ITPortalClientView({
 
           {/* Column 3: Statistics Card */}
           <div className="lg:col-span-3 space-y-4 self-start order-3 lg:order-3">
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
               <div>
-                <h3 className="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">
+                <h3 className="font-bold text-foreground text-sm tracking-tight flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-blue-600" />
                   Статистика по месяцам
                 </h3>
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                   Показатели по корпусу: <span className="font-semibold text-blue-600">{buildingFilter === "all" ? "Все корпуса" : buildingFilter}</span>
                 </p>
               </div>
 
               {stats.length === 0 ? (
-                <p className="text-xs text-gray-500 text-center py-4">Нет данных</p>
+                <p className="text-xs text-muted-foreground text-center py-4">Нет данных</p>
               ) : (
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
                   {stats.map((row) => {
                     const resolutionRate = row.total > 0 ? Math.round((row.resolved / row.total) * 100) : 0;
                     return (
-                      <div key={row.monthKey} className="p-4 rounded-xl border border-gray-150 bg-gray-50/50 dark:bg-slate-800/40 space-y-3">
-                        <div className="flex justify-between items-center border-b border-gray-200/50 pb-1.5">
-                          <span className="font-bold text-sm text-gray-800">{row.monthName}</span>
-                          <span className="text-xs font-bold text-gray-900 bg-gray-200 dark:bg-slate-700 px-2.5 py-0.5 rounded-full">
+                      <div key={row.monthKey} className="p-4 rounded-xl border border-border bg-muted/40 space-y-3">
+                        <div className="flex justify-between items-center border-b border-border pb-1.5">
+                          <span className="font-bold text-sm text-foreground">{row.monthName}</span>
+                          <span className="text-xs font-bold text-foreground bg-muted px-2.5 py-0.5 rounded-full">
                             {row.total} всего
                           </span>
                         </div>
@@ -948,11 +948,11 @@ export default function ITPortalClientView({
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                          <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
                             <span>Выполнение задач</span>
                             <span>{resolutionRate}%</span>
                           </div>
-                          <div className="w-full bg-gray-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                          <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
                             <div 
                               className="bg-emerald-500 h-full rounded-full transition-all duration-300" 
                               style={{ width: `${resolutionRate}%` }}
@@ -1009,12 +1009,12 @@ export default function ITPortalClientView({
             </div>
             {/* Resolution Photos Attach */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-1.5 text-gray-700">
-                <Camera className="w-4 h-4 text-gray-500" />
+              <Label className="text-sm font-medium flex items-center gap-1.5 text-muted-foreground">
+                <Camera className="w-4 h-4 text-muted-foreground" />
                 Прикрепить фото проделанной работы (опционально)
               </Label>
               <div className="flex flex-col gap-2">
-                <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                <label className="flex items-center justify-center border border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors">
                   <input
                     type="file"
                     multiple
@@ -1023,15 +1023,15 @@ export default function ITPortalClientView({
                     className="hidden"
                   />
                   <div className="text-center space-y-1">
-                    <ImageIcon className="w-5 h-5 text-gray-400 mx-auto" />
-                    <span className="text-xs text-gray-500 block">Нажмите для выбора фото решения</span>
+                    <ImageIcon className="w-5 h-5 text-muted-foreground mx-auto" />
+                    <span className="text-xs text-muted-foreground block">Нажмите для выбора фото решения</span>
                   </div>
                 </label>
 
                 {resolutionPhotoPreviews.length > 0 && (
                   <div className="grid grid-cols-4 gap-2 mt-2">
                     {resolutionPhotoPreviews.map((preview, index) => (
-                      <div key={index} className="relative aspect-square rounded-lg border overflow-hidden group">
+                      <div key={index} className="relative aspect-square rounded-lg border border-border bg-card overflow-hidden group">
                         <img src={preview} alt="Решение" className="object-cover w-full h-full" />
                         <button
                           type="button"

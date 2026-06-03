@@ -42,7 +42,7 @@ export default function FacilitiesPortalHeader({
   const [profileOpen, setProfileOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-16 flex items-center justify-between px-3 sm:px-6 bg-white border-b border-gray-200">
+    <header className="fixed top-0 left-0 right-0 z-40 h-16 flex items-center justify-between px-3 sm:px-6 bg-card border-b border-border">
       {/* Left: Logo + Nav */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
@@ -50,8 +50,8 @@ export default function FacilitiesPortalHeader({
             <MonitorIcon className="w-5 h-5 text-white" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-sm tracking-tight text-gray-900">CoreAsset</span>
-            <span className="hidden xs:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+            <span className="font-bold text-sm tracking-tight text-foreground">CoreAsset</span>
+            <span className="hidden xs:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20">
               АХЧ Портал
             </span>
           </div>
@@ -68,8 +68,8 @@ export default function FacilitiesPortalHeader({
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150",
                   active
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -83,8 +83,8 @@ export default function FacilitiesPortalHeader({
       {/* Right: User info + Theme Toggle + Profile + Logout */}
       <div className="flex items-center gap-4">
         <div className="hidden md:flex flex-col items-end">
-          <span className="text-sm font-medium text-gray-900">{facilitiesName}</span>
-          <span className="text-xs text-gray-500">{facilitiesPosition}</span>
+          <span className="text-sm font-medium text-foreground">{facilitiesName}</span>
+          <span className="text-xs text-muted-foreground">{facilitiesPosition}</span>
         </div>
 
         <ThemeToggle />
@@ -94,7 +94,7 @@ export default function FacilitiesPortalHeader({
             variant="ghost"
             size="sm"
             onClick={() => setProfileOpen(true)}
-            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 cursor-pointer h-9 rounded-lg"
+            className="gap-2 text-muted-foreground hover:text-foreground hover:bg-muted px-2 sm:px-3 cursor-pointer h-9 rounded-lg"
           >
             {employee.avatar_url ? (
               <img
@@ -114,7 +114,7 @@ export default function FacilitiesPortalHeader({
             variant="ghost"
             size="sm"
             type="submit"
-            className="gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 h-9 rounded-lg"
+            className="gap-2 text-muted-foreground hover:text-foreground hover:bg-muted px-2 sm:px-3 h-9 rounded-lg"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Выйти</span>

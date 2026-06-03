@@ -115,7 +115,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Основная информация</p>
           <Row label="Серийный номер" value={device.serial_number} />
           <Row label="Кабинет" value={device.room} />
@@ -123,7 +123,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         </div>
 
         {device.device_type === "pc" && (
-          <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
             <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Характеристики ПК</p>
             <Row label="CPU" value={hw.cpu} />
             <Row label="RAM" value={hw.ram} />
@@ -134,7 +134,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         )}
 
         {device.device_type === "monitor" && (
-          <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
             <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Характеристики Монитора</p>
             <Row label="Диагональ" value={hw.diagonal} />
             <Row label="Разрешение" value={hw.resolution} />
@@ -142,7 +142,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
         <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Закреплённый сотрудник</p>
         {employee ? (
           <div className="flex items-center gap-3">
@@ -163,7 +163,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Установленное ПО ({installs.length})
@@ -186,7 +186,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 space-y-3 bg-white shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             История инцидентов ({incidents.length})

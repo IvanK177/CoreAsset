@@ -195,7 +195,7 @@ export function ProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto bg-white rounded-2xl p-5 sm:p-6 overflow-y-auto max-h-[90vh]">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto rounded-2xl p-5 sm:p-6 overflow-y-auto max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Личный профиль</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -208,7 +208,7 @@ export function ProfileDialog({
           <div className="flex flex-col items-center justify-center pb-2">
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-20 h-20 rounded-full border-2 border-dashed border-gray-300 dark:border-slate-700 flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all duration-150 group overflow-hidden bg-gray-50 dark:bg-slate-800"
+              className="relative w-20 h-20 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all duration-150 group overflow-hidden bg-muted/50"
               title="Нажмите, чтобы изменить аватарку"
             >
               {avatarPreview ? (
@@ -220,8 +220,8 @@ export function ProfileDialog({
                 </>
               ) : (
                 <div className="text-center p-2 flex flex-col items-center justify-center">
-                  <User className="w-7 h-7 text-gray-400" />
-                  <span className="text-[10px] text-gray-500 mt-1">Добавить фото</span>
+                  <User className="w-7 h-7 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground mt-1">Добавить фото</span>
                 </div>
               )}
             </div>
@@ -258,7 +258,7 @@ export function ProfileDialog({
               placeholder="example@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
+              className="h-11 rounded-lg border-border bg-background"
               required
               disabled={pending}
             />
@@ -274,7 +274,7 @@ export function ProfileDialog({
               placeholder="Например: Разработчик"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
+              className="h-11 rounded-lg border-border bg-background"
               required
               disabled={pending}
             />
@@ -290,7 +290,7 @@ export function ProfileDialog({
               placeholder="Иванов Иван Иванович"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
+              className="h-11 rounded-lg border-border bg-background"
               required
               disabled={pending}
             />
@@ -306,7 +306,7 @@ export function ProfileDialog({
               placeholder="+7 (999) 123-45-67"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
+              className="h-11 rounded-lg border-border bg-background"
               disabled={pending}
             />
           </div>
@@ -321,7 +321,7 @@ export function ProfileDialog({
               placeholder="@username"
               value={telegram}
               onChange={(e) => setTelegram(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
+              className="h-11 rounded-lg border-border bg-background"
               disabled={pending}
             />
           </div>
@@ -334,7 +334,7 @@ export function ProfileDialog({
               onValueChange={(v) => setBuilding(v ?? "")}
               items={buildingItems}
             >
-              <SelectTrigger className="h-11 rounded-lg border-gray-200 w-full bg-white text-left">
+              <SelectTrigger className="h-11 rounded-lg border-border w-full bg-background text-left">
                 <SelectValue placeholder="Выберите корпус" />
               </SelectTrigger>
               <SelectContent>
@@ -357,14 +357,14 @@ export function ProfileDialog({
               placeholder="Например: 204"
               value={room}
               onChange={(e) => setRoom(e.target.value)}
-              className="h-11 rounded-lg border-gray-200"
+              className="h-11 rounded-lg border-border bg-background"
               disabled={pending}
             />
           </div>
 
           {/* Error */}
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+            <p className="text-sm text-red-600 bg-red-500/10 px-3 py-2 rounded-lg">
               {error}
             </p>
           )}
@@ -374,7 +374,7 @@ export function ProfileDialog({
             <Button
               type="button"
               variant="outline"
-              className="flex-1 h-10 rounded-lg border-gray-200 text-gray-700"
+              className="flex-1 h-10 rounded-lg border-border text-foreground hover:bg-muted"
               onClick={handleClose}
               disabled={pending}
             >

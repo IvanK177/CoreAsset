@@ -191,7 +191,7 @@ export function EmployeesClientView({
                   {e.full_name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{e.full_name}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{e.full_name}</p>
                 </div>
                 <EmployeeStatusBadge status={e.is_active ? "active" : "dismissed"} />
               </button>
@@ -204,8 +204,8 @@ export function EmployeesClientView({
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={() => setSelectedId(null)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                <ArrowLeft className="w-5 h-5 text-gray-500" />
+              <button onClick={() => setSelectedId(null)} className="p-2 rounded-lg hover:bg-muted transition-colors">
+                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
               </button>
               <div className={cn(
                 "flex items-center justify-center w-12 h-12 rounded-full text-lg font-bold",
@@ -214,8 +214,8 @@ export function EmployeesClientView({
                 {selectedEmployee.full_name.split(" ").map((n) => n.charAt(0)).join("").slice(0, 2)}
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{selectedEmployee.full_name}</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="text-xl font-bold text-foreground">{selectedEmployee.full_name}</h2>
+                <p className="text-sm text-muted-foreground">
                   {selectedEmployee.position ?? "—"} · Каб. {selectedEmployee.room ?? "—"}
                 </p>
               </div>
@@ -283,8 +283,8 @@ export function EmployeesClientView({
           </div>
 
           {/* Block 1: Contact Info */}
-          <div className="rounded-xl border border-border bg-slate-50 dark:bg-slate-900/20 p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Контактная информация</h3>
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Контактная информация</h3>
             <div className="grid grid-cols-2 gap-3">
               <ContactRow icon={Mail} label="Email" value={selectedEmployee.email} />
               <ContactRow icon={MessageSquare} label="Telegram" value={selectedEmployee.telegram} />
@@ -295,7 +295,7 @@ export function EmployeesClientView({
 
           {/* Block 2: Assigned Devices */}
           <div className="rounded-xl border border-border p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплённые устройства</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Закреплённые устройства</h3>
             {selectedDevices.length === 0 ? (
               <p className="text-sm text-muted-foreground py-2">Нет привязанных устройств</p>
             ) : (
@@ -307,10 +307,10 @@ export function EmployeesClientView({
                     <Link
                       key={dev.id}
                       href={`/devices/${dev.id}`}
-                      className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 dark:hover:bg-slate-900/40 border border-border transition-colors font-mono"
+                      className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 hover:bg-muted/80 dark:bg-muted/10 dark:hover:bg-muted/20 border border-border transition-colors font-mono"
                     >
                       <DeviceIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-foreground">
                         {dev.inventory_number}
                       </span>
                       <span className="text-xs text-gray-500 font-sans">
@@ -328,7 +328,7 @@ export function EmployeesClientView({
 
           {/* Block 3: Incident History */}
           <div className="rounded-xl border border-border p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">История заявок</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">История заявок</h3>
             {selectedIncidents.length === 0 ? (
               <p className="text-sm text-muted-foreground py-2">Инцидентов нет</p>
             ) : (
@@ -337,11 +337,11 @@ export function EmployeesClientView({
                   <Link
                     key={inc.id}
                     href={`/incidents?selectedId=${inc.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 dark:hover:bg-slate-900/40 border border-border transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/80 dark:bg-muted/10 dark:hover:bg-muted/20 border border-border transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <AlertTriangle className="w-4 h-4 text-gray-400 shrink-0" />
-                      <span className="text-sm text-gray-900 truncate">{inc.title ?? inc.description}</span>
+                      <span className="text-sm text-foreground truncate">{inc.title ?? inc.description}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <PriorityBadge priority={inc.priority as "low" | "medium" | "high" | "critical"} />
@@ -422,7 +422,7 @@ export function EmployeesClientView({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-border">
+              <tr className="bg-muted/40 dark:bg-muted/10 border-b border-border">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Сотрудник</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Должность / Отдел</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email</th>
@@ -436,7 +436,7 @@ export function EmployeesClientView({
                 <tr
                   key={e.id}
                   onClick={() => setSelectedId(e.id)}
-                  className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer border-b border-border last:border-b-0"
+                  className="hover:bg-muted/40 dark:hover:bg-muted/20 transition-colors cursor-pointer border-b border-border last:border-b-0"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -446,12 +446,12 @@ export function EmployeesClientView({
                       )}>
                         {e.full_name.charAt(0)}
                       </div>
-                      <span className="text-sm font-medium text-gray-900">{e.full_name}</span>
+                      <span className="text-sm font-medium text-foreground">{e.full_name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{e.position ?? "—"}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{e.email ?? "—"}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{e.room ?? "—"}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{e.position ?? "—"}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{e.email ?? "—"}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{e.room ?? "—"}</td>
                   <td className="px-4 py-3">
                     <EmployeeStatusBadge status={e.is_active ? "active" : "dismissed"} />
                   </td>
@@ -471,10 +471,10 @@ export function EmployeesClientView({
 function ContactRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | null | undefined }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon className="w-4 h-4 text-gray-400 shrink-0" />
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
       <div>
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className="text-sm font-medium text-gray-900">{value ?? "—"}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium text-foreground">{value ?? "—"}</p>
       </div>
     </div>
   );
