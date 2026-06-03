@@ -61,6 +61,74 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     return initialCache;
   });
 
+  // Ensure current user details are loaded in the cache
+  useEffect(() => {
+    if (!currentUserId) return;
+    
+    const fetchCurrentUserDetails = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("employees")
+        .select("full_name, avatar_url")
+        .eq("id", currentUserId)
+        .single();
+        
+      if (data) {
+        setSenderDetails((prev) => {
+          if (prev[currentUserId]) return prev;
+          return {
+            ...prev,
+            [currentUserId]: {
+              name: data.full_name,
+              avatarUrl: data.avatar_url ?? null,
+            },
+          };
+        });
+      }
+    };
+    
+    fetchCurrentUserDetails();
+  }, [currentUserId]);
+
+  // Sync state with parent's initialMessages when they update (e.g. from Server Actions revalidatePath)
+  useEffect(() => {
+    setMessages((prev) => {
+      // Keep optimistic messages that are not yet in initialMessages
+      const pendingOptimistic = prev.filter((m) => {
+        if (!m.id.startsWith("temp-")) return false;
+        
+        // Match by text and sender
+        const matched = initialMessages.some(
+          (real) => real.sender_id === m.sender_id && real.text === m.text
+        );
+        return !matched;
+      });
+      
+      return [...initialMessages, ...pendingOptimistic].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+
+    // Also update senderDetails cache with any new senders
+    const updatedCache = { ...senderDetails };
+    let hasNewSenders = false;
+    initialMessages.forEach((msg) => {
+      if (msg.sender && msg.sender_id && !updatedCache[msg.sender_id]) {
+        const extracted = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
+        if (extracted?.full_name) {
+          updatedCache[msg.sender_id] = {
+            name: extracted.full_name,
+            avatarUrl: extracted.avatar_url ?? null,
+          };
+          hasNewSenders = true;
+        }
+      }
+    });
+    if (hasNewSenders) {
+      setSenderDetails(updatedCache);
+    }
+  }, [initialMessages]);
+
   // Autoscroll to bottom
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -84,61 +152,147 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     senderDetailsRef.current = senderDetails;
   }, [senderDetails]);
 
-  // Supabase Realtime Subscription
+  // Supabase Realtime Subscription with Polling Fallback
   useEffect(() => {
+    let isMounted = true;
     const supabase = createClient();
+    let channel: any = null;
+    let pollingInterval: NodeJS.Timeout | null = null;
 
-    const channel = supabase
-      .channel(`incident-chat-${incidentId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "incident_messages",
-          filter: `incident_id=eq.${incidentId}`,
-        },
-        async (payload) => {
-          const newMsg = payload.new as Omit<Message, "sender">;
-          
-          // If message is already in state, ignore it
-          if (messagesRef.current.some((m) => m.id === newMsg.id)) return;
+    const setupPolling = () => {
+      if (pollingInterval) clearInterval(pollingInterval);
+      
+      pollingInterval = setInterval(async () => {
+        const { data, error } = await supabase
+          .from("incident_messages")
+          .select("*, sender:employees!incident_messages_sender_id_fkey(full_name, avatar_url)")
+          .eq("incident_id", incidentId)
+          .order("created_at", { ascending: true });
 
-          // Fetch sender details if not in state cache
-          let senderInfo = newMsg.sender_id ? senderDetailsRef.current[newMsg.sender_id] : null;
-          if (!senderInfo && newMsg.sender_id) {
-            const { data } = (await supabase
-              .from("employees")
-              .select("full_name, avatar_url")
-              .eq("id", newMsg.sender_id as string)
-              .single()) as any;
-            senderInfo = {
-              name: data?.full_name ?? "Пользователь",
-              avatarUrl: data?.avatar_url ?? null,
-            };
-            setSenderDetails((prev) => ({ ...prev, [newMsg.sender_id!]: senderInfo! }));
+        if (!error && isMounted && data) {
+          // Sync sender details cache
+          const updatedCache = { ...senderDetailsRef.current };
+          let hasNewSenders = false;
+          data.forEach((msg: any) => {
+            if (msg.sender && msg.sender_id && !updatedCache[msg.sender_id]) {
+              const extracted = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
+              if (extracted?.full_name) {
+                updatedCache[msg.sender_id] = {
+                  name: extracted.full_name,
+                  avatarUrl: extracted.avatar_url ?? null,
+                };
+                hasNewSenders = true;
+              }
+            }
+          });
+          if (hasNewSenders) {
+            setSenderDetails(updatedCache);
           }
 
-          const completeMsg: Message = {
-            ...newMsg,
-            sender: senderInfo
-              ? {
-                  full_name: senderInfo.name,
-                  avatar_url: senderInfo.avatarUrl,
-                }
-              : null,
-          };
-
           setMessages((prev) => {
-            if (prev.some((m) => m.id === completeMsg.id)) return prev;
-            return [...prev, completeMsg];
+            // Keep optimistic messages that are not yet in the loaded list
+            const pendingOptimistic = prev.filter((m) => {
+              if (!m.id.startsWith("temp-")) return false;
+              const matched = data.some(
+                (real: any) => real.sender_id === m.sender_id && real.text === m.text
+              );
+              return !matched;
+            });
+
+            // Map and format incoming data to match local structure
+            const formatted = data.map((d: any) => ({
+              ...d,
+              sender: d.sender ? {
+                full_name: d.sender.full_name,
+                avatar_url: d.sender.avatar_url,
+              } : null
+            }));
+
+            return [...formatted, ...pendingOptimistic].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
           });
         }
-      )
-      .subscribe();
+      }, 5000);
+    };
+
+    const setupRealtime = () => {
+      channel = supabase
+        .channel(`incident-chat-${incidentId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "incident_messages",
+            filter: `incident_id=eq.${incidentId}`,
+          },
+          async (payload) => {
+            const newMsg = payload.new as Omit<Message, "sender">;
+            
+            // If message is already in state, ignore it
+            if (messagesRef.current.some((m) => m.id === newMsg.id)) return;
+
+            // Fetch sender details if not in state cache
+            let senderInfo = newMsg.sender_id ? senderDetailsRef.current[newMsg.sender_id] : null;
+            if (!senderInfo && newMsg.sender_id) {
+              const { data } = (await supabase
+                .from("employees")
+                .select("full_name, avatar_url")
+                .eq("id", newMsg.sender_id as string)
+                .single()) as any;
+              senderInfo = {
+                name: data?.full_name ?? "Пользователь",
+                avatarUrl: data?.avatar_url ?? null,
+              };
+              setSenderDetails((prev) => ({ ...prev, [newMsg.sender_id!]: senderInfo! }));
+            }
+
+            const completeMsg: Message = {
+              ...newMsg,
+              sender: senderInfo
+                ? {
+                    full_name: senderInfo.name,
+                    avatar_url: senderInfo.avatarUrl,
+                  }
+                : null,
+            };
+
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === completeMsg.id)) return prev;
+              
+              // Remove optimistic message that matches this new message's text and sender
+              const filtered = prev.filter(
+                (m) =>
+                  !(
+                    m.id.startsWith("temp-") &&
+                    m.sender_id === completeMsg.sender_id &&
+                    m.text === completeMsg.text
+                  )
+              );
+              return [...filtered, completeMsg];
+            });
+          }
+        )
+        .subscribe((status) => {
+          console.log(`Realtime status for incident ${incidentId}:`, status);
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            console.warn("WebSocket blocked or error, switching to polling fallback");
+            setupPolling();
+          }
+        });
+    };
+
+    setupRealtime();
 
     return () => {
-      supabase.removeChannel(channel);
+      isMounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
     };
   }, [incidentId]);
 
@@ -165,8 +319,25 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
 
     if ((!hasText && !hasPhotos) || sending) return;
 
-    setSending(true);
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage: Message = {
+      id: tempId,
+      incident_id: incidentId,
+      sender_id: currentUserId,
+      text: textToSend,
+      created_at: new Date().toISOString(),
+      sender: {
+        full_name: senderDetails[currentUserId]?.name ?? "Отправка...",
+        avatar_url: senderDetails[currentUserId]?.avatarUrl ?? null,
+      },
+      photo_urls: [...photoPreviews],
+    };
+
+    setMessages((prev) => [...prev, tempMessage]);
+    setPhotos([]);
+    setPhotoPreviews([]);
     setInputText("");
+    setSending(true);
 
     const uploadedPhotoUrls: string[] = [];
 
@@ -201,6 +372,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           if (uploadError) {
             console.error("Chat photo upload error:", uploadError);
             alert(`Ошибка при загрузке фото ${file.name}`);
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
             setSending(false);
             return;
           }
@@ -214,6 +386,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
       } catch (err) {
         console.error("Chat attachment upload exception:", err);
         alert("Не удалось загрузить фотографии в чат");
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
         setSending(false);
         return;
       }
@@ -222,9 +395,13 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     const res = await sendMessage(incidentId, textToSend, uploadedPhotoUrls);
     if (res && res.error) {
       alert(res.error);
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } else {
-      setPhotos([]);
-      setPhotoPreviews([]);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId ? { ...m, photo_urls: uploadedPhotoUrls } : m
+        )
+      );
     }
     setSending(false);
   };

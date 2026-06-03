@@ -23,14 +23,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/supabase-proxy/:path*",
-        destination: "https://tmivtbessykjksntdcwl.supabase.co/:path*",
-      },
-    ];
-  },
 };
 
 export default nextConfig;
