@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, Loader2, Monitor } from "lucide-react";
 
+// Keep track of the code exchange promise globally to prevent double exchange in React Strict Mode
+let exchangePromise: Promise<any> | null = null;
+
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,15 +24,24 @@ export default function ResetPasswordPage() {
 
   // Verify session on mount (must come from the password reset email link)
   useEffect(() => {
+    let active = true;
+
     const checkSession = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
       
       if (code) {
+        if (!exchangePromise) {
+          // Store the promise globally so that the second mount awaits the exact same exchange
+          exchangePromise = supabase.auth.exchangeCodeForSession(code).then((res) => {
+            // Immediately remove code from the URL once code is exchanged successfully
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return res;
+          });
+        }
+        
         try {
-          await supabase.auth.exchangeCodeForSession(code);
-          // Clean up code from the URL so it's not visible
-          window.history.replaceState({}, document.title, window.location.pathname);
+          await exchangePromise;
         } catch (err) {
           console.error("Error exchanging code for session:", err);
         }
@@ -37,15 +49,21 @@ export default function ResetPasswordPage() {
 
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session || !session.user) {
-        // No session found — redirect back to login with error parameter
-        router.push("/login?error=invalid_link");
-      } else {
-        setVerifying(false);
+      if (active) {
+        if (!session || !session.user) {
+          // No session found — redirect back to login with error parameter
+          router.push("/login?error=invalid_link");
+        } else {
+          setVerifying(false);
+        }
       }
     };
     
     checkSession();
+
+    return () => {
+      active = false;
+    };
   }, [router, supabase]);
 
   const handleReset = async (e: React.FormEvent) => {
