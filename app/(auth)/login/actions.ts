@@ -9,7 +9,6 @@ interface AuthResult {
   success?: string;
 }
 
-/** Helper: fetch employee record from employees table by user id */
 async function getEmployee(userId: string) {
   const supabase = createServiceClient();
   return supabase
@@ -19,16 +18,13 @@ async function getEmployee(userId: string) {
     .single();
 }
 
-/** Helper: redirect based on whether user has a profile and their role */
 async function redirectAfterAuth(userId: string): Promise<never> {
   const { data: employee } = await getEmployee(userId);
 
-  // If user has no employee profile (or no full_name), send to onboarding
   if (!employee || !employee.full_name) {
     redirect("/onboarding");
   }
 
-  // Has a complete profile — redirect by role
   if (employee.role === "admin") redirect("/dashboard");
   if (employee.role === "it_specialist") redirect("/it-portal");
   if (employee.role === "facilities") redirect("/facilities-portal");
@@ -36,7 +32,6 @@ async function redirectAfterAuth(userId: string): Promise<never> {
   redirect("/portal");
 }
 
-/** Sign in with email + password, then redirect based on profile/role */
 export async function signIn(formData: FormData): Promise<AuthResult> {
   const supabase = await createClient();
   const email = formData.get("email") as string;
@@ -55,7 +50,6 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
   return await redirectAfterAuth(userId);
 }
 
-/** Sign up with email + password — redirects to onboarding for profile setup */
 export async function signUp(formData: FormData): Promise<AuthResult> {
   const supabase = await createClient();
   const email = formData.get("email") as string;
@@ -71,12 +65,10 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
 
   if (error) return { error: error.message };
 
-  // If email confirmation is required, session will be null
   if (data.user && !data.session) {
     return { success: "Письмо с подтверждением отправлено на ваш email. После подтверждения вы сможете заполнить профиль." };
   }
 
-  // If immediately confirmed (no email verification), redirect to onboarding
   if (data.session && data.user?.id) {
     redirect("/onboarding");
   }
@@ -93,7 +85,6 @@ async function ensureAuthUserAndSignIn(
   const serviceClient = createServiceClient();
   const cookieStore = await cookies();
 
-  // 1. Try to find existing employee of this role
   const { data: existingEmp } = await serviceClient
     .from("employees")
     .select("id, email, full_name")
@@ -111,7 +102,6 @@ async function ensureAuthUserAndSignIn(
     empEmail = existingEmp.email;
     empName = existingEmp.full_name;
   } else {
-    // If not found in database, insert dynamic employee profile
     const { error: insertErr } = await serviceClient.from("employees").insert({
       id: empId,
       email: empEmail,
@@ -125,7 +115,6 @@ async function ensureAuthUserAndSignIn(
     }
   }
 
-  // 2. Ensure the user exists in auth.users with the exact same ID
   const { error: createError } = await serviceClient.auth.admin.createUser({
     id: empId,
     email: empEmail,
@@ -136,7 +125,6 @@ async function ensureAuthUserAndSignIn(
   });
 
   if (createError) {
-    // If user already exists, update their password & metadata
     const { error: updateError } = await serviceClient.auth.admin.updateUserById(empId, {
       password: "demo123password",
       app_metadata: { role: role },
@@ -147,7 +135,6 @@ async function ensureAuthUserAndSignIn(
     }
   }
 
-  // 3. Log the user in on the client side to write auth cookies
   const authClient = await createClient();
   const { error: signInError } = await authClient.auth.signInWithPassword({
     email: empEmail,
@@ -158,7 +145,6 @@ async function ensureAuthUserAndSignIn(
     console.error("[ensureAuthUserAndSignIn] Sign in error:", signInError.message);
   }
 
-  // 4. Set demo cookies for backward compatibility
   cookieStore.set("demo_role", role, {
     path: "/",
     maxAge: 60 * 60 * 24,
@@ -175,7 +161,6 @@ async function ensureAuthUserAndSignIn(
   return empId;
 }
 
-/** Demo sign-in: sets cookies for demo mode and redirects based on role */
 export async function demoSignIn(role: "admin" | "employee" | "it_specialist" | "facilities" | "developer") {
   if (role === "admin") {
     await ensureAuthUserAndSignIn(
@@ -228,7 +213,6 @@ export async function demoSignIn(role: "admin" | "employee" | "it_specialist" | 
   }
 }
 
-/** Request a password reset email link from Supabase Auth */
 export async function resetPassword(email: string) {
   if (!email) {
     return { error: "Пожалуйста, введите email" };
@@ -237,7 +221,6 @@ export async function resetPassword(email: string) {
   const supabase = await createClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://core-asset-api.vercel.app";
 
-  // Request secure reset password link (does not leak if email exists or not)
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
     redirectTo: `${siteUrl}/reset-password`,
   });
@@ -246,24 +229,20 @@ export async function resetPassword(email: string) {
     console.error("Reset password error:", error.message);
   }
 
-  // Always return success to prevent user enumeration
   return {
     success: "Если этот email зарегистрирован, вы получите письмо для сброса пароля."
   };
 }
 
-/** Exchange PKCE code or verify OTP token for session on the server side to access cookies */
 export async function exchangeCode(code: string) {
   try {
     const supabase = await createClient();
     
-    // Try exchanging as PKCE code first (this is the default when PKCE is active)
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     if (!exchangeError) {
       return { success: true };
     }
     
-    // If that fails, fall back to verifyOtp (in case it is a standard token_hash)
     const { error: verifyError } = await supabase.auth.verifyOtp({
       token_hash: code,
       type: "recovery",
@@ -275,8 +254,8 @@ export async function exchangeCode(code: string) {
     }
     
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message || "Failed to exchange code" };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to exchange code";
+    return { error: message };
   }
 }
-

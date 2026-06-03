@@ -1,7 +1,6 @@
 "use server";
 
-import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
+import { createServiceClient } from "@/lib/supabase/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAuth } from "./auth";
 

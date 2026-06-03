@@ -9,8 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, Loader2, Monitor } from "lucide-react";
 import { exchangeCode } from "../login/actions";
 
-// Keep track of the code exchange promise globally to prevent double exchange in React Strict Mode
-let exchangePromise: Promise<any> | null = null;
+let exchangePromise: Promise<{ success?: boolean; error?: string }> | null = null;
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
@@ -23,7 +22,6 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Verify session on mount (must come from the password reset email link)
   useEffect(() => {
     let active = true;
 
@@ -35,12 +33,10 @@ export default function ResetPasswordPage() {
       
       if (activeToken) {
         if (!exchangePromise) {
-          // Exchange code or verify OTP on the server side where we have access to cookies (like code_verifier)
           exchangePromise = exchangeCode(activeToken).then((res) => {
             if (res.error) {
               throw new Error(res.error);
             }
-            // Immediately remove token parameters from the URL once verified successfully
             window.history.replaceState({}, document.title, window.location.pathname);
             return res;
           });
@@ -57,7 +53,6 @@ export default function ResetPasswordPage() {
       
       if (active) {
         if (!session || !session.user) {
-          // No session found — redirect back to login with error parameter
           router.push("/login?error=invalid_link");
         } else {
           setVerifying(false);
@@ -88,7 +83,6 @@ export default function ResetPasswordPage() {
     setLoading(true);
     setError("");
     
-    // Update password using the active session from recovery link
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
@@ -100,7 +94,6 @@ export default function ResetPasswordPage() {
       return;
     }
     
-    // Redirect to login on success
     router.push("/login?password_reset=success");
   };
 
@@ -115,7 +108,6 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] px-4">
-      {/* Logo */}
       <div className="flex flex-col items-center mb-8 select-none">
         <div className="flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-[#2563eb] mb-4">
           <Monitor className="w-9 h-9 text-white" />
@@ -128,7 +120,6 @@ export default function ResetPasswordPage() {
         </p>
       </div>
 
-      {/* Card */}
       <div className="w-full max-w-[420px] rounded-2xl bg-card border border-border/60 p-6 sm:p-8 shadow-xl text-foreground">
         <div className="text-center mb-6">
           <h2 className="text-xl font-semibold text-foreground">
@@ -140,7 +131,6 @@ export default function ResetPasswordPage() {
         </div>
         
         <form onSubmit={handleReset} className="space-y-5">
-          {/* New Password */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-foreground/80">
               Новый пароль
@@ -170,7 +160,6 @@ export default function ResetPasswordPage() {
             </div>
           </div>
           
-          {/* Confirm Password */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-foreground/80">
               Подтвердите пароль
@@ -206,7 +195,6 @@ export default function ResetPasswordPage() {
             </div>
           )}
           
-          {/* Shifting the button slightly lower via margin top (mt-8) */}
           <Button
             type="submit"
             className="w-full h-11 mt-8 rounded-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground gap-2"

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useActionState, useTransition, useEffect } from "react";
+import { useState, useActionState, useTransition, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn, demoSignIn, resetPassword } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,17 @@ interface FormState {
 
 const initialState: FormState = { error: "", success: "" };
 
-export default function LoginPage() {
+function LoginContent() {
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get("error");
+  const passwordResetParam = searchParams.get("password_reset");
+
+  const paramsMessage = errorParam === "invalid_link"
+    ? { error: "Ссылка для сброса пароля недействительна или устарела." }
+    : passwordResetParam === "success"
+    ? { success: "Пароль успешно изменен. Войдите с новым паролем." }
+    : null;
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [isDemoPending, startDemoTransition] = useTransition();
@@ -35,21 +46,6 @@ export default function LoginPage() {
   const [logoClicks, setLogoClicks] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
   const [showDemoPanel, setShowDemoPanel] = useState(false);
-
-  const [paramsMessage, setParamsMessage] = useState<{ error?: string; success?: string } | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const error = params.get("error");
-      const passwordReset = params.get("password_reset");
-      if (error === "invalid_link") {
-        setParamsMessage({ error: "Ссылка для сброса пароля недействительна или устарела." });
-      } else if (passwordReset === "success") {
-        setParamsMessage({ success: "Пароль успешно изменен. Войдите с новым паролем." });
-      }
-    }
-  }, []);
 
   const handleLogoClick = () => {
     const now = Date.now();
@@ -105,7 +101,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] px-4">
-      {/* Logo */}
       <div 
         onClick={handleLogoClick}
         className="flex flex-col items-center mb-8 cursor-pointer select-none active:scale-98 transition-transform"
@@ -121,15 +116,12 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Login Card */}
       <div className="w-full max-w-[420px] rounded-2xl bg-card border border-border/60 p-6 sm:p-8 shadow-xl">
         <h2 className="text-xl font-semibold text-foreground mb-6">
           Войти в систему
         </h2>
 
-        {/* Email/Password Form */}
         <form id="login-form" action={formAction} className="space-y-5">
-          {/* Email */}
           <div className="space-y-2">
             <Label
               htmlFor="email"
@@ -153,7 +145,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Password */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label
@@ -196,7 +187,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Params Message */}
           {paramsMessage && (
             <div className={`text-sm px-3 py-2 rounded-lg border ${paramsMessage.error ? 'text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-900/30' : 'text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/20 dark:border-green-900/30'}`}>
               {paramsMessage.error && <p>{paramsMessage.error}</p>}
@@ -204,7 +194,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Reset Message */}
           {resetMessage && (
             <div className={`text-sm px-3 py-2 rounded-lg border ${resetMessage.error ? 'text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-900/30' : 'text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/20 dark:border-green-900/30'}`}>
               {resetMessage.error && <p>{resetMessage.error}</p>}
@@ -212,21 +201,18 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Error Message */}
           {state.error && (
             <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
               {state.error}
             </p>
           )}
 
-          {/* Success Message */}
           {state.success && (
-            <p className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+            <p className="text-sm text-green-600 bg-red-50 px-3 py-2 rounded-lg">
               {state.success}
             </p>
           )}
 
-          {/* Submit */}
           <Button
             type="submit"
             disabled={pending || isDemoPending}
@@ -237,7 +223,6 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {/* Link to Register */}
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Нет аккаунта?{" "}
           <Link
@@ -248,7 +233,6 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        {/* Demo Section */}
         {showDemoPanel && (
           <div className="mt-6">
             <div className="relative flex items-center justify-center">
@@ -330,7 +314,14 @@ export default function LoginPage() {
           </div>
         )}
       </div>
-
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -14,10 +14,12 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    setMounted(true);
-    // ✅ Читаем уже примененный класс из DOM (скрипт в <head> уже выполнился)
-    const isDark = document.documentElement.classList.contains("dark");
-    setTheme(isDark ? "dark" : "light");
+    const timer = setTimeout(() => {
+      setMounted(true);
+      const isDark = document.documentElement.classList.contains("dark");
+      setTheme(isDark ? "dark" : "light");
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleTheme = () => {
@@ -32,7 +34,6 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   };
 
   if (!mounted) {
-    // ✅ Скелетон до гидратации — избегает мерцания
     return (
       <div className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg" />
     );

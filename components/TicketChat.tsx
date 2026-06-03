@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { sendMessage } from "@/lib/actions/messages";
-import { Send, Loader2, Camera, X, Image as ImageIcon } from "lucide-react";
+import { Send, Loader2, Camera, X } from "lucide-react";
 import { formatDateTimeRu } from "@/lib/utils";
 import { toast } from "sonner";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 interface SenderInfo {
   full_name: string;
@@ -28,6 +29,22 @@ interface TicketChatProps {
   initialMessages: Message[];
 }
 
+interface QueryMessage {
+  id: string;
+  incident_id: string;
+  sender_id: string | null;
+  text: string;
+  created_at: string;
+  photo_urls?: string[] | null;
+  sender: {
+    full_name: string;
+    avatar_url: string | null;
+  } | {
+    full_name: string;
+    avatar_url: string | null;
+  }[] | null;
+}
+
 export function TicketChat({ incidentId, currentUserId, initialMessages }: TicketChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputText, setInputText] = useState("");
@@ -38,14 +55,12 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
       photoPreviews.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [photoPreviews]);
   
-  // Store sender details cache in state to comply with React rules of render
   const [senderDetails, setSenderDetails] = useState<Record<string, { name: string; avatarUrl: string | null }>>(() => {
     const initialCache: Record<string, { name: string; avatarUrl: string | null }> = {};
     initialMessages.forEach((msg) => {
@@ -62,17 +77,16 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     return initialCache;
   });
 
-  // Ensure current user details are loaded in the cache
   useEffect(() => {
     if (!currentUserId) return;
     
     const fetchCurrentUserDetails = async () => {
       const supabase = createClient();
-      const { data } = await supabase
+      const { data } = await (supabase
         .from("employees")
-        .select("full_name, avatar_url")
-        .eq("id", currentUserId)
-        .single();
+        .select("id, full_name, avatar_url")
+        .eq("id" as never, currentUserId)
+        .single() as unknown as { data: { id: string; full_name: string; avatar_url: string | null } | null });
         
       if (data) {
         setSenderDetails((prev) => {
@@ -91,46 +105,48 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     fetchCurrentUserDetails();
   }, [currentUserId]);
 
-  // Sync state with parent's initialMessages when they update (e.g. from Server Actions revalidatePath)
   useEffect(() => {
-    setMessages((prev) => {
-      // Keep optimistic messages that are not yet in initialMessages
-      const pendingOptimistic = prev.filter((m) => {
-        if (!m.id.startsWith("temp-")) return false;
+    const timer = setTimeout(() => {
+      setMessages((prev) => {
+        const pendingOptimistic = prev.filter((m) => {
+          if (!m.id.startsWith("temp-")) return false;
+          const matched = initialMessages.some(
+            (real) => real.sender_id === m.sender_id && real.text === m.text
+          );
+          return !matched;
+        });
         
-        // Match by text and sender
-        const matched = initialMessages.some(
-          (real) => real.sender_id === m.sender_id && real.text === m.text
+        return [...initialMessages, ...pendingOptimistic].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
-        return !matched;
       });
-      
-      return [...initialMessages, ...pendingOptimistic].sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
-    });
-
-    // Also update senderDetails cache with any new senders
-    const updatedCache = { ...senderDetails };
-    let hasNewSenders = false;
-    initialMessages.forEach((msg) => {
-      if (msg.sender && msg.sender_id && !updatedCache[msg.sender_id]) {
-        const extracted = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
-        if (extracted?.full_name) {
-          updatedCache[msg.sender_id] = {
-            name: extracted.full_name,
-            avatarUrl: extracted.avatar_url ?? null,
-          };
-          hasNewSenders = true;
-        }
-      }
-    });
-    if (hasNewSenders) {
-      setSenderDetails(updatedCache);
-    }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialMessages]);
 
-  // Autoscroll to bottom
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSenderDetails((prev) => {
+        const updatedCache = { ...prev };
+        let hasNewSenders = false;
+        initialMessages.forEach((msg) => {
+          if (msg.sender && msg.sender_id && !updatedCache[msg.sender_id]) {
+            const extracted = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
+            if (extracted?.full_name) {
+              updatedCache[msg.sender_id] = {
+                name: extracted.full_name,
+                avatarUrl: extracted.avatar_url ?? null,
+              };
+              hasNewSenders = true;
+            }
+          }
+        });
+        return hasNewSenders ? updatedCache : prev;
+      });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [initialMessages]);
+
   const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -141,7 +157,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     scrollToBottom();
   }, [messages]);
 
-  // Refs to keep subscription callback updated without resetting the Supabase channel
   const messagesRef = useRef<Message[]>(messages);
   const senderDetailsRef = useRef<Record<string, { name: string; avatarUrl: string | null }>>(senderDetails);
 
@@ -153,28 +168,27 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     senderDetailsRef.current = senderDetails;
   }, [senderDetails]);
 
-  // Supabase Realtime Subscription with Polling Fallback
   useEffect(() => {
     let isMounted = true;
     const supabase = createClient();
-    let channel: any = null;
+    let channel: RealtimeChannel | null = null;
     let pollingInterval: NodeJS.Timeout | null = null;
 
     const setupPolling = () => {
       if (pollingInterval) clearInterval(pollingInterval);
       
       pollingInterval = setInterval(async () => {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase
           .from("incident_messages")
           .select("*, sender:employees!incident_messages_sender_id_fkey(full_name, avatar_url)")
-          .eq("incident_id", incidentId)
-          .order("created_at", { ascending: true });
+          .eq("incident_id" as never, incidentId)
+          .order("created_at" as never, { ascending: true }) as unknown as { data: QueryMessage[] | null; error: unknown });
 
         if (!error && isMounted && data) {
-          // Sync sender details cache
+          const messagesData = data as unknown as QueryMessage[];
           const updatedCache = { ...senderDetailsRef.current };
           let hasNewSenders = false;
-          data.forEach((msg: any) => {
+          messagesData.forEach((msg) => {
             if (msg.sender && msg.sender_id && !updatedCache[msg.sender_id]) {
               const extracted = Array.isArray(msg.sender) ? msg.sender[0] : msg.sender;
               if (extracted?.full_name) {
@@ -191,21 +205,19 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           }
 
           setMessages((prev) => {
-            // Keep optimistic messages that are not yet in the loaded list
             const pendingOptimistic = prev.filter((m) => {
               if (!m.id.startsWith("temp-")) return false;
-              const matched = data.some(
-                (real: any) => real.sender_id === m.sender_id && real.text === m.text
+              const matched = messagesData.some(
+                (real) => real.sender_id === m.sender_id && real.text === m.text
               );
               return !matched;
             });
 
-            // Map and format incoming data to match local structure
-            const formatted = data.map((d: any) => ({
+            const formatted = messagesData.map((d) => ({
               ...d,
               sender: d.sender ? {
-                full_name: d.sender.full_name,
-                avatar_url: d.sender.avatar_url,
+                full_name: Array.isArray(d.sender) ? d.sender[0].full_name : d.sender.full_name,
+                avatar_url: Array.isArray(d.sender) ? d.sender[0].avatar_url : d.sender.avatar_url,
               } : null
             }));
 
@@ -231,22 +243,22 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           async (payload) => {
             const newMsg = payload.new as Omit<Message, "sender">;
             
-            // If message is already in state, ignore it
             if (messagesRef.current.some((m) => m.id === newMsg.id)) return;
 
-            // Fetch sender details if not in state cache
             let senderInfo = newMsg.sender_id ? senderDetailsRef.current[newMsg.sender_id] : null;
             if (!senderInfo && newMsg.sender_id) {
-              const { data } = (await supabase
+              const { data } = await (supabase
                 .from("employees")
                 .select("full_name, avatar_url")
-                .eq("id", newMsg.sender_id as string)
-                .single()) as any;
-              senderInfo = {
-                name: data?.full_name ?? "Пользователь",
-                avatarUrl: data?.avatar_url ?? null,
-              };
-              setSenderDetails((prev) => ({ ...prev, [newMsg.sender_id!]: senderInfo! }));
+                .eq("id" as never, newMsg.sender_id)
+                .single() as unknown as { data: { full_name: string; avatar_url: string | null } | null });
+              if (data) {
+                senderInfo = {
+                  name: data.full_name,
+                  avatarUrl: data.avatar_url ?? null,
+                };
+                setSenderDetails((prev) => ({ ...prev, [newMsg.sender_id!]: senderInfo! }));
+              }
             }
 
             const completeMsg: Message = {
@@ -262,7 +274,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
             setMessages((prev) => {
               if (prev.some((m) => m.id === completeMsg.id)) return prev;
               
-              // Remove optimistic message that matches this new message's text and sender
               const filtered = prev.filter(
                 (m) =>
                   !(
@@ -276,9 +287,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           }
         )
         .subscribe((status) => {
-          console.log(`Realtime status for incident ${incidentId}:`, status);
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            console.warn("WebSocket blocked or error, switching to polling fallback");
             setupPolling();
           }
         });
@@ -320,7 +329,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
 
     if ((!hasText && !hasPhotos) || sending) return;
 
-    // Save inputs in case of error rollback
     const originalPhotos = [...photos];
     const originalPreviews = [...photoPreviews];
     const originalInputText = inputText;
@@ -376,7 +384,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
             });
 
           if (uploadError) {
-            console.error("Chat photo upload error:", uploadError);
             toast.error(`Ошибка при загрузке фото ${file.name}`);
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
             setPhotos(originalPhotos);
@@ -433,7 +440,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
 
   return (
     <div className="flex flex-col h-[400px] border border-border rounded-xl bg-card text-card-foreground shadow-sm overflow-hidden">
-      {/* Messages Header */}
       <div className="bg-muted/50 border-b border-border px-4 py-2 flex items-center justify-between">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Чат по инциденту</span>
         <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
@@ -441,7 +447,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         </span>
       </div>
 
-      {/* Messages List */}
       <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-3 custom-scrollbar">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
@@ -455,7 +460,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
             
             return (
               <div key={msg.id} className={`flex items-start gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
-                {/* Avatar */}
                 <div className="w-8 h-8 rounded-full bg-muted shrink-0 overflow-hidden flex items-center justify-center border border-border">
                   {senderInfo?.avatarUrl ? (
                     <img src={senderInfo.avatarUrl} alt={senderName} className="w-full h-full object-cover" />
@@ -466,7 +470,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
                   )}
                 </div>
 
-                {/* Message Bubble Column */}
                 <div className={`flex flex-col max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
                   {!isOwn && (
                     <span className="text-[10px] font-semibold text-muted-foreground mb-0.5 ml-1">
@@ -511,7 +514,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         )}
       </div>
 
-      {/* Selected Photos Preview */}
       {photoPreviews.length > 0 && (
         <div className="border-t border-border p-2 bg-muted/20 flex flex-wrap gap-2">
           {photoPreviews.map((preview, index) => (
@@ -531,7 +533,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         </div>
       )}
 
-      {/* Message Input Form */}
       <form onSubmit={handleSend} className="border-t border-border p-2 bg-muted/30 flex gap-2">
         <input
           type="file"
@@ -568,7 +569,6 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         </button>
       </form>
 
-      {/* Photo Preview Overlay */}
       {previewImageUrl && (
         <div 
           className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4 animate-fade-in"

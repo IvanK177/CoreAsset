@@ -3,23 +3,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 
-/**
- * Shared sign-out action used by Sidebar and PortalHeader.
- * Clears the Supabase session, all auth cookies, and demo cookies,
- * then redirects to /login.
- */
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
 
-  // Clear all auth, demo, and pending registration cookies explicitly
   const cookieStore = await cookies();
   cookieStore.delete("demo_role");
   cookieStore.delete("demo_employee_id");
   cookieStore.delete("pending_reg");
 
-  // Delete all Supabase auth cookies (sb-* prefix)
   const allCookies = cookieStore.getAll();
   allCookies.forEach((cookie) => {
     if (cookie.name.startsWith("sb-")) {
@@ -30,11 +24,6 @@ export async function signOut() {
   redirect("/login");
 }
 
-/**
- * Custom back action for the onboarding page.
- * If registration is pending, deletes the registration cookie and redirects back to /register.
- * If the user is fully logged in, logs them out and redirects to /login.
- */
 export async function goBackFromOnboarding() {
   const cookieStore = await cookies();
   const hasPending = cookieStore.has("pending_reg");
@@ -47,11 +36,7 @@ export async function goBackFromOnboarding() {
   }
 }
 
-/**
- * Validates the user's session and role.
- * Supports both standard Supabase sessions and demo modes.
- */
-export async function requireAuth(requiredRoles?: string[]): Promise<{ user: any; role: string }> {
+export async function requireAuth(requiredRoles?: string[]): Promise<{ user: User | { id: string; email: string }; role: string }> {
   const supabase = await createClient();
   const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -88,4 +73,4 @@ export async function requireAuth(requiredRoles?: string[]): Promise<{ user: any
   }
 
   return { user: user || { id: userId, email: "demo@corp.ru" }, role };
-}
+}

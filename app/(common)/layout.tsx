@@ -1,5 +1,4 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import type { Tables } from "@/types/database.types";
 import { cookies } from "next/headers";
 import { daysUntilExpiry } from "@/lib/utils";
 import DashboardLayoutClient from "@/components/layout/DashboardLayoutClient";
@@ -18,7 +17,6 @@ export default async function CommonLayout({ children }: { children: React.React
   const demoRole = cookieStore.get("demo_role")?.value;
   const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
 
-  // 1. Determine the user's role & profile
   let employeeData = null;
   let role = demoRole || "employee";
 
@@ -35,9 +33,6 @@ export default async function CommonLayout({ children }: { children: React.React
     }
   }
 
-
-
-  // 2. Render appropriate layout wrapper depending on the role
   if (role === "admin") {
     const [incidentsRes, licensesRes] = await Promise.all([
       dataClient.from("incidents").select("id, priority, status").neq("status", "resolved"),
@@ -131,7 +126,6 @@ export default async function CommonLayout({ children }: { children: React.React
     );
   }
 
-  // Default / Employee role
   return (
     <div className="min-h-screen bg-background text-foreground">
       <PortalHeader
