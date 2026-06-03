@@ -22,6 +22,19 @@ export default function ResetPasswordPage() {
   // Verify session on mount (must come from the password reset email link)
   useEffect(() => {
     const checkSession = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      
+      if (code) {
+        try {
+          await supabase.auth.exchangeCodeForSession(code);
+          // Clean up code from the URL so it's not visible
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (err) {
+          console.error("Error exchanging code for session:", err);
+        }
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session || !session.user) {

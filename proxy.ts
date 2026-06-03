@@ -13,7 +13,7 @@ const ADMIN_ROUTES = [
 ];
 
 /** Public routes that don't require authentication */
-const PUBLIC_ROUTES = ["/login", "/register", "/auth/callback"];
+const PUBLIC_ROUTES = ["/login", "/register", "/auth/callback", "/reset-password"];
 
 /** Role-based home paths */
 const ROLE_HOME: Record<string, string> = {
