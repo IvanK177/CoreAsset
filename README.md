@@ -64,7 +64,10 @@ npm install
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://XXXXX.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxciOixIUzI1N...
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+
+> **Важно:** `NEXT_PUBLIC_SITE_URL` отвечает за формирование правильной ссылки сброса пароля (redirect URL) в письмах восстановления доступа. Для локального запуска укажите `http://localhost:3000`, для продакшена — адрес вашего сайта.
 
 > Полный anon key находится в Supabase Dashboard → Project Settings → API.
 
