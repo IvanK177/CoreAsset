@@ -32,6 +32,25 @@ export default function LoginPage() {
   const [resetMessage, setResetMessage] = useState<{ error?: string; success?: string; tempPassword?: string } | null>(null);
   const [resetPending, setResetPending] = useState(false);
 
+  const [logoClicks, setLogoClicks] = useState(0);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [showDemoPanel, setShowDemoPanel] = useState(false);
+
+  const handleLogoClick = () => {
+    const now = Date.now();
+    if (now - lastClickTime < 1000) {
+      const newClicks = logoClicks + 1;
+      setLogoClicks(newClicks);
+      if (newClicks >= 3) {
+        setShowDemoPanel(true);
+        setLogoClicks(0);
+      }
+    } else {
+      setLogoClicks(1);
+    }
+    setLastClickTime(now);
+  };
+
   const handleForgotPassword = async () => {
     if (!email) {
       setResetMessage({ error: "Пожалуйста, введите email в поле выше перед сбросом пароля" });
@@ -72,7 +91,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] px-4">
       {/* Logo */}
-      <div className="flex flex-col items-center mb-8">
+      <div 
+        onClick={handleLogoClick}
+        className="flex flex-col items-center mb-8 cursor-pointer select-none active:scale-98 transition-transform"
+      >
         <div className="flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-[#2563eb] mb-4">
           <Monitor className="w-9 h-9 text-white" />
         </div>
@@ -223,84 +245,86 @@ export default function LoginPage() {
         </p>
 
         {/* Demo Section */}
-        <div className="mt-6">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
+        {showDemoPanel && (
+          <div className="mt-6">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative bg-card px-4 text-xs text-muted-foreground">
+                Быстрый вход (демо)
+              </div>
             </div>
-            <div className="relative bg-card px-4 text-xs text-muted-foreground">
-              Быстрый вход (демо)
-            </div>
-          </div>
 
-          <div className="mt-4 space-y-2">
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
-              disabled={pending || isDemoPending}
-              onClick={() => handleDemoLogin("admin")}
-            >
-              {isDemoPending && activeDemoRole === "admin" ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-red-600" />
-              ) : (
-                <Monitor className="w-3.5 h-3.5 text-red-500" />
-              )}
-              {isDemoPending && activeDemoRole === "admin" ? "Вход…" : "Войти как Администратор"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
-              disabled={pending || isDemoPending}
-              onClick={() => handleDemoLogin("employee")}
-            >
-              {isDemoPending && activeDemoRole === "employee" ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
-              ) : (
-                <User className="w-3.5 h-3.5 text-emerald-500" />
-              )}
-              {isDemoPending && activeDemoRole === "employee" ? "Вход…" : "Войти как Сотрудник"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
-              disabled={pending || isDemoPending}
-              onClick={() => handleDemoLogin("it_specialist")}
-            >
-              {isDemoPending && activeDemoRole === "it_specialist" ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-              ) : (
-                <Wrench className="w-3.5 h-3.5 text-blue-500" />
-              )}
-              {isDemoPending && activeDemoRole === "it_specialist" ? "Вход…" : "Войти как IT-специалист"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg border-teal-500/20 text-teal-600 dark:text-teal-400 hover:bg-teal-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
-              disabled={pending || isDemoPending}
-              onClick={() => handleDemoLogin("facilities")}
-            >
-              {isDemoPending && activeDemoRole === "facilities" ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-600" />
-              ) : (
-                <Wrench className="w-3.5 h-3.5 text-teal-500" />
-              )}
-              {isDemoPending && activeDemoRole === "facilities" ? "Вход…" : "Войти как Специалист АХЧ"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
-              disabled={pending || isDemoPending}
-              onClick={() => handleDemoLogin("developer")}
-            >
-              {isDemoPending && activeDemoRole === "developer" ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
-              ) : (
-                <Wrench className="w-3.5 h-3.5 text-indigo-500" />
-              )}
-              {isDemoPending && activeDemoRole === "developer" ? "Вход…" : "Войти как Разработчик"}
-            </Button>
+            <div className="mt-4 space-y-2">
+              <Button
+                variant="outline"
+                className="w-full h-10 rounded-lg border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
+                disabled={pending || isDemoPending}
+                onClick={() => handleDemoLogin("admin")}
+              >
+                {isDemoPending && activeDemoRole === "admin" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-red-600" />
+                ) : (
+                  <Monitor className="w-3.5 h-3.5 text-red-500" />
+                )}
+                {isDemoPending && activeDemoRole === "admin" ? "Вход…" : "Войти как Администратор"}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-10 rounded-lg border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
+                disabled={pending || isDemoPending}
+                onClick={() => handleDemoLogin("employee")}
+              >
+                {isDemoPending && activeDemoRole === "employee" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-emerald-500" />
+                )}
+                {isDemoPending && activeDemoRole === "employee" ? "Вход…" : "Войти как Сотрудник"}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-10 rounded-lg border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
+                disabled={pending || isDemoPending}
+                onClick={() => handleDemoLogin("it_specialist")}
+              >
+                {isDemoPending && activeDemoRole === "it_specialist" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                ) : (
+                  <Wrench className="w-3.5 h-3.5 text-blue-500" />
+                )}
+                {isDemoPending && activeDemoRole === "it_specialist" ? "Вход…" : "Войти как IT-специалист"}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-10 rounded-lg border-teal-500/20 text-teal-600 dark:text-teal-400 hover:bg-teal-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
+                disabled={pending || isDemoPending}
+                onClick={() => handleDemoLogin("facilities")}
+              >
+                {isDemoPending && activeDemoRole === "facilities" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-600" />
+                ) : (
+                  <Wrench className="w-3.5 h-3.5 text-teal-500" />
+                )}
+                {isDemoPending && activeDemoRole === "facilities" ? "Вход…" : "Войти как Специалист АХЧ"}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-10 rounded-lg border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
+                disabled={pending || isDemoPending}
+                onClick={() => handleDemoLogin("developer")}
+              >
+                {isDemoPending && activeDemoRole === "developer" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                ) : (
+                  <Wrench className="w-3.5 h-3.5 text-indigo-500" />
+                )}
+                {isDemoPending && activeDemoRole === "developer" ? "Вход…" : "Войти как Разработчик"}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
     </div>
