@@ -69,7 +69,7 @@ export default function FacilitiesPortalHeader({
                   "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150",
                   active
                     ? "bg-emerald-50 text-emerald-700"
-                    : "text-gray-550 hover:bg-gray-50 hover:text-gray-700"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                 )}
               >
                 <Icon className="w-4 h-4 shrink-0" />

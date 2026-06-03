@@ -237,11 +237,11 @@
     color: #cbd5e1 !important;
   }
   
-  .text-gray-650, .text-gray-600, .text-slate-600 {
+  .text-gray-600, .text-slate-600 {
     color: #94a3b8 !important;
   }
   
-  .text-gray-550, .text-gray-555, .text-gray-500, .text-slate-550, .text-slate-500 {
+  .text-gray-500, .text-slate-500 {
     color: var(--muted-foreground) !important;
   }
   

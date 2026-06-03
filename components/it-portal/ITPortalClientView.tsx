@@ -500,7 +500,7 @@ export default function ITPortalClientView({
                 ) : (
                   <div className="flex flex-col items-center justify-center p-6 border border-dashed border-gray-200 rounded-xl bg-gray-50 text-center">
                     <MessageSquare className="w-8 h-8 text-gray-400 mb-2" />
-                    <p className="text-sm font-medium text-gray-650">Чат недоступен</p>
+                    <p className="text-sm font-medium text-gray-500">Чат недоступен</p>
                     <p className="text-xs text-gray-400 mt-1 max-w-[280px]">
                       Вы сможете общаться с сотрудником после того, как примете эту заявку в работу.
                     </p>
@@ -722,7 +722,7 @@ export default function ITPortalClientView({
                   <Clock className="w-4 h-4 text-blue-600" />
                   Сроки решения
                 </h3>
-                <p className="text-xs text-gray-555 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">Регламент исправления инцидентов по приоритетам</p>
               </div>
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-red-50/70 border border-red-100/50">
@@ -807,7 +807,7 @@ export default function ITPortalClientView({
                                 {getIncidentTitle(incident)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-gray-555 flex-wrap">
+                            <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
                               {/* Author */}
                               <span className="flex items-center gap-1">
                                 <User className="w-3 h-3 text-gray-400" />
@@ -880,7 +880,7 @@ export default function ITPortalClientView({
                         {isInProgress && isAssignedToMe && (
                           <Button
                             size="sm"
-                            className="gap-2 bg-emerald-600 hover:bg-emerald-750 text-white cursor-pointer"
+                            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
                             disabled={isActionPending}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -918,7 +918,7 @@ export default function ITPortalClientView({
                   <BarChart3 className="w-4 h-4 text-blue-600" />
                   Статистика по месяцам
                 </h3>
-                <p className="text-xs text-gray-555 mt-1 leading-relaxed">
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                   Показатели по корпусу: <span className="font-semibold text-blue-600">{buildingFilter === "all" ? "Все корпуса" : buildingFilter}</span>
                 </p>
               </div>

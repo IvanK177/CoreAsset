@@ -35,7 +35,7 @@ function AccordionItem({ title, children }: { title: string; children: React.Rea
         )}
       >
         <div className="overflow-hidden">
-          <div className="text-xs sm:text-sm text-gray-650 dark:text-slate-400 leading-relaxed pt-1 pb-4">
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 leading-relaxed pt-1 pb-4">
             {children}
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function SupportPage() {
           <LifeBuoy className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-905 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
             Поддержка и справка
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-0.5">

@@ -169,7 +169,7 @@ export default function DevPortalClientView({ requests }: DevPortalClientViewPro
                 key={req.id}
                 onClick={() => setSelectedRequest(req)}
                 className={cn(
-                  "rounded-2xl bg-white dark:bg-slate-900 p-5 shadow-sm border transition-all duration-150 cursor-pointer hover:shadow-md hover:border-indigo-300 dark:border-slate-850",
+                  "rounded-2xl bg-white dark:bg-slate-900 p-5 shadow-sm border transition-all duration-150 cursor-pointer hover:shadow-md hover:border-indigo-300 dark:border-slate-800",
                   isOpen ? "border-yellow-200" : isInProgress ? "border-blue-200" : "border-emerald-200"
                 )}
               >
@@ -322,11 +322,11 @@ export default function DevPortalClientView({ requests }: DevPortalClientViewPro
                     </div>
                     <div>
                       <span className="text-gray-400 block">Email:</span>
-                      <span className="text-gray-750 dark:text-gray-300">{selectedRequest.employee?.email ?? "—"}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{selectedRequest.employee?.email ?? "—"}</span>
                     </div>
                     <div>
                       <span className="text-gray-400 block">Кабинет:</span>
-                      <span className="text-gray-750 dark:text-gray-300">{selectedRequest.employee?.room ?? "—"}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{selectedRequest.employee?.room ?? "—"}</span>
                     </div>
                   </div>
                 </div>

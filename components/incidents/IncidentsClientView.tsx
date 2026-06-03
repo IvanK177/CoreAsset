@@ -628,7 +628,7 @@ export function IncidentsClientView({
                   <p className="text-sm font-semibold text-gray-900 truncate">
                     <DecompressedText text={inc.title || inc.description} truncate={100} />
                   </p>
-                  <p className="text-xs text-gray-550 mt-1 flex items-center gap-1.5 flex-wrap">
+                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
                     <span>
                       {inc.device
                         ? `${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`

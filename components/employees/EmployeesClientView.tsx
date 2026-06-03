@@ -417,11 +417,11 @@ export function EmployeesClientView({
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Сотрудник</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Должность / Отдел</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Кабинет</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-505 uppercase tracking-wide">Статус</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Сотрудник</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Должность / Отдел</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Кабинет</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Статус</th>
                 <th className="px-4 py-3 w-8" />
               </tr>
             </thead>
@@ -467,7 +467,7 @@ function ContactRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ 
     <div className="flex items-center gap-2">
       <Icon className="w-4 h-4 text-gray-400 shrink-0" />
       <div>
-        <p className="text-xs text-gray-505">{label}</p>
+        <p className="text-xs text-gray-500">{label}</p>
         <p className="text-sm font-medium text-gray-900">{value ?? "—"}</p>
       </div>
     </div>

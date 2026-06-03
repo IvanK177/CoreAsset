@@ -171,7 +171,7 @@ export default async function DashboardPage() {
                         <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
                         <span className="text-sm font-semibold text-gray-900 truncate">{inc.description}</span>
                       </div>
-                      <p className="text-xs text-gray-505 mt-1">
+                      <p className="text-xs text-gray-500 mt-1">
                         {device?.inventory_number ?? "—"}
                       </p>
                     </div>

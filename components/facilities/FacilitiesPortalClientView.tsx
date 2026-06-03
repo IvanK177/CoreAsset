@@ -296,7 +296,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                   </Badge>
                 </div>
                 <p className="text-sm font-medium text-gray-900 truncate">Кабинет {req.room}</p>
-                <p className="text-xs text-gray-555 truncate">{req.employee?.full_name ?? "—"}</p>
+                <p className="text-xs text-gray-500 truncate">{req.employee?.full_name ?? "—"}</p>
               </button>
             ))}
           </div>
@@ -339,7 +339,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Заявитель</h4>
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-gray-800">{selectedRequest.employee?.full_name ?? "—"}</p>
-                    <p className="text-xs text-gray-550">{selectedRequest.employee?.position ?? "—"}</p>
+                    <p className="text-xs text-gray-500">{selectedRequest.employee?.position ?? "—"}</p>
                   </div>
                 </div>
 
@@ -619,7 +619,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                 <Clock className="w-4 h-4 text-emerald-600" />
                 Сроки решения АХЧ
               </h3>
-              <p className="text-xs text-gray-555 mt-1 leading-relaxed">Регламент выполнения заявок АХЧ по типам</p>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">Регламент выполнения заявок АХЧ по типам</p>
             </div>
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-orange-50/70 border border-orange-100/50">
@@ -692,7 +692,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                               Кабинет {req.room}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-gray-555 flex-wrap">
+                          <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
                             <span className="flex items-center gap-1">
                               <User className="w-3 h-3 text-gray-400" />
                               {req.employee?.full_name ?? "—"}
@@ -792,7 +792,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
                 <BarChart3 className="w-4 h-4 text-emerald-600" />
                 Статистика по месяцам
               </h3>
-              <p className="text-xs text-gray-555 mt-1 leading-relaxed">
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                 Показатели по корпусу: <span className="font-semibold text-emerald-600">{buildingFilter === "all" ? "Все корпуса" : buildingFilter}</span>
               </p>
             </div>

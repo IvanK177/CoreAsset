@@ -46,7 +46,7 @@ function getSlaStatus(deadline: Date) {
   } else if (diff === 0) {
     return {
       text: "Срок истекает СЕГОДНЯ!",
-      color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-955/30 dark:text-amber-400 dark:border-amber-900/50",
+      color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50",
       indicator: "bg-amber-500",
     };
   } else if (diff === 1) {
@@ -147,7 +147,7 @@ export function TaskCalendar({ tasks, onTaskClick }: TaskCalendarProps) {
         />
 
         {/* Legend */}
-        <div className="w-full mt-5 pt-4 border-t border-gray-100 dark:border-slate-850 grid grid-cols-2 gap-2 text-xs">
+        <div className="w-full mt-5 pt-4 border-t border-gray-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
             <span>Критический (1 дн)</span>
@@ -170,7 +170,7 @@ export function TaskCalendar({ tasks, onTaskClick }: TaskCalendarProps) {
       {/* Right: Agenda List */}
       <div className="lg:col-span-7 space-y-4">
         <div className="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm min-h-[350px] flex flex-col">
-          <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-850 pb-3 mb-4 flex-wrap gap-2">
+          <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3 mb-4 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Clock className="w-4 h-4 text-blue-500" />
               Дедлайны на выбранный день
@@ -242,7 +242,7 @@ export function TaskCalendar({ tasks, onTaskClick }: TaskCalendarProps) {
                     </div>
 
                     {/* Metadata footer */}
-                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-50 dark:border-slate-850 pt-2.5 mt-0.5 flex-wrap">
+                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-50 dark:border-slate-800 pt-2.5 mt-0.5 flex-wrap">
                       {task.employeeName && (
                         <span className="flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-gray-400" />
