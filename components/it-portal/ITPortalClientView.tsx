@@ -274,7 +274,7 @@ export default function ITPortalClientView({
             .from("ticket-attachments")
             .upload(filePath, fileToUpload, {
               contentType: fileToUpload.type,
-              upsert: false,
+              upsert: true,
             });
 
           if (uploadError) {

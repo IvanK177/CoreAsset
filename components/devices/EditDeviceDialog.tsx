@@ -264,7 +264,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
             .from("ticket-attachments")
             .upload(filePath, fileToUpload, {
               contentType: fileToUpload.type,
-              upsert: false,
+              upsert: true,
             });
 
           if (uploadError) {

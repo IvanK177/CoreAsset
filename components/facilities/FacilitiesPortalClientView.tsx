@@ -210,7 +210,7 @@ export default function FacilitiesPortalClientView({ requests }: FacilitiesPorta
             .from("ticket-attachments")
             .upload(filePath, fileToUpload, {
               contentType: fileToUpload.type,
-              upsert: false,
+              upsert: true,
             });
 
           if (uploadError) {

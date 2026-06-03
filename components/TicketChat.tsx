@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { sendMessage } from "@/lib/actions/messages";
 import { Send, Loader2, Camera, X, Image as ImageIcon } from "lucide-react";
 import { formatDateTimeRu } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SenderInfo {
   full_name: string;
@@ -319,6 +320,11 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
 
     if ((!hasText && !hasPhotos) || sending) return;
 
+    // Save inputs in case of error rollback
+    const originalPhotos = [...photos];
+    const originalPreviews = [...photoPreviews];
+    const originalInputText = inputText;
+
     const tempId = `temp-${Date.now()}`;
     const tempMessage: Message = {
       id: tempId,
@@ -346,7 +352,7 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         const { compressImageToTarget } = await import("@/lib/image/compressImage");
         const supabase = createClient();
 
-        for (const file of photos) {
+        for (const file of originalPhotos) {
           let fileToUpload = file;
           try {
             const compressionResult = await compressImageToTarget(file);
@@ -366,13 +372,16 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
             .from("ticket-attachments")
             .upload(filePath, fileToUpload, {
               contentType: fileToUpload.type,
-              upsert: false,
+              upsert: true,
             });
 
           if (uploadError) {
             console.error("Chat photo upload error:", uploadError);
-            alert(`Ошибка при загрузке фото ${file.name}`);
+            toast.error(`Ошибка при загрузке фото ${file.name}`);
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
+            setPhotos(originalPhotos);
+            setPhotoPreviews(originalPreviews);
+            setInputText(originalInputText);
             setSending(false);
             return;
           }
@@ -385,25 +394,41 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         }
       } catch (err) {
         console.error("Chat attachment upload exception:", err);
-        alert("Не удалось загрузить фотографии в чат");
+        toast.error("Не удалось загрузить фотографии в чат");
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setPhotos(originalPhotos);
+        setPhotoPreviews(originalPreviews);
+        setInputText(originalInputText);
         setSending(false);
         return;
       }
     }
 
-    const res = await sendMessage(incidentId, textToSend, uploadedPhotoUrls);
-    if (res && res.error) {
-      alert(res.error);
+    try {
+      const res = await sendMessage(incidentId, textToSend, uploadedPhotoUrls);
+      if (res && res.error) {
+        toast.error(res.error);
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setPhotos(originalPhotos);
+        setPhotoPreviews(originalPreviews);
+        setInputText(originalInputText);
+      } else {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...m, photo_urls: uploadedPhotoUrls } : m
+          )
+        );
+      }
+    } catch (sendErr) {
+      console.error("Chat send message exception:", sendErr);
+      toast.error("Не удалось отправить сообщение");
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
-    } else {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === tempId ? { ...m, photo_urls: uploadedPhotoUrls } : m
-        )
-      );
+      setPhotos(originalPhotos);
+      setPhotoPreviews(originalPreviews);
+      setInputText(originalInputText);
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   return (
