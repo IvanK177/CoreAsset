@@ -63,14 +63,14 @@ export default function RegisterPage() {
       </div>
 
       {/* Register Card */}
-      <div className="w-[420px] rounded-2xl bg-white p-8 shadow-xl">
+      <div className="w-full max-w-[420px] rounded-2xl bg-card border border-border/60 p-6 sm:p-8 shadow-xl">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-foreground">
             Регистрация
           </h2>
           <Link
             href="/login"
-            className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
           >
             <ArrowLeft className="w-4 h-4" />
             Назад
@@ -82,12 +82,12 @@ export default function RegisterPage() {
           <div className="space-y-2">
             <Label
               htmlFor="email"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/80"
             >
               Email
             </Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="email"
                 name="email"
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                 placeholder="your@email.com"
                 required
                 autoComplete="email"
-                className="pl-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
             </div>
           </div>
@@ -106,12 +106,12 @@ export default function RegisterPage() {
           <div className="space-y-2">
             <Label
               htmlFor="password"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/80"
             >
               Пароль
             </Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="password"
                 name="password"
@@ -120,12 +120,12 @@ export default function RegisterPage() {
                 required
                 autoComplete="new-password"
                 minLength={6}
-                className="pl-10 pr-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 pr-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -140,12 +140,12 @@ export default function RegisterPage() {
           <div className="space-y-2">
             <Label
               htmlFor="confirm_password"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/80"
             >
               Подтвердите пароль
             </Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="confirm_password"
                 name="confirm_password"
@@ -154,12 +154,12 @@ export default function RegisterPage() {
                 required
                 autoComplete="new-password"
                 minLength={6}
-                className="pl-10 pr-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 pr-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showConfirmPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -181,7 +181,7 @@ export default function RegisterPage() {
           <Button
             type="submit"
             disabled={pending}
-            className="w-full h-11 rounded-lg font-medium bg-[#2563eb] hover:bg-[#1d4ed8] gap-2"
+            className="w-full h-11 rounded-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
           >
             {pending && <Loader2 className="w-4 h-4 animate-spin" />}
             {pending ? "Регистрация…" : "Зарегистрироваться"}
@@ -189,11 +189,11 @@ export default function RegisterPage() {
         </form>
 
         {/* Link to Login */}
-        <p className="mt-4 text-center text-sm text-gray-500">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           Уже есть аккаунт?{" "}
           <Link
             href="/login"
-            className="text-[#2563eb] hover:text-[#1d4ed8] font-medium"
+            className="text-primary hover:underline font-semibold"
           >
             Войти
           </Link>

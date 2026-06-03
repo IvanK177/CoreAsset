@@ -79,10 +79,10 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
               href={href}
               onClick={() => onClose?.()}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ease-out hover:translate-x-0.5",
                 active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm shadow-blue-500/20"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />

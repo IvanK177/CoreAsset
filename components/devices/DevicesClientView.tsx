@@ -30,6 +30,12 @@ import { removeSoftware } from "@/lib/actions/licenses";
 import { cn, formatDate, safeHardware, BUILDING_ADDRESSES } from "@/lib/utils";
 import { ArrowLeft, Edit, Monitor, X, Plus, Key, AlertTriangle, Building, Cpu, Keyboard, Mouse, Printer, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import type { Tables } from "@/types/database.types";
 
 type Device = Tables<"devices">;
@@ -211,22 +217,26 @@ export function DevicesClientView({
     return (
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="hidden lg:block lg:w-1/3 space-y-3">
-          <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
-            <Building className="w-4 h-4 text-gray-400 shrink-0" />
-            <select
+          <div className="bg-card p-3 rounded-xl border border-border/60 shadow-sm flex items-center gap-2">
+            <Building className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Select
               value={buildingFilter}
-              onChange={(e) => onBuildingFilterChange(e.target.value)}
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate"
+              onValueChange={(v) => onBuildingFilterChange(v || "all")}
             >
-              <option value="all">Все корпуса</option>
-              {Object.keys(BUILDING_ADDRESSES).map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-8 text-xs bg-card border border-border">
+                {buildingFilter === "all" ? "Все корпуса" : buildingFilter}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все корпуса</SelectItem>
+                {Object.keys(BUILDING_ADDRESSES).map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {/* Main type filter inside sidebar listing */}
-          <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm space-y-1">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1">Тип устройства</p>
+          <div className="bg-card p-3 rounded-xl border border-border/60 shadow-sm space-y-1">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Тип устройства</p>
             <div className="grid grid-cols-2 gap-1">
               {typeFilterOptions.map((opt) => (
                 <button
@@ -235,8 +245,8 @@ export function DevicesClientView({
                   className={cn(
                     "px-2 py-1.5 rounded-lg text-left text-xs font-medium transition-colors",
                     activeTypeFilter === opt.value
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-500 hover:bg-gray-50"
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
                   {opt.label}
@@ -252,19 +262,19 @@ export function DevicesClientView({
             onSearchChange={setSearchQuery}
             compact
           />
-          <div className="rounded-xl bg-white shadow-sm overflow-hidden max-h-[400px] overflow-y-auto custom-scrollbar">
+          <div className="rounded-xl bg-card border border-border/50 shadow-sm overflow-hidden max-h-[400px] overflow-y-auto custom-scrollbar">
             {filteredDevices.map((d) => (
               <button
                 key={d.id}
                 onClick={() => setSelectedId(d.id)}
                 className={cn(
-                  "w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-gray-100 last:border-b-0",
-                  d.id === selectedId ? "bg-blue-50" : "hover:bg-gray-50"
+                  "w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-border/50 last:border-b-0",
+                  d.id === selectedId ? "bg-accent/60" : "hover:bg-muted/40"
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="font-mono text-sm font-medium text-gray-900 truncate">{d.inventory_number}</span>
-                  <span className="text-xs text-gray-500">{d.room ?? "—"}</span>
+                  <span className="font-mono text-sm font-medium text-foreground truncate">{d.inventory_number}</span>
+                  <span className="text-xs text-muted-foreground">{d.room ?? "—"}</span>
                 </div>
                 <DeviceStatusBadge status={d.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
               </button>
@@ -272,14 +282,14 @@ export function DevicesClientView({
           </div>
         </div>
 
-        <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-6">
+        <div className="w-full lg:w-2/3 rounded-xl bg-card border border-border/60 shadow-sm p-4 md:p-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <button onClick={() => setSelectedId(null)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors shrink-0">
-                <ArrowLeft className="w-5 h-5 text-gray-500" />
+              <button onClick={() => setSelectedId(null)} className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0">
+                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
               </button>
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#dbeafe] shrink-0">
-                {createElement(deviceIcon, { className: "w-5 h-5 text-[#2563eb]" })}
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 shrink-0">
+                {createElement(deviceIcon, { className: "w-5 h-5 text-primary" })}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -307,7 +317,7 @@ export function DevicesClientView({
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+          <div className="rounded-xl border border-border/65 bg-muted/30 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Основные данные / Характеристики</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
@@ -364,72 +374,72 @@ export function DevicesClientView({
             );
           })()}
 
-          <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl border border-border/65 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплён за сотрудником</h3>
               <button
                 onClick={() => setLinkDialogOpen(true)}
-                className="text-xs text-[#2563eb] font-medium hover:underline flex items-center gap-1"
+                className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Изменить
               </button>
             </div>
             {selectedEmployee ? (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/40">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#2563eb] text-white text-sm font-bold">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-sm font-bold">
                     {selectedEmployee.full_name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{selectedEmployee.full_name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-foreground">{selectedEmployee.full_name}</p>
+                    <p className="text-xs text-muted-foreground">
                       {selectedEmployee.position ?? "—"} · Каб. {selectedEmployee.room ?? selectedDevice.room ?? "—"}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setRemoveEmployeeDialogOpen(true)}
-                  className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-red-500 transition-colors"
                   title="Открепить сотрудника"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 py-2">Не закреплён за сотрудником</p>
+              <p className="text-sm text-muted-foreground py-2">Не закреплён за сотрудником</p>
             )}
           </div>
 
-          <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl border border-border/65 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Установленное ПО</h3>
               <button
                 onClick={() => setInstallDialogOpen(true)}
-                className="text-xs text-[#2563eb] font-medium hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-xs text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> Установить ПО
               </button>
             </div>
             {normalizedInstalls.length === 0 ? (
-              <p className="text-sm text-gray-500 py-2">ПО не установлено</p>
+              <p className="text-sm text-muted-foreground py-2">ПО не установлено</p>
             ) : (
               <div className="space-y-2">
                 {normalizedInstalls.map((inst) => (
-                  <div key={inst.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                  <div key={inst.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/40">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        <Key className="w-3 h-3 text-gray-400 inline mr-1" />
+                      <p className="text-sm font-medium text-foreground">
+                        <Key className="w-3 h-3 text-muted-foreground inline mr-1" />
                         {inst.license?.software_name ?? "—"}
                         {inst.license?.version ? ` v${inst.license.version}` : ""}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Лицензия · {formatDate(inst.installed_at)}
                         {inst.license && inst.license.price_per_unit != null && ` · ${inst.license.price_per_unit} ₽/ед.`}
                       </p>
                     </div>
                     <button
                       onClick={() => { setRemoveLicenseInstallId(inst.id); setRemoveLicenseDialogOpen(true); }}
-                      className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-red-500 transition-colors"
+                      className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-red-500 transition-colors"
                       title="Удалить лицензию"
                     >
                       <X className="w-4 h-4" />
@@ -440,29 +450,29 @@ export function DevicesClientView({
             )}
           </div>
 
-          <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl border border-border/65 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">История инцидентов</h3>
               <button
                 onClick={() => setTicketDialogOpen(true)}
-                className="text-xs text-[#2563eb] font-medium hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-xs text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> Создать тикет
               </button>
             </div>
             {selectedIncidents.length === 0 ? (
-              <p className="text-sm text-gray-500 py-2">Инцидентов нет</p>
+              <p className="text-sm text-muted-foreground py-2">Инцидентов нет</p>
             ) : (
               <div className="space-y-2">
                 {selectedIncidents.map((inc) => (
                   <a
                     key={inc.id}
                     href={`/incidents?selectedId=${inc.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/70 border border-border/40 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">{inc.description}</span>
+                      <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">{inc.description}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <PriorityBadge priority={inc.priority as "low" | "medium" | "high" | "critical"} />
@@ -526,9 +536,9 @@ export function DevicesClientView({
   return (
     <div className="space-y-4">
       {/* Top Filter Bar with Main Types Filter */}
-      <div className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm">
         {/* Main Category type filter tabs */}
-        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 p-1 rounded-xl self-start overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1 bg-muted/40 border border-border/60 p-1 rounded-xl self-start overflow-x-auto max-w-full">
           {typeFilterOptions.map((opt) => (
             <button
               key={opt.value}
@@ -536,8 +546,8 @@ export function DevicesClientView({
               className={cn(
                 "px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all",
                 activeTypeFilter === opt.value
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {opt.label}
@@ -553,37 +563,39 @@ export function DevicesClientView({
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
           />
-          <div className="flex items-center gap-2 shrink-0">
-            <Building className="w-4 h-4 text-gray-400 shrink-0" />
-            <select
-              value={buildingFilter}
-              onChange={(e) => onBuildingFilterChange(e.target.value)}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
-            >
-              <option value="all">Все корпуса</option>
+          <Select
+            value={buildingFilter}
+            onValueChange={(v) => onBuildingFilterChange(v || "all")}
+          >
+            <SelectTrigger className="w-[200px] h-9 bg-card border border-border text-sm gap-2">
+              <Building className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="truncate">{buildingFilter === "all" ? "Все корпуса" : buildingFilter}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все корпуса</SelectItem>
               {Object.keys(BUILDING_ADDRESSES).map((b) => (
-                <option key={b} value={b}>{b}</option>
+                <SelectItem key={b} value={b}>{b}</SelectItem>
               ))}
-            </select>
-          </div>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
+      <div className="rounded-xl bg-card border border-border/50 shadow-sm overflow-x-auto">
         {filteredDevices.length === 0 ? (
-          <div className="py-16 text-center text-gray-500">
+          <div className="py-16 text-center text-muted-foreground">
             <Monitor className="w-10 h-10 mx-auto opacity-40 mb-3" />
             <p className="text-sm">Устройства не найдены</p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Инв. номер</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Тип устройства</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Название / Модель</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Кабинет</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Статус</th>
+              <tr className="bg-muted/50 border-b border-border/60">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Инв. номер</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Тип устройства</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Название / Модель</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Кабинет</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Статус</th>
                 <th className="px-4 py-3 w-8" />
               </tr>
             </thead>
@@ -592,12 +604,12 @@ export function DevicesClientView({
                 <tr
                   key={d.id}
                   onClick={() => setSelectedId(d.id)}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-b-0"
+                  className="hover:bg-muted/30 transition-colors cursor-pointer border-b border-border/60 last:border-b-0"
                 >
-                  <td className="px-4 py-3 font-mono text-sm font-medium text-gray-900">{d.inventory_number}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{getDeviceTypeLabel(d.device_type)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900 font-medium">{d.computer_type}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{d.room ?? "—"}</td>
+                  <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">{d.inventory_number}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{getDeviceTypeLabel(d.device_type)}</td>
+                  <td className="px-4 py-3 text-sm text-foreground font-medium">{d.computer_type}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{d.room ?? "—"}</td>
                   <td className="px-4 py-3">
                     <DeviceStatusBadge status={d.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
                   </td>
@@ -617,8 +629,8 @@ export function DevicesClientView({
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className="text-sm font-medium text-gray-900">{value ?? "—"}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-semibold text-foreground">{value ?? "—"}</p>
     </div>
   );
 }

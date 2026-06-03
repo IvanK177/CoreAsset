@@ -13,10 +13,10 @@ const computerLabels: Record<ComputerStatus, string> = {
 };
 
 const computerColors: Record<ComputerStatus, string> = {
-  active: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  repair: "bg-orange-100 text-orange-700 border-orange-200",
-  decommissioned: "bg-gray-100 text-gray-600 border-gray-200",
-  storage: "bg-blue-100 text-blue-700 border-blue-200",
+  active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  repair: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+  decommissioned: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+  storage: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
 };
 
 const employeeLabels: Record<EmployeeStatus, string> = {
@@ -25,8 +25,8 @@ const employeeLabels: Record<EmployeeStatus, string> = {
 };
 
 const employeeColors: Record<EmployeeStatus, string> = {
-  active: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  dismissed: "bg-gray-100 text-gray-600 border-gray-200",
+  active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  dismissed: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
 };
 
 const incidentLabels: Record<IncidentStatus, string> = {
@@ -37,10 +37,10 @@ const incidentLabels: Record<IncidentStatus, string> = {
 };
 
 const incidentColors: Record<IncidentStatus, string> = {
-  open: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  in_progress: "bg-blue-100 text-blue-700 border-blue-200",
-  resolved: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  cancelled: "bg-gray-100 text-gray-600 border-gray-200",
+  open: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  in_progress: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+  resolved: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  cancelled: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
 };
 
 export function DeviceStatusBadge({ status }: { status: ComputerStatus }) {

@@ -3,7 +3,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { EmployeeStatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Tables } from "@/types/database.types";
 import { Eye } from "lucide-react";
@@ -34,14 +34,7 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
               <TableCell className="text-muted-foreground">{e.email ?? "—"}</TableCell>
               <TableCell className="text-muted-foreground">{e.room ?? "—"}</TableCell>
               <TableCell>
-                <Badge
-                  variant="outline"
-                  className={e.is_active
-                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                    : "bg-slate-500/15 text-slate-400 border-slate-500/30"}
-                >
-                  {e.is_active ? "Активен" : "Уволен"}
-                </Badge>
+                <EmployeeStatusBadge status={e.is_active ? "active" : "dismissed"} />
               </TableCell>
               <TableCell>
                 <Link href={`/employees/${e.id}`} className={buttonVariants({ variant: "ghost", size: "icon" })}>

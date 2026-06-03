@@ -85,8 +85,8 @@ export default function LoginPage() {
       </div>
 
       {/* Login Card */}
-      <div className="w-full max-w-[420px] rounded-2xl bg-white p-6 sm:p-8 shadow-xl">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+      <div className="w-full max-w-[420px] rounded-2xl bg-card border border-border/60 p-6 sm:p-8 shadow-xl">
+        <h2 className="text-xl font-semibold text-foreground mb-6">
           Войти в систему
         </h2>
 
@@ -96,12 +96,12 @@ export default function LoginPage() {
           <div className="space-y-2">
             <Label
               htmlFor="email"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/80"
             >
               Email
             </Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="email"
                 name="email"
@@ -111,7 +111,7 @@ export default function LoginPage() {
                 placeholder="admin@corp.ru"
                 required
                 autoComplete="email"
-                className="pl-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
             </div>
           </div>
@@ -121,7 +121,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="password"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-semibold text-foreground/80"
               >
                 Пароль
               </Label>
@@ -129,13 +129,13 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={resetPending}
-                className="text-xs text-[#2563eb] hover:text-[#1d4ed8] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-xs text-primary hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {resetPending ? "Сброс..." : "Забыли пароль?"}
               </button>
             </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="password"
                 name="password"
@@ -143,12 +143,12 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
-                className="pl-10 pr-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 pr-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -204,7 +204,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={pending || isDemoPending}
-            className="w-full h-11 rounded-lg font-medium bg-[#2563eb] hover:bg-[#1d4ed8] gap-2"
+            className="w-full h-11 rounded-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
           >
             {pending && <Loader2 className="w-4 h-4 animate-spin" />}
             {pending ? "Вход…" : "Войти"}
@@ -212,11 +212,11 @@ export default function LoginPage() {
         </form>
 
         {/* Link to Register */}
-        <p className="mt-4 text-center text-sm text-gray-500">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           Нет аккаунта?{" "}
           <Link
             href={email ? `/register?email=${encodeURIComponent(email)}` : "/register"}
-            className="text-[#2563eb] hover:text-[#1d4ed8] font-medium"
+            className="text-primary hover:underline font-semibold"
           >
             Зарегистрироваться
           </Link>
@@ -226,9 +226,9 @@ export default function LoginPage() {
         <div className="mt-6">
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-border" />
             </div>
-            <div className="relative bg-white px-4 text-xs text-gray-500">
+            <div className="relative bg-card px-4 text-xs text-muted-foreground">
               Быстрый вход (демо)
             </div>
           </div>
@@ -236,7 +236,7 @@ export default function LoginPage() {
           <div className="mt-4 space-y-2">
             <Button
               variant="outline"
-              className="w-full h-10 rounded-lg border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
+              className="w-full h-10 rounded-lg border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("admin")}
             >
@@ -249,7 +249,7 @@ export default function LoginPage() {
             </Button>
             <Button
               variant="outline"
-              className="w-full h-10 rounded-lg border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
+              className="w-full h-10 rounded-lg border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("employee")}
             >
@@ -262,7 +262,7 @@ export default function LoginPage() {
             </Button>
             <Button
               variant="outline"
-              className="w-full h-10 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
+              className="w-full h-10 rounded-lg border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("it_specialist")}
             >
@@ -275,7 +275,7 @@ export default function LoginPage() {
             </Button>
             <Button
               variant="outline"
-              className="w-full h-10 rounded-lg border-teal-200 text-teal-700 hover:bg-teal-50 hover:border-teal-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
+              className="w-full h-10 rounded-lg border-teal-500/20 text-teal-600 dark:text-teal-400 hover:bg-teal-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("facilities")}
             >
@@ -284,10 +284,11 @@ export default function LoginPage() {
               ) : (
                 <Wrench className="w-3.5 h-3.5 text-teal-500" />
               )}
+              {isDemoPending && activeDemoRole === "facilities" ? "Вход…" : "Войти как Специалист АХО"}
             </Button>
             <Button
               variant="outline"
-              className="w-full h-10 rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-colors text-xs font-medium flex items-center justify-center gap-2"
+              className="w-full h-10 rounded-lg border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/5 transition-all text-xs font-semibold flex items-center justify-center gap-2"
               disabled={pending || isDemoPending}
               onClick={() => handleDemoLogin("developer")}
             >

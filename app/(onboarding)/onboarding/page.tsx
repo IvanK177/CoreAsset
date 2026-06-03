@@ -6,6 +6,12 @@ import { goBackFromOnboarding } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import Link from "next/link";
 import {
   Monitor,
@@ -48,7 +54,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] px-4">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-[#2563eb] mb-4">
+          <div className="flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-primary mb-4 shadow-lg shadow-primary/20">
             <Monitor className="w-9 h-9 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
@@ -60,19 +66,19 @@ export default function OnboardingPage() {
         </div>
 
         {/* Success Card */}
-        <div className="w-full max-w-[480px] rounded-2xl bg-white p-6 sm:p-8 shadow-xl text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-6">
+        <div className="w-full max-w-[480px] rounded-2xl bg-card border border-border/60 p-6 sm:p-8 shadow-xl text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 mb-6">
             <Send className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-foreground mb-4">
             Регистрация почти завершена!
           </h2>
-          <p className="text-gray-600 mb-6 leading-relaxed">
+          <p className="text-muted-foreground mb-6 leading-relaxed">
             {state.message || "Письмо с подтверждением отправлено на ваш email. Пожалуйста, подтвердите его, чтобы войти в систему."}
           </p>
           <Link
             href="/login"
-            className="w-full h-11 rounded-lg font-medium bg-[#2563eb] hover:bg-[#1d4ed8] text-white flex items-center justify-center transition-colors"
+            className="w-full h-11 rounded-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-colors shadow-sm"
           >
             Перейти к входу
           </Link>
@@ -85,34 +91,34 @@ export default function OnboardingPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] px-4">
       {/* Logo */}
       <div className="flex flex-col items-center mb-8">
-        <div className="flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-[#2563eb] mb-4">
+        <div className="flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-primary mb-4 shadow-lg shadow-primary/20">
           <Monitor className="w-9 h-9 text-white" />
         </div>
         <h1 className="text-2xl font-bold text-white tracking-tight">
           CoreAsset
         </h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-gray-300 mt-1">
           Заполните профиль для начала работы
         </p>
       </div>
 
       {/* Onboarding Card */}
-      <div className="w-full max-w-[480px] rounded-2xl bg-white p-6 sm:p-8 shadow-xl">
+      <div className="w-full max-w-[480px] rounded-2xl bg-card border border-border/60 p-6 sm:p-8 shadow-xl">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-bold text-foreground">
             Добро пожаловать!
           </h2>
           <form action={goBackFromOnboarding}>
             <button
               type="submit"
-              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               Назад
             </button>
           </form>
         </div>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           Заполните информацию о себе, чтобы получить доступ к порталу сотрудника.
         </p>
 
@@ -121,12 +127,12 @@ export default function OnboardingPage() {
           <div className="space-y-2">
             <Label
               htmlFor="full_name"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/85"
             >
-              ФИО <span className="text-red-500">*</span>
+              ФИО <span className="text-destructive">*</span>
             </Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="full_name"
                 name="full_name"
@@ -134,7 +140,7 @@ export default function OnboardingPage() {
                 placeholder="Иванов Иван Петрович"
                 required
                 autoComplete="name"
-                className="pl-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
             </div>
           </div>
@@ -143,12 +149,12 @@ export default function OnboardingPage() {
           <div className="space-y-2">
             <Label
               htmlFor="position"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/85"
             >
-              Должность / Отдел <span className="text-red-500">*</span>
+              Должность / Отдел <span className="text-destructive">*</span>
             </Label>
             <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="position"
                 name="position"
@@ -156,7 +162,7 @@ export default function OnboardingPage() {
                 placeholder="Инженер-программист"
                 required
                 autoComplete="organization-title"
-                className="pl-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
             </div>
           </div>
@@ -165,31 +171,29 @@ export default function OnboardingPage() {
           <div className="space-y-2">
             <Label
               htmlFor="building"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/85"
             >
-              Корпус <span className="text-red-500">*</span>
+              Корпус <span className="text-destructive">*</span>
             </Label>
             <div className="relative">
-              <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
-              <select
-                id="building"
-                name="building"
-                required
+              <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+              <input type="hidden" name="building" value={selectedBuilding} />
+              <Select
                 value={selectedBuilding}
-                onChange={(e) => setSelectedBuilding(e.target.value)}
-                className="w-full pl-10 pr-8 h-11 rounded-lg border border-gray-200 bg-white text-sm focus:border-blue-500 focus:outline-none appearance-none"
+                onValueChange={(v) => setSelectedBuilding(v || "")}
               >
-                <option value="" disabled>Выберите корпус</option>
-                {Object.keys(BUILDING_ADDRESSES).map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">
-                ▼
-              </div>
+                <SelectTrigger className="w-full pl-10 pr-8 h-11 rounded-lg border border-border bg-background text-sm text-foreground">
+                  <span>{selectedBuilding || "Выберите корпус"}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(BUILDING_ADDRESSES).map((b) => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {selectedBuilding && (
-              <p className="text-xs text-gray-500 mt-1 italic leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-1 italic leading-relaxed">
                 Адрес: {BUILDING_ADDRESSES[selectedBuilding as keyof typeof BUILDING_ADDRESSES]}
               </p>
             )}
@@ -199,19 +203,19 @@ export default function OnboardingPage() {
           <div className="space-y-2">
             <Label
               htmlFor="room"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/85"
             >
               Кабинет
             </Label>
             <div className="relative">
-              <DoorOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <DoorOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="room"
                 name="room"
                 type="text"
                 placeholder="301"
                 autoComplete="off"
-                className="pl-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
             </div>
           </div>
@@ -220,19 +224,19 @@ export default function OnboardingPage() {
           <div className="space-y-2">
             <Label
               htmlFor="phone"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/85"
             >
               Телефон
             </Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="phone"
                 name="phone"
                 type="tel"
                 placeholder="+7 (999) 123-45-67"
                 autoComplete="tel"
-                className="pl-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
             </div>
           </div>
@@ -241,19 +245,19 @@ export default function OnboardingPage() {
           <div className="space-y-2">
             <Label
               htmlFor="telegram"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-foreground/85"
             >
               Telegram
             </Label>
             <div className="relative">
-              <Send className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Send className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="telegram"
                 name="telegram"
                 type="text"
                 placeholder="@username"
                 autoComplete="off"
-                className="pl-10 h-11 rounded-lg border-gray-200"
+                className="pl-10 h-11 rounded-lg border-border bg-background text-foreground"
               />
             </div>
           </div>
@@ -269,7 +273,7 @@ export default function OnboardingPage() {
           <Button
             type="submit"
             disabled={pending}
-            className="w-full h-11 rounded-lg font-medium bg-[#2563eb] hover:bg-[#1d4ed8] gap-2"
+            className="w-full h-11 rounded-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
           >
             {pending && <Loader2 className="w-4 h-4 animate-spin" />}
             {pending ? "Сохранение…" : "Завершить регистрацию"}

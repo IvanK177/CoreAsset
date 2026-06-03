@@ -123,18 +123,22 @@ export function EmployeesClientView({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left: Narrow list */}
         <div className="hidden lg:block lg:w-1/3 space-y-3">
-          <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
-            <Building className="w-4 h-4 text-gray-400 shrink-0" />
-            <select
+          <div className="bg-card p-3 rounded-xl border border-border/60 shadow-sm flex items-center gap-2">
+            <Building className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Select
               value={buildingFilter}
-              onChange={(e) => onBuildingFilterChange(e.target.value)}
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate"
+              onValueChange={(v) => onBuildingFilterChange(v || "all")}
             >
-              <option value="all">Все корпуса</option>
-              {Object.keys(BUILDING_ADDRESSES).map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-8 text-xs bg-card border border-border">
+                {buildingFilter === "all" ? "Все корпуса" : buildingFilter}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все корпуса</SelectItem>
+                {Object.keys(BUILDING_ADDRESSES).map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {/* Search + Filter */}
           <div className="flex items-center gap-2">
@@ -144,7 +148,7 @@ export function EmployeesClientView({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Поиск по имени..."
-                className="pl-9 h-8 text-xs rounded-lg border-gray-200 bg-white"
+                className="pl-9 h-8 text-xs rounded-lg border-border bg-card text-foreground"
               />
               {searchQuery && (
                 <button
@@ -170,14 +174,14 @@ export function EmployeesClientView({
             </Select>
           </div>
 
-          <div className="rounded-xl bg-white shadow-sm overflow-hidden">
+          <div className="rounded-xl bg-card border border-border/60 shadow-sm overflow-hidden">
             {filteredEmployees.map((e) => (
               <button
                 key={e.id}
                 onClick={() => setSelectedId(e.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-100 last:border-b-0",
-                  e.id === selectedId ? "bg-blue-50" : "hover:bg-gray-50"
+                  "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border/50 last:border-b-0",
+                  e.id === selectedId ? "bg-accent/60" : "hover:bg-muted/40"
                 )}
               >
                 <div className={cn(
@@ -196,7 +200,7 @@ export function EmployeesClientView({
         </div>
 
         {/* Right: Detail panel */}
-        <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-6">
+        <div className="w-full lg:w-2/3 rounded-xl bg-card border border-border/60 shadow-sm p-4 md:p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -279,7 +283,7 @@ export function EmployeesClientView({
           </div>
 
           {/* Block 1: Contact Info */}
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+          <div className="rounded-xl border border-border/65 bg-muted/30 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Контактная информация</h3>
             <div className="grid grid-cols-2 gap-3">
               <ContactRow icon={Mail} label="Email" value={selectedEmployee.email} />
@@ -290,10 +294,10 @@ export function EmployeesClientView({
           </div>
 
           {/* Block 2: Assigned Devices */}
-          <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl border border-border/65 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплённые устройства</h3>
             {selectedDevices.length === 0 ? (
-              <p className="text-sm text-gray-500 py-2">Нет привязанных устройств</p>
+              <p className="text-sm text-muted-foreground py-2">Нет привязанных устройств</p>
             ) : (
               <div className="space-y-2">
                 {selectedDevices.map((dev) => {
@@ -303,7 +307,7 @@ export function EmployeesClientView({
                     <Link
                       key={dev.id}
                       href={`/devices/${dev.id}`}
-                      className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors font-mono"
+                      className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 hover:bg-muted/70 border border-border/40 transition-colors font-mono"
                     >
                       <DeviceIcon className="w-4 h-4 text-gray-400 shrink-0" />
                       <span className="text-sm font-medium text-gray-900">
@@ -323,17 +327,17 @@ export function EmployeesClientView({
           </div>
 
           {/* Block 3: Incident History */}
-          <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="rounded-xl border border-border/65 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">История заявок</h3>
             {selectedIncidents.length === 0 ? (
-              <p className="text-sm text-gray-500 py-2">Инцидентов нет</p>
+              <p className="text-sm text-muted-foreground py-2">Инцидентов нет</p>
             ) : (
               <div className="space-y-2">
                 {selectedIncidents.map((inc) => (
                   <Link
                     key={inc.id}
                     href={`/incidents?selectedId=${inc.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/70 border border-border/40 transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <AlertTriangle className="w-4 h-4 text-gray-400 shrink-0" />
@@ -358,14 +362,14 @@ export function EmployeesClientView({
   return (
     <div className="space-y-4">
       {/* Search + Status Filter + Building Filter */}
-      <div className="flex items-center gap-3 flex-wrap bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+      <div className="flex items-center gap-3 flex-wrap bg-card p-4 rounded-xl border border-border/60 shadow-sm">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Поиск по имени..."
-            className="pl-9 h-9 rounded-lg border-gray-200 bg-white"
+            className="pl-9 h-9 rounded-lg border-border bg-card text-foreground"
           />
           {searchQuery && (
             <button
@@ -380,7 +384,7 @@ export function EmployeesClientView({
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as EmployeeStatusFilter)}
         >
-          <SelectTrigger className="w-[150px] h-9 bg-white">
+          <SelectTrigger className="w-[150px] h-9 bg-card">
             {statusFilterLabels[statusFilter]}
           </SelectTrigger>
           <SelectContent>
@@ -389,39 +393,41 @@ export function EmployeesClientView({
             <SelectItem value="dismissed">Уволенные</SelectItem>
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-2 bg-white px-3 h-9 rounded-lg border border-gray-200">
-          <Building className="w-4 h-4 text-gray-400 shrink-0" />
-          <select
-            value={buildingFilter}
-            onChange={(e) => onBuildingFilterChange(e.target.value)}
-            className="text-sm bg-transparent focus:outline-none text-gray-700 max-w-[200px] truncate cursor-pointer"
-          >
-            <option value="all">Все корпуса</option>
+        <Select
+          value={buildingFilter}
+          onValueChange={(v) => onBuildingFilterChange(v || "all")}
+        >
+          <SelectTrigger className="w-[180px] h-9 bg-card border border-border text-sm gap-2">
+            <Building className="w-4 h-4 text-muted-foreground shrink-0" />
+            <span className="truncate">{buildingFilter === "all" ? "Все корпуса" : buildingFilter}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все корпуса</SelectItem>
             {Object.keys(BUILDING_ADDRESSES).map((b) => (
-              <option key={b} value={b}>{b}</option>
+              <SelectItem key={b} value={b}>{b}</SelectItem>
             ))}
-          </select>
-        </div>
-        <span className="text-xs text-gray-500">
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground">
           {filteredEmployees.length} сотрудников
         </span>
       </div>
 
-      <div className="rounded-xl bg-white shadow-sm overflow-x-auto">
+      <div className="rounded-xl bg-card border border-border/50 shadow-sm overflow-x-auto">
         {filteredEmployees.length === 0 ? (
-          <div className="py-16 text-center text-gray-500">
+          <div className="py-16 text-center text-muted-foreground">
             <Users className="w-10 h-10 mx-auto opacity-40 mb-3" />
             <p className="text-sm">Сотрудники не найдены</p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Сотрудник</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Должность / Отдел</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Кабинет</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Статус</th>
+              <tr className="bg-muted/50 border-b border-border/60">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Сотрудник</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Должность / Отдел</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Кабинет</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Статус</th>
                 <th className="px-4 py-3 w-8" />
               </tr>
             </thead>
@@ -430,7 +436,7 @@ export function EmployeesClientView({
                 <tr
                   key={e.id}
                   onClick={() => setSelectedId(e.id)}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-b-0"
+                  className="hover:bg-muted/30 transition-colors cursor-pointer border-b border-border/60 last:border-b-0"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">

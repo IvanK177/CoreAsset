@@ -12,23 +12,23 @@ interface StatCardProps {
   href?: string;
 }
 
-export function StatCard({ label, value, subtitle, icon: Icon, iconBgColor, iconTextColor = "text-gray-700", href }: StatCardProps) {
+export function StatCard({ label, value, subtitle, icon: Icon, iconBgColor, iconTextColor = "text-foreground", href }: StatCardProps) {
   const card = (
     <div
       className={cn(
-        "rounded-xl bg-white p-5 shadow-sm flex items-center gap-4",
-        href && "cursor-pointer hover:shadow-md transition-shadow"
+        "rounded-xl bg-card border border-border/60 p-5 shadow-sm flex items-center gap-4 transition-all duration-300 ease-out",
+        href && "cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:border-border/80 dark:hover:border-slate-800"
       )}
     >
-      <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg", iconBgColor)}>
+      <div className={cn("flex items-center justify-center w-10 h-10 rounded-xl transition-transform duration-300", iconBgColor)}>
         <Icon className={cn("w-5 h-5", iconTextColor)} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-3xl font-bold tracking-tight text-gray-900">{value}</p>
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+        <p className="text-3xl font-bold tracking-tight text-foreground">{value}</p>
+        <p className="text-sm font-semibold text-foreground/90">{label}</p>
+        {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
       </div>
-      {href && <ChevronRight className="w-5 h-5 text-gray-400 shrink-0" />}
+      {href && <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5" />}
     </div>
   );
 
