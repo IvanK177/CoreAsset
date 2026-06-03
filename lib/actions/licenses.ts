@@ -4,9 +4,11 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { licenseSchema } from "@/lib/schemas/license.schema";
+import { requireAuth } from "./auth";
 
 /** Create a license (merged table: software info + license pool in one row) */
 export async function createLicense(formData: FormData) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = await createServiceClient();
   const parsed = licenseSchema.safeParse({
     software_name: formData.get("software_name"),
@@ -34,6 +36,7 @@ export async function createLicense(formData: FormData) {
 
 /** Delete a license */
 export async function deleteLicense(id: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = await createServiceClient();
   await supabase.from("licenses").delete().eq("id", id);
   revalidateTag("licenses", { expire: 0 });
@@ -44,6 +47,7 @@ export async function deleteLicense(id: string) {
 
 /** Non-redirecting variant for dialog use — deletes a license, returns result without redirect */
 export async function deleteLicenseDialog(id: string) {
+  await requireAuth(["admin", "it_specialist"]);
   let deleteError: string | null = null;
 
   try {
@@ -68,6 +72,7 @@ export async function deleteLicenseDialog(id: string) {
 
 /** Install a license on a device — inserts into device_licenses (used_seats incremented by DB trigger) */
 export async function installSoftwareDialog(deviceId: string, licenseId: string, installedAt?: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = await createServiceClient();
 
   // Fetch the license to check seat availability
@@ -103,6 +108,7 @@ export async function installSoftwareDialog(deviceId: string, licenseId: string,
 
 /** Remove a license installation from a device — deletes from device_licenses (used_seats decremented by DB trigger) */
 export async function removeSoftware(installationId: string, deviceId: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = await createServiceClient();
 
   // Delete the installation
@@ -116,6 +122,7 @@ export async function removeSoftware(installationId: string, deviceId: string) {
 
 /** Non-redirecting variant for dialog use — creates a license in one step */
 export async function createLicenseDialog(formData: FormData) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = await createServiceClient();
 
   const parsed = licenseSchema.safeParse({
@@ -144,6 +151,7 @@ export async function createLicenseDialog(formData: FormData) {
 }
 
 export async function installMultipleSoftware(deviceId: string, licenseIds: string[], installedAt?: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = await createServiceClient();
 
   const installDate = installedAt || new Date().toISOString();

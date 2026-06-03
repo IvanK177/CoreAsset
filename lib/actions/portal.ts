@@ -3,15 +3,21 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { compressText, decompressText } from "@/lib/compression";
+import { requireAuth } from "./auth";
 
 /** Create an incident from the employee portal (non-redirecting) */
 export async function createPortalIncident(formData: FormData) {
+  const employeeId = formData.get("employee_id") as string;
+  const { user, role } = await requireAuth();
+  if (role !== "admin" && user.id !== employeeId) {
+    return { error: "Недостаточно прав для создания инцидента от имени другого сотрудника" };
+  }
+
   const supabase = await createServiceClient();
 
   const title = formData.get("title") as string;
   const description = formData.get("description") as string | null;
   const deviceId = formData.get("device_id") as string | null;
-  const employeeId = formData.get("employee_id") as string;
   const priority = formData.get("priority") as string;
 
   const photoUrlsRaw = formData.get("photo_urls") as string | null;
@@ -74,17 +80,22 @@ export async function portalSignOut() {
 
 /** Cancel (delete) an incident from the employee portal if it is still open */
 export async function cancelPortalIncident(id: string) {
+  const { user, role } = await requireAuth();
   const supabase = await createServiceClient();
 
   // 1. Fetch incident status to ensure it is still "open"
   const { data: incident, error: fetchError } = await supabase
     .from("incidents")
-    .select("status, description, title")
+    .select("status, description, title, employee_id")
     .eq("id", id)
     .single();
 
   if (fetchError || !incident) {
     return { error: "Заявка не найдена" };
+  }
+
+  if (role !== "admin" && role !== "it_specialist" && incident.employee_id !== user.id) {
+    return { error: "Недостаточно прав для отмены этой заявки" };
   }
 
   if (incident.status !== "open") {
@@ -126,12 +137,17 @@ export async function cancelPortalIncident(id: string) {
 
 /** Create a room request from the employee portal */
 export async function createPortalRoomRequest(formData: FormData) {
+  const authorId = formData.get("author_id") as string;
+  const { user, role } = await requireAuth();
+  if (role !== "admin" && user.id !== authorId) {
+    return { error: "Недостаточно прав для создания запроса от имени другого сотрудника" };
+  }
+
   const supabase = createServiceClient();
 
   const room = formData.get("room") as string;
   const type = formData.get("type") as string;
   const description = formData.get("description") as string;
-  const authorId = formData.get("author_id") as string;
   const priority = (formData.get("priority") as string) || "medium";
 
   const photoUrlsRaw = formData.get("photo_urls") as string | null;
@@ -167,6 +183,11 @@ export async function createPortalRoomRequest(formData: FormData) {
 
 /** Update employee profile from the employee portal */
 export async function updateEmployeeProfile(employeeId: string, formData: FormData) {
+  const { user, role } = await requireAuth();
+  if (role !== "admin" && user.id !== employeeId) {
+    return { error: "Недостаточно прав для редактирования чужого профиля" };
+  }
+
   const supabase = createServiceClient();
 
   const fullName = formData.get("full_name") as string;

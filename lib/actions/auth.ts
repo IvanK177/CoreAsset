@@ -45,4 +45,47 @@ export async function goBackFromOnboarding() {
   } else {
     await signOut();
   }
+}
+
+/**
+ * Validates the user's session and role.
+ * Supports both standard Supabase sessions and demo modes.
+ */
+export async function requireAuth(requiredRoles?: string[]): Promise<{ user: any; role: string }> {
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  const cookieStore = await cookies();
+  const demoRole = cookieStore.get("demo_role")?.value;
+  const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
+
+  if ((error || !user) && !demoEmployeeId) {
+    redirect("/login");
+  }
+
+  const userId = user?.id || demoEmployeeId;
+  if (!userId) {
+    redirect("/login");
+  }
+
+  let role = demoRole || null;
+
+  if (!role) {
+    const { data: employee, error: empError } = await supabase
+      .from("employees")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (empError || !employee) {
+      throw new Error("Профиль пользователя не найден");
+    }
+    role = employee.role as string;
+  }
+
+  if (requiredRoles && requiredRoles.length > 0 && !requiredRoles.includes(role)) {
+    throw new Error(`Доступ запрещен: требуется роль ${requiredRoles.join(" или ")}`);
+  }
+
+  return { user: user || { id: userId, email: "demo@corp.ru" }, role };
 }

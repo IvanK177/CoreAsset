@@ -3,11 +3,13 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { compressText, decompressText } from "@/lib/compression";
+import { requireAuth } from "./auth";
 
 /**
   * Assign a room request to "in_progress" status.
   */
 export async function takeRoomRequestToWork(id: string) {
+  await requireAuth(["admin", "facilities"]);
   const supabase = createServiceClient();
   const authClient = await createClient();
   const { data: { user } } = await authClient.auth.getUser();
@@ -45,6 +47,7 @@ export async function takeRoomRequestToWork(id: string) {
 }
 
 export async function resolveRoomRequest(id: string, resolution: string = "", resolutionPhotoUrls: string[] = []) {
+  await requireAuth(["admin", "facilities"]);
   const supabase = createServiceClient();
   const authClient = await createClient();
   const { data: { user } } = await authClient.auth.getUser();

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { incidentSchema } from "@/lib/schemas/incident.schema";
 import { compressText, decompressText } from "@/lib/compression";
+import { requireAuth } from "./auth";
 
 /** Convert FormData entry values: null → undefined, empty string → undefined */
 function emptyToUndefined(value: FormDataEntryValue | null): string | undefined {
@@ -13,6 +14,7 @@ function emptyToUndefined(value: FormDataEntryValue | null): string | undefined 
 }
 
 export async function createIncident(formData: FormData) {
+  await requireAuth();
   const supabase = await createServiceClient();
   const parsed = incidentSchema.safeParse({
     device_id: emptyToUndefined(formData.get("device_id")),
@@ -50,6 +52,7 @@ export async function createIncident(formData: FormData) {
 }
 
 export async function updateIncidentStatus(id: string, status: "open" | "in_progress" | "resolved", resolution?: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = await createServiceClient();
 
   const { data: current } = await supabase
@@ -92,6 +95,7 @@ export async function updateIncidentStatus(id: string, status: "open" | "in_prog
 
 /** Non-redirecting variant for dialog use — returns { success, id } or { error } */
 export async function createIncidentDialog(formData: FormData) {
+  await requireAuth();
   const supabase = await createServiceClient();
   const parsed = incidentSchema.safeParse({
     device_id: emptyToUndefined(formData.get("device_id")),
@@ -130,6 +134,7 @@ export async function createIncidentFromDevice(
   description: string | undefined,
   priority: string,
 ) {
+  await requireAuth();
   const supabase = await createServiceClient();
 
   const parsed = incidentSchema.safeParse({
@@ -164,6 +169,7 @@ export async function createIncidentFromDevice(
 }
 
 export async function deleteIncident(id: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = await createServiceClient();
   await supabase.from("incidents").delete().eq("id", id);
   revalidateTag("incidents", { expire: 0 });

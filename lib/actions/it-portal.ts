@@ -3,12 +3,14 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 import { compressText, decompressText } from "@/lib/compression";
+import { requireAuth } from "./auth";
 
 /**
  * Assign an incident to the current IT specialist and set status to "in_progress".
  * The `assigned_to` field stores the employee ID of the IT specialist who took the ticket.
  */
 export async function takeIncidentToWork(incidentId: string, specialistId: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
 
   const { data: current } = await supabase
@@ -49,6 +51,7 @@ export async function takeIncidentToWork(incidentId: string, specialistId: strin
  * Resolve an incident: set status to "resolved" and record resolved_at timestamp.
  */
 export async function resolveIncident(incidentId: string, resolution: string, resolutionPhotoUrls: string[] = []) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
 
   const { data: current } = await supabase

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { requireAuth } from "./auth";
 
 export async function getCurrentEmployee() {
   const authClient = await createClient();
@@ -35,6 +36,7 @@ export async function getCurrentEmployee() {
 }
 
 export async function getIncidentMessages(incidentId: string) {
+  await requireAuth();
   const employee = await getCurrentEmployee();
   if (!employee) {
     return [];
@@ -76,6 +78,7 @@ export async function getIncidentMessages(incidentId: string) {
 }
 
 export async function sendMessage(incidentId: string, text: string, photoUrls?: string[]) {
+  await requireAuth();
   const hasText = text && text.trim();
   const hasPhotos = photoUrls && photoUrls.length > 0;
 

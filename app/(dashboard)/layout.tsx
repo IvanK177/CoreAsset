@@ -56,16 +56,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     employeeData = data;
   }
 
-  if (!employeeData) {
-    // Fallback: try to find any admin in the database
-    const { data } = await dataClient
-      .from("employees")
-      .select("id, full_name, position, email, phone, telegram, room, building, avatar_url")
-      .eq("role", "admin")
-      .limit(1)
-      .single();
-    employeeData = data;
-  }
+
 
   const userName = employeeData?.full_name || user?.email || "Администратор";
 

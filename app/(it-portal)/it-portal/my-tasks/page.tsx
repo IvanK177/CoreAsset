@@ -57,17 +57,7 @@ export default async function MyTasksPage() {
     }
   }
 
-  // Fallback: find any active IT specialist
-  if (!specialistId) {
-    const { data } = await dataClient
-      .from("employees")
-      .select("id")
-      .eq("role", "it_specialist")
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-    specialistId = data?.id;
-  }
+
 
   // Fetch ALL incidents (so stats are overall, client view handles filtering)
   const { data, error: myError } = await dataClient

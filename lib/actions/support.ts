@@ -3,27 +3,17 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { requireAuth } from "./auth";
 
 export async function sendSupportRequest(message: string) {
   if (!message || !message.trim()) {
     return { error: "Текст обращения не может быть пустым" };
   }
 
-  const authClient = await createClient();
+  const { user } = await requireAuth();
   const dataClient = createServiceClient();
-  const cookieStore = await cookies();
-  const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
 
-  const { data: { user } } = await authClient.auth.getUser();
-
-  let employeeId = user?.id;
-  if (!employeeId && demoEmployeeId) {
-    employeeId = demoEmployeeId;
-  }
-
-  if (!employeeId) {
-    employeeId = "e0000001-0000-0000-0000-000000000001"; // Fallback to a valid employee ID
-  }
+  const employeeId = user.id;
 
   const { data, error } = await dataClient
     .from("support_requests")
@@ -46,6 +36,7 @@ export async function sendSupportRequest(message: string) {
 }
 
 export async function takeSupportRequestToWork(id: string) {
+  await requireAuth(["admin", "developer"]);
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("support_requests")
@@ -63,6 +54,7 @@ export async function takeSupportRequestToWork(id: string) {
 }
 
 export async function resolveSupportRequest(id: string) {
+  await requireAuth(["admin", "developer"]);
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("support_requests")

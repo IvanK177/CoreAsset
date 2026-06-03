@@ -38,16 +38,7 @@ export default async function DeveloperPortalLayout({ children }: { children: Re
     employeeData = data;
   }
 
-  if (!employeeData) {
-    const { data } = await dataClient
-      .from("employees")
-      .select("id, full_name, position, email, phone, telegram, room, building, avatar_url")
-      .eq("role", "developer")
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-    employeeData = data;
-  }
+
 
   const userName = employeeData?.full_name || user?.email || "Разработчик";
 

@@ -35,16 +35,7 @@ export default async function CommonLayout({ children }: { children: React.React
     }
   }
 
-  // Fallback profile if none found
-  if (!employeeData) {
-    const { data } = await dataClient
-      .from("employees")
-      .select("id, full_name, position, email, role, room, phone, telegram, building, avatar_url")
-      .eq("role", role as Tables<"employees">["role"])
-      .limit(1)
-      .single();
-    employeeData = data;
-  }
+
 
   // 2. Render appropriate layout wrapper depending on the role
   if (role === "admin") {

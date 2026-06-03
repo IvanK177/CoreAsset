@@ -35,17 +35,7 @@ export default async function ITPortalLayout({ children }: { children: React.Rea
     employeeData = data;
   }
 
-  // Fallback: find any active IT specialist
-  if (!employeeData) {
-    const { data } = await dataClient
-      .from("employees")
-      .select("id, full_name, position, email, role, room, phone, telegram, building, avatar_url")
-      .eq("role", "it_specialist")
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-    employeeData = data;
-  }
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">

@@ -4,8 +4,10 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { employeeSchema, employeeUpdateSchema } from "@/lib/schemas/employee.schema";
+import { requireAuth } from "./auth";
 
 export async function createEmployee(formData: FormData) {
+  await requireAuth(["admin"]);
   const supabase = await createServiceClient();
   const raw = {
     full_name: formData.get("full_name"),
@@ -58,6 +60,7 @@ export async function createEmployee(formData: FormData) {
 }
 
 export async function updateEmployee(id: string, formData: FormData) {
+  await requireAuth(["admin"]);
   const supabase = await createServiceClient();
   const raw = {
     full_name: formData.get("full_name"),
@@ -102,8 +105,9 @@ export async function updateEmployee(id: string, formData: FormData) {
 }
 
 export async function deleteEmployee(id: string) {
+  await requireAuth(["admin"]);
   let deleteError: string | null = null;
-
+ 
   try {
     const supabase = await createServiceClient();
 
@@ -136,8 +140,9 @@ export async function deleteEmployee(id: string) {
 }
 
 export async function restoreEmployee(id: string) {
+  await requireAuth(["admin"]);
   let actionError: string | null = null;
-
+ 
   try {
     const supabase = await createServiceClient();
 
@@ -188,8 +193,9 @@ export async function restoreEmployee(id: string) {
 }
 
 export async function dismissEmployee(id: string) {
+  await requireAuth(["admin"]);
   let actionError: string | null = null;
-
+ 
   try {
     const supabase = await createServiceClient();
 
@@ -239,8 +245,9 @@ export async function dismissEmployee(id: string) {
 
 /** Non-redirecting variant — dismisses an active employee, returns result without redirect */
 export async function dismissEmployeeDialog(id: string) {
+  await requireAuth(["admin"]);
   let actionError: string | null = null;
-
+ 
   try {
     const supabase = await createServiceClient();
 
@@ -287,8 +294,9 @@ export async function dismissEmployeeDialog(id: string) {
 
 /** Non-redirecting variant — restores a dismissed employee, returns result without redirect */
 export async function restoreEmployeeDialog(id: string) {
+  await requireAuth(["admin"]);
   let actionError: string | null = null;
-
+ 
   try {
     const supabase = await createServiceClient();
 
@@ -318,8 +326,9 @@ export async function restoreEmployeeDialog(id: string) {
 
 /** Non-redirecting variant — deletes an employee AND their auth account, returns result without redirect */
 export async function deleteEmployeeDialog(id: string) {
+  await requireAuth(["admin"]);
   let deleteError: string | null = null;
-
+ 
   try {
     const supabase = await createServiceClient();
 
@@ -353,6 +362,7 @@ export async function deleteEmployeeDialog(id: string) {
 
 /** Non-redirecting variant for dialog use — returns { success: true } or { error } */
 export async function createEmployeeDialog(formData: FormData) {
+  await requireAuth(["admin"]);
   const supabase = await createServiceClient();
   const raw = {
     full_name: formData.get("full_name"),
@@ -406,6 +416,7 @@ export async function createEmployeeDialog(formData: FormData) {
 }
 
 export async function updateEmployeeRole(id: string, role: "admin" | "employee" | "it_specialist") {
+  await requireAuth(["admin"]);
   const supabase = createServiceClient();
 
   const { error } = await supabase

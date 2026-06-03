@@ -1,11 +1,13 @@
 "use server";
-
+ 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { computerTemplateSchema } from "@/lib/schemas/computer_template.schema";
-
+import { requireAuth } from "./auth";
+ 
 export async function createTemplate(formData: FormData) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
   const raw = {
     name: formData.get("name"),
@@ -21,26 +23,27 @@ export async function createTemplate(formData: FormData) {
       resolution: formData.get("resolution") || undefined,
     },
   };
-
+ 
   const parsed = computerTemplateSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-
+ 
   const { error } = await supabase.from("computer_templates").insert({
     name: parsed.data.name,
     description: parsed.data.description || null,
     computer_type: parsed.data.computer_type || null,
     hardware: parsed.data.hardware ?? null,
   });
-
+ 
   if (error) return { error: error.message };
-
+ 
   revalidateTag("templates", { expire: 0 });
   revalidatePath("/templates");
   revalidatePath("/devices");
   redirect("/templates");
 }
-
+ 
 export async function updateTemplate(id: string, formData: FormData) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
   const raw = {
     name: formData.get("name"),
@@ -56,10 +59,10 @@ export async function updateTemplate(id: string, formData: FormData) {
       resolution: formData.get("resolution") || undefined,
     },
   };
-
+ 
   const parsed = computerTemplateSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-
+ 
   const { error } = await supabase
     .from("computer_templates")
     .update({
@@ -69,31 +72,33 @@ export async function updateTemplate(id: string, formData: FormData) {
       hardware: parsed.data.hardware ?? null,
     })
     .eq("id", id);
-
+ 
   if (error) return { error: error.message };
-
+ 
   revalidateTag("templates", { expire: 0 });
   revalidatePath("/templates");
   revalidatePath("/devices");
   redirect("/templates");
 }
-
+ 
 export async function deleteTemplate(id: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
   const { error } = await supabase.from("computer_templates").delete().eq("id", id);
   if (error) return { error: error.message };
-
+ 
   revalidateTag("templates", { expire: 0 });
   revalidatePath("/templates");
   revalidatePath("/devices");
   redirect("/templates");
 }
-
+ 
 export async function deleteTemplateDialog(id: string) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
   const { error } = await supabase.from("computer_templates").delete().eq("id", id);
   if (error) return { error: error.message };
-
+ 
   revalidateTag("templates", { expire: 0 });
   revalidatePath("/templates");
   revalidatePath("/devices");

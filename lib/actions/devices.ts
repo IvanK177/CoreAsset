@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { deviceSchema } from "@/lib/schemas/device.schema";
+import { requireAuth } from "./auth";
 
 function parseDeviceFormData(formData: FormData) {
   const raw = {
@@ -29,6 +30,7 @@ function parseDeviceFormData(formData: FormData) {
 }
 
 export async function createDevice(formData: FormData) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
   const parsed = parseDeviceFormData(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message, code: undefined };
@@ -48,6 +50,7 @@ export async function createDevice(formData: FormData) {
 }
 
 export async function updateDevice(id: string, formData: FormData) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
   const parsed = parseDeviceFormData(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message, code: undefined };
@@ -67,6 +70,7 @@ export async function updateDevice(id: string, formData: FormData) {
 }
 
 export async function deleteDevice(id: string) {
+  await requireAuth(["admin", "it_specialist"]);
   let deleteError: string | null = null;
 
   try {
@@ -90,6 +94,7 @@ export async function deleteDevice(id: string) {
 }
 
 export async function linkEmployeeToDevice(deviceId: string, employeeId: string | null) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
 
   const { error } = await supabase
@@ -106,6 +111,7 @@ export async function linkEmployeeToDevice(deviceId: string, employeeId: string 
 }
 
 export async function updateDeviceDialog(id: string, formData: FormData) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
   const parsed = parseDeviceFormData(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message, code: undefined };
@@ -126,6 +132,7 @@ export async function updateDeviceDialog(id: string, formData: FormData) {
 }
 
 export async function createDeviceDialog(formData: FormData) {
+  await requireAuth(["admin", "it_specialist"]);
   const supabase = createServiceClient();
   const parsed = parseDeviceFormData(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message, code: undefined };
