@@ -10,14 +10,14 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
+  const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = savedTheme === "dark" || (!savedTheme && systemPrefersDark) ? "dark" : "light";
-    // eslint-disable-next-line
-    setTheme(initialTheme);
+    setMounted(true);
+    // ✅ Читаем уже примененный класс из DOM (скрипт в <head> уже выполнился)
+    const isDark = document.documentElement.classList.contains("dark");
+    setTheme(isDark ? "dark" : "light");
   }, []);
 
   const toggleTheme = () => {
@@ -30,6 +30,13 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       document.documentElement.classList.remove("dark");
     }
   };
+
+  if (!mounted) {
+    // ✅ Скелетон до гидратации — избегает мерцания
+    return (
+      <div className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg" />
+    );
+  }
 
   return (
     <Button

@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "sonner";
 import PWARegister from "@/components/shared/PWARegister";
-import ThemeInitializer from "@/components/shared/ThemeInitializer";
 import "./globals.css";
 
 const geist = Geist({
@@ -41,9 +40,24 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={geist.variable}>
+    <html lang="ru" className={geist.variable} suppressHydrationWarning>
+      <head>
+        {/* 🌓 Блокирующая инициализация темы — устраняет FOUC */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark')
+                } else {
+                  document.documentElement.classList.remove('dark')
+                }
+              } catch (_) {}
+            `
+          }}
+        />
+      </head>
       <body className="antialiased">
-        <ThemeInitializer />
         <PWARegister />
         {children}
         <Toaster position="bottom-right" richColors />
