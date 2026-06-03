@@ -29,6 +29,7 @@ export default function ResetPasswordPage() {
     const checkSession = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
+      const tokenHash = params.get("token_hash");
       
       if (code) {
         if (!exchangePromise) {
@@ -44,6 +45,24 @@ export default function ResetPasswordPage() {
           await exchangePromise;
         } catch (err) {
           console.error("Error exchanging code for session:", err);
+        }
+      } else if (tokenHash) {
+        if (!exchangePromise) {
+          // Store the promise globally to verify token_hash directly
+          exchangePromise = supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: "recovery",
+          }).then((res) => {
+            // Immediately remove token_hash from the URL once verified successfully
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return res;
+          });
+        }
+        
+        try {
+          await exchangePromise;
+        } catch (err) {
+          console.error("Error verifying token hash:", err);
         }
       }
 
