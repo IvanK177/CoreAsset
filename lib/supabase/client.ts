@@ -3,7 +3,7 @@ import type { Database } from "@/types/database.types";
 
 export const createClient = () => {
   const isBrowser = typeof window !== "undefined";
-  const supabaseUrl = isBrowser ? "/supabase-proxy" : process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseUrl = isBrowser ? `${window.location.origin}/supabase-proxy` : process.env.NEXT_PUBLIC_SUPABASE_URL!;
   
   return createBrowserClient<Database>(
     supabaseUrl,
