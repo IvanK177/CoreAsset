@@ -47,12 +47,12 @@ export function DeviceFilterBar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Поиск по инв. номеру..."
-            className={cn("pl-9 h-9 rounded-lg border-gray-200 bg-white", compact && "h-8 text-xs")}
+            className={cn("pl-9 h-9 rounded-lg border-border bg-background text-foreground", compact && "h-8 text-xs")}
           />
           {searchQuery && (
             <button
               onClick={() => onSearchChange("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="w-3 h-3" />
             </button>
@@ -61,7 +61,7 @@ export function DeviceFilterBar({
       )}
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 overflow-x-auto max-w-full">
+      <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1 overflow-x-auto max-w-full">
         {filterOptions.map((option) => (
           <button
             key={option.value}
@@ -69,8 +69,8 @@ export function DeviceFilterBar({
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 whitespace-nowrap",
               activeFilter === option.value
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-card text-foreground shadow-sm border border-border/30"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {option.dotColor && (

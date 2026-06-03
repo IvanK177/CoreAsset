@@ -164,7 +164,7 @@ export default async function DashboardPage() {
                   <Link
                     key={inc.id}
                     href={`/incidents?selectedId=${inc.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -191,10 +191,10 @@ export default async function DashboardPage() {
         <div className="space-y-4">
           {/* Expiring Licenses */}
           {expiringLicenses.length > 0 && (
-            <div className="border border-red-200 bg-red-50 rounded-xl p-4">
+            <div className="border border-red-500/20 dark:border-red-500/30 bg-red-500/10 dark:bg-red-500/20 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <Clock className="w-4 h-4 text-red-500 shrink-0" />
-                <h3 className="text-sm font-semibold text-red-700">Истекают лицензии</h3>
+                <Clock className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" />
+                <h3 className="text-sm font-semibold text-red-700 dark:text-red-400">Истекают лицензии</h3>
               </div>
               <div className="space-y-2">
                 {expiringLicenses.map((l) => {
@@ -202,10 +202,10 @@ export default async function DashboardPage() {
                   return (
                     <div key={l.id} className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-card-foreground">{l.software_name ?? "—"}</p>
-                        <p className="text-xs text-muted-foreground">{l.vendor ?? "—"}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-card-foreground">{l.software_name ?? "—"}</p>
+                        <p className="text-xs text-gray-500 dark:text-muted-foreground">{l.vendor ?? "—"}</p>
                       </div>
-                      <span className="text-xs font-medium text-red-600">через {days} дн.</span>
+                      <span className="text-xs font-medium text-red-600 dark:text-red-400">через {days} дн.</span>
                     </div>
                   );
                 })}
@@ -242,7 +242,7 @@ export default async function DashboardPage() {
                     <span className="text-sm text-muted-foreground">{lu.name}</span>
                     <span className="text-sm font-medium text-card-foreground">{lu.used}/{lu.total}</span>
                   </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",

@@ -969,7 +969,7 @@ export default function ITPortalClientView({
         </div>
       </div>
     ) : (
-        <div className="bg-white dark:bg-[#1e293b] p-6 rounded-2xl border border-gray-150 dark:border-slate-800 shadow-sm">
+        <div className="bg-card p-6 rounded-2xl border border-border/60 shadow-sm">
           <TaskCalendar
             tasks={calendarTasks}
             onTaskClick={(id) => {
@@ -988,7 +988,7 @@ export default function ITPortalClientView({
 
       {/* Resolve Ticket Dialog */}
       <Dialog open={resolveDialogOpen} onOpenChange={setResolveDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border/60 rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">Завершение заявки</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">

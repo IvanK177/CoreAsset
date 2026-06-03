@@ -284,7 +284,7 @@ export default function LoginPage() {
               ) : (
                 <Wrench className="w-3.5 h-3.5 text-teal-500" />
               )}
-              {isDemoPending && activeDemoRole === "facilities" ? "Вход…" : "Войти как Специалист АХО"}
+              {isDemoPending && activeDemoRole === "facilities" ? "Вход…" : "Войти как Специалист АХЧ"}
             </Button>
             <Button
               variant="outline"

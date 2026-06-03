@@ -113,7 +113,7 @@ export function AddLicenseDialog({ open, onOpenChange }: AddLicenseDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6">
+      <DialogContent className="sm:max-w-[580px] bg-card text-card-foreground border-border/60 rounded-2xl p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Добавить лицензию</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">

@@ -105,7 +105,7 @@ export function InstallSoftwareDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+      <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border/60 rounded-2xl p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Установить ПО</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -116,7 +116,7 @@ export function InstallSoftwareDialog({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label>Программы / Лицензии *</Label>
-            <div className="border border-gray-200 rounded-lg max-h-60 overflow-y-auto p-3 space-y-2 bg-gray-50">
+            <div className="border border-border rounded-lg max-h-60 overflow-y-auto p-3 space-y-2 bg-muted/40">
               {licenseOptions.map((l) => {
                 const isSelected = selectedLicenseIds.includes(l.id);
                 const isFull = l.used_seats >= l.total_seats;
@@ -124,8 +124,8 @@ export function InstallSoftwareDialog({
                   <label
                     key={l.id}
                     className={cn(
-                      "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border text-sm bg-white",
-                      isSelected ? "border-blue-200 bg-blue-50/50" : "border-transparent hover:bg-gray-50",
+                      "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border text-sm bg-card text-foreground",
+                      isSelected ? "border-primary/40 bg-primary/10" : "border-transparent hover:bg-muted/50",
                       isFull && !isSelected && "opacity-50 cursor-not-allowed"
                     )}
                   >
@@ -143,8 +143,8 @@ export function InstallSoftwareDialog({
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{l.software_name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="font-medium text-foreground truncate">{l.software_name}</p>
+                      <p className="text-xs text-muted-foreground">
                         {l.used_seats} из {l.total_seats} мест занято
                       </p>
                     </div>

@@ -274,7 +274,7 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
         });
       }
     }}>
-      <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[580px] bg-card text-card-foreground border-border/60 rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Добавить устройство</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -538,12 +538,12 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
           )}
           {/* Photo attachment field */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-1.5 text-gray-700">
-              <Camera className="w-4 h-4 text-gray-500" />
+            <Label className="text-sm font-medium flex items-center gap-1.5 text-foreground/80">
+              <Camera className="w-4 h-4 text-muted-foreground" />
               Фотографии устройства
             </Label>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex items-center justify-center border border-dashed border-border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
                 <input
                   type="file"
                   multiple
@@ -553,8 +553,8 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
                   disabled={pending}
                 />
                 <div className="text-center space-y-1">
-                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto" />
-                  <span className="text-xs text-gray-500 block">Нажмите, чтобы выбрать фото устройства</span>
+                  <ImageIcon className="w-6 h-6 text-muted-foreground mx-auto" />
+                  <span className="text-xs text-muted-foreground block">Нажмите, чтобы выбрать фото устройства</span>
                 </div>
               </label>
 

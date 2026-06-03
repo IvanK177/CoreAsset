@@ -324,7 +324,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
         });
       }
     }}>
-      <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[580px] bg-card text-card-foreground border-border/60 rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Редактировать устройство</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -590,12 +590,12 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
           )}
           {/* Photo attachment field */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-1.5 text-gray-700">
-              <Camera className="w-4 h-4 text-gray-500" />
+            <Label className="text-sm font-medium flex items-center gap-1.5 text-foreground/80">
+              <Camera className="w-4 h-4 text-muted-foreground" />
               Фотографии устройства
             </Label>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex items-center justify-center border border-dashed border-border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
                 <input
                   type="file"
                   multiple
@@ -605,15 +605,15 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
                   disabled={pending}
                 />
                 <div className="text-center space-y-1">
-                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto" />
-                  <span className="text-xs text-gray-500 block">Нажмите, чтобы выбрать фото устройства</span>
+                  <ImageIcon className="w-6 h-6 text-muted-foreground mx-auto" />
+                  <span className="text-xs text-muted-foreground block">Нажмите, чтобы выбрать фото устройства</span>
                 </div>
               </label>
 
               {/* Existing Photos Previews */}
               {existingPhotos.length > 0 && (
                 <div className="space-y-1 mt-2">
-                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Текущие фото</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Текущие фото</span>
                   <div className="grid grid-cols-4 gap-2">
                     {existingPhotos.map((url, index) => (
                       <div key={`existing-${index}`} className="relative aspect-square rounded-lg border overflow-hidden group">
@@ -636,7 +636,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
               {/* New Photos Previews */}
               {photoPreviews.length > 0 && (
                 <div className="space-y-1 mt-2">
-                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Новые фото</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Новые фото</span>
                   <div className="grid grid-cols-4 gap-2">
                     {photoPreviews.map((preview, index) => (
                       <div key={`new-${index}`} className="relative aspect-square rounded-lg border overflow-hidden group">

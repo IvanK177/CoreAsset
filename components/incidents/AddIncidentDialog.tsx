@@ -141,7 +141,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
       onOpenChange(v);
 
     }}>
-      <DialogContent className="sm:max-w-[580px] bg-white rounded-2xl p-6">
+      <DialogContent className="sm:max-w-[580px] bg-card text-card-foreground border-border/60 rounded-2xl p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Новый тикет</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -245,7 +245,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
                 disabled
                 placeholder="Кабинет не указан"
                 value={selectedEmployeeRoom || ""}
-                className="bg-gray-50 border-gray-200 cursor-not-allowed w-full"
+                className="bg-muted/50 border-border cursor-not-allowed w-full"
               />
             </div>
           </div>

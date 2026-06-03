@@ -246,7 +246,7 @@ export function DevicesClientView({
                     "px-2 py-1.5 rounded-lg text-left text-xs font-medium transition-colors",
                     activeTypeFilter === opt.value
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-900/50"
+                      : "text-muted-foreground hover:bg-muted/50"
                   )}
                 >
                   {opt.label}
@@ -269,7 +269,7 @@ export function DevicesClientView({
                 onClick={() => setSelectedId(d.id)}
                 className={cn(
                   "w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-border last:border-b-0",
-                  d.id === selectedId ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-50 dark:hover:bg-slate-900/50"
+                  d.id === selectedId ? "bg-muted" : "hover:bg-muted/50"
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -293,10 +293,10 @@ export function DevicesClientView({
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-gray-900 truncate">{selectedDevice.inventory_number}</h2>
+                  <h2 className="text-xl font-bold text-foreground truncate">{selectedDevice.inventory_number}</h2>
                   <DeviceStatusBadge status={selectedDevice.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
                 </div>
-                <p className="text-sm text-gray-500 truncate">
+                <p className="text-sm text-muted-foreground truncate">
                   {getDeviceTypeLabel(selectedDevice.device_type)} · {selectedDevice.computer_type}
                 </p>
               </div>
@@ -317,8 +317,8 @@ export function DevicesClientView({
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-slate-50 dark:bg-slate-900/20 p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Основные данные / Характеристики</h3>
+          <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">Основные данные / Характеристики</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
               <InfoRow label="Кабинет" value={selectedDevice.room} />
@@ -349,8 +349,8 @@ export function DevicesClientView({
           {(() => {
             const devicePhotos = selectedDevice.photo_urls as string[] | null;
             return devicePhotos && devicePhotos.length > 0 && (
-              <div className="rounded-xl border border-gray-200 p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              <div className="rounded-xl border border-border/60 p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">
                   Фотографии устройства ({devicePhotos.length})
                 </h3>
                 <div className="grid grid-cols-3 gap-2">
@@ -360,7 +360,7 @@ export function DevicesClientView({
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                      className="relative aspect-video rounded-lg overflow-hidden border border-border/40 hover:opacity-90 transition-opacity"
                     >
                       <img
                         src={url}
@@ -376,7 +376,7 @@ export function DevicesClientView({
 
           <div className="rounded-xl border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплён за сотрудником</h3>
+              <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">Закреплён за сотрудником</h3>
               <button
                 onClick={() => setLinkDialogOpen(true)}
                 className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
@@ -385,7 +385,7 @@ export function DevicesClientView({
               </button>
             </div>
             {selectedEmployee ? (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-border">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-sm font-bold">
                     {selectedEmployee.full_name.charAt(0)}
@@ -412,7 +412,7 @@ export function DevicesClientView({
 
           <div className="rounded-xl border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Установленное ПО</h3>
+              <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">Установленное ПО</h3>
               <button
                 onClick={() => setInstallDialogOpen(true)}
                 className="text-xs text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer"
@@ -425,7 +425,7 @@ export function DevicesClientView({
             ) : (
               <div className="space-y-2">
                 {normalizedInstalls.map((inst) => (
-                  <div key={inst.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-border">
+                  <div key={inst.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border">
                     <div>
                       <p className="text-sm font-medium text-foreground">
                         <Key className="w-3 h-3 text-muted-foreground inline mr-1" />
@@ -452,7 +452,7 @@ export function DevicesClientView({
 
           <div className="rounded-xl border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">История инцидентов</h3>
+              <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">История инцидентов</h3>
               <button
                 onClick={() => setTicketDialogOpen(true)}
                 className="text-xs text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer"
@@ -468,7 +468,7 @@ export function DevicesClientView({
                   <a
                     key={inc.id}
                     href={`/incidents?selectedId=${inc.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 dark:hover:bg-slate-900/40 border border-border transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-muted-foreground" />
@@ -538,7 +538,7 @@ export function DevicesClientView({
       {/* Top Filter Bar with Main Types Filter */}
       <div className="flex flex-col gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
         {/* Main Category type filter tabs */}
-        <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900/30 border border-border p-1 rounded-xl self-start overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1 bg-muted/30 border border-border p-1 rounded-xl self-start overflow-x-auto max-w-full">
           {typeFilterOptions.map((opt) => (
             <button
               key={opt.value}
@@ -590,7 +590,7 @@ export function DevicesClientView({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-border">
+              <tr className="bg-muted/20 border-b border-border">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Инв. номер</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Тип устройства</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Название / Модель</th>
@@ -604,7 +604,7 @@ export function DevicesClientView({
                 <tr
                   key={d.id}
                   onClick={() => setSelectedId(d.id)}
-                  className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer border-b border-border last:border-b-0"
+                  className="hover:bg-muted/50 transition-colors cursor-pointer border-b border-border last:border-b-0"
                 >
                   <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">{d.inventory_number}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{getDeviceTypeLabel(d.device_type)}</td>
@@ -614,7 +614,7 @@ export function DevicesClientView({
                     <DeviceStatusBadge status={d.lifecycle_status as "active" | "repair" | "storage" | "decommissioned"} />
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-gray-400">›</span>
+                    <span className="text-muted-foreground">›</span>
                   </td>
                 </tr>
               ))}
