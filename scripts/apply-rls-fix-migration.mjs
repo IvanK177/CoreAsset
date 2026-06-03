@@ -11,9 +11,7 @@ import { fileURLToPath } from "url";
 
 dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), "..", ".env") });
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const PROJECT_REF = "tmivtbessykjksntdcwl";
+
 
 // The SQL to execute
 const SQL_STATEMENTS = [
@@ -49,7 +47,7 @@ async function tryWithPgDirect() {
       return true;
     } catch (err) {
       console.error(`  ❌ Failed: ${err.code || ''} ${err.message}`);
-      try { await client.end(); } catch (_) {}
+      try { await client.end(); } catch {}
       // Wait before retrying
       await new Promise(r => setTimeout(r, 3000));
     }

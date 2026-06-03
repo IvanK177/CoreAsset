@@ -85,7 +85,7 @@ async function tryApply(url, label) {
     await client.end();
   } catch (err) {
     console.error(`❌ ${label} failed: ${err.message}`);
-    try { await client.end(); } catch (_) {}
+    try { await client.end(); } catch {}
     return false;
   }
   return false;

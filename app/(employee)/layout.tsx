@@ -8,7 +8,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
   const { data: { user } } = await authClient.auth.getUser();
 
   const cookieStore = await cookies();
-  const demoRole = cookieStore.get("demo_role")?.value;
+
   const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
 
   // Get employee data — prefer user.id match (trigger-synced), then demo cookie, then fallback

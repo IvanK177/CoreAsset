@@ -9,7 +9,7 @@ export default async function ITPortalLayout({ children }: { children: React.Rea
   const { data: { user } } = await authClient.auth.getUser();
 
   const cookieStore = await cookies();
-  const demoRole = cookieStore.get("demo_role")?.value;
+
   const demoEmployeeId = cookieStore.get("demo_employee_id")?.value;
 
   // Get IT specialist employee data — prefer user.id match (trigger-synced), then demo cookie, then fallback

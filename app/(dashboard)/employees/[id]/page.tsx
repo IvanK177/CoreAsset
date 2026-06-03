@@ -4,7 +4,7 @@ export const revalidate = 0;
 import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { TicketDialogButton } from "@/components/shared/TicketDialogButton";
 import { SubmitButton } from "@/components/shared/SubmitButton";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { deleteEmployee, dismissEmployee, restoreEmployee } from "@/lib/actions/employees";
 import { formatDate, extractJoinObject, formatDateTimeRu } from "@/lib/utils";
-import { Edit, Monitor, User, UserCheck, UserX, Phone, MessageCircle } from "lucide-react";
+import { Edit, Monitor, User, UserCheck, UserX } from "lucide-react";
 
 const deviceTypeRussianLabels: Record<string, string> = {
   pc: "Компьютер",

@@ -106,6 +106,12 @@ const STATUS_ITEMS: Record<string, React.ReactNode> = {
   decommissioned: "Списан",
 };
 
+function generateUUID() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto 
+    ? crypto.randomUUID() 
+    : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+}
+
 interface EditDeviceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -116,7 +122,7 @@ interface EditDeviceDialogProps {
 export function EditDeviceDialog({ open, onOpenChange, device, templates }: EditDeviceDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const hw = (device.hardware as Hardware | null) ?? {};
@@ -168,6 +174,9 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
   };
 
   const deviceType = useWatch({ control: form.control, name: "device_type" });
+  const templateId = useWatch({ control: form.control, name: "template_id" });
+  const computerType = useWatch({ control: form.control, name: "computer_type" });
+  const lifecycleStatus = useWatch({ control: form.control, name: "lifecycle_status" });
 
   const templateItems: Record<string, React.ReactNode> = {
     "": "Без шаблона",
@@ -194,10 +203,12 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
         resolution: currentHw.resolution ?? "",
         template_id: device.template_id ?? "",
       });
-      setError(null);
-      setPhotos([]);
-      setPhotoPreviews([]);
-      setExistingPhotos((device.photo_urls as string[] | null) ?? []);
+      setTimeout(() => {
+        setError(null);
+        setPhotos([]);
+        setPhotoPreviews([]);
+        setExistingPhotos((device.photo_urls as string[] | null) ?? []);
+      }, 0);
     }
   }, [open, device, form]);
 
@@ -245,9 +256,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
           }
 
           const fileExt = fileToUpload.name.split(".").pop();
-          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
-            ? crypto.randomUUID() 
-            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const uuid = generateUUID();
           const fileName = `${uuid}.${fileExt}`;
           const filePath = `devices/${fileName}`;
           
@@ -360,7 +369,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
             <div className="space-y-2">
               <Label>Шаблон конфигурации</Label>
               <Select
-                value={form.watch("template_id") || ""}
+                value={templateId || ""}
                 onValueChange={(val) => {
                   form.setValue("template_id", val);
                   if (val) {
@@ -431,7 +440,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
               <div className="space-y-2">
                 <Label>Тип ПК *</Label>
                 <Select
-                  value={form.watch("computer_type")}
+                  value={computerType}
                   onValueChange={(v) => form.setValue("computer_type", v ?? "desktop")}
                   items={PC_SUBTYPE_ITEMS}
                 >
@@ -484,7 +493,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
             <div className="space-y-2">
               <Label>Статус *</Label>
               <Select
-                value={form.watch("lifecycle_status")}
+                value={lifecycleStatus}
                 onValueChange={(v) => form.setValue("lifecycle_status", v as "active" | "repair" | "storage" | "decommissioned")}
                 items={STATUS_ITEMS}
               >

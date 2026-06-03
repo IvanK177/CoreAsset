@@ -6,7 +6,7 @@ import { format, differenceInCalendarDays, startOfDay, isSameDay } from "date-fn
 import { ru } from "date-fns/locale";
 import { toZonedTime } from "date-fns-tz";
 import { cn } from "@/lib/utils";
-import { Clock, CheckCircle2, AlertTriangle, Calendar, MapPin, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, CheckCircle2, Calendar, MapPin, User, ChevronLeft, ChevronRight } from "lucide-react";
 import "react-day-picker/style.css";
 
 const TIMEZONE = "Europe/Moscow";

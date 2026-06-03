@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -94,6 +94,12 @@ const STATUS_ITEMS: Record<string, React.ReactNode> = {
   decommissioned: "Списан",
 };
 
+function generateUUID() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto 
+    ? crypto.randomUUID() 
+    : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+}
+
 interface AddDeviceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -103,7 +109,7 @@ interface AddDeviceDialogProps {
 export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const form = useForm<DeviceDialogValues>({
@@ -147,7 +153,10 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
     });
   };
 
-  const deviceType = form.watch("device_type");
+  const deviceType = useWatch({ control: form.control, name: "device_type" }) || "pc";
+  const templateId = useWatch({ control: form.control, name: "template_id" });
+  const computerType = useWatch({ control: form.control, name: "computer_type" });
+  const lifecycleStatus = useWatch({ control: form.control, name: "lifecycle_status" });
 
   const templateItems: Record<string, React.ReactNode> = {
     "": "Без шаблона",
@@ -197,9 +206,7 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
           }
 
           const fileExt = fileToUpload.name.split(".").pop();
-          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
-            ? crypto.randomUUID() 
-            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const uuid = generateUUID();
           const fileName = `${uuid}.${fileExt}`;
           const filePath = `devices/${fileName}`;
           
@@ -310,7 +317,7 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
             <div className="space-y-2">
               <Label>Шаблон конфигурации (по желанию)</Label>
               <Select
-                value={form.watch("template_id") || ""}
+                value={templateId || ""}
                 onValueChange={(val) => {
                   form.setValue("template_id", val);
                   if (val) {
@@ -381,7 +388,7 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
               <div className="space-y-2">
                 <Label>Тип ПК *</Label>
                 <Select
-                  value={form.watch("computer_type")}
+                  value={computerType}
                   onValueChange={(v) => form.setValue("computer_type", v ?? "desktop")}
                   items={PC_SUBTYPE_ITEMS}
                 >
@@ -434,7 +441,7 @@ export function AddDeviceDialog({ open, onOpenChange, templates }: AddDeviceDial
             <div className="space-y-2">
               <Label>Статус *</Label>
               <Select
-                value={form.watch("lifecycle_status")}
+                value={lifecycleStatus}
                 onValueChange={(v) => form.setValue("lifecycle_status", v as DeviceDialogValues["lifecycle_status"])}
                 items={STATUS_ITEMS}
               >

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { cn, formatDateTimeRu } from "@/lib/utils";
-import { AlertTriangle, Clock, CheckCircle2, User, Mail, Building, Loader2, MessageSquare, HelpCircle } from "lucide-react";
+import { Clock, CheckCircle2, User, Mail, Building, Loader2, MessageSquare, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";

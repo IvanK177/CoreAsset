@@ -61,7 +61,7 @@ async function testConnection() {
     process.exit(0);
   } catch (err) {
     console.error(`\n❌ Error: ${err.code} ${err.message}`);
-    try { await client.end(); } catch (_) {}
+    try { await client.end(); } catch {}
     process.exit(1);
   }
 }

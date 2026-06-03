@@ -47,7 +47,7 @@ async function main() {
   } catch (e) {
     console.error('Error:', e.message);
   } finally {
-    try { await client.end(); } catch (_) {}
+    try { await client.end(); } catch {}
     console.log('Done');
   }
 }

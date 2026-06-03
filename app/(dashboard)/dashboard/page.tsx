@@ -11,7 +11,7 @@ import {
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
-import { cn, formatDate, daysUntilExpiry, extractJoinObject, formatDateTimeRu } from "@/lib/utils";
+import { cn, daysUntilExpiry, extractJoinObject, formatDateTimeRu } from "@/lib/utils";
 import { Monitor, Package, Wrench, AlertTriangle, DollarSign, Clock, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
