@@ -30,39 +30,34 @@ export default function ResetPasswordPage() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
       const tokenHash = params.get("token_hash");
+      const activeToken = code || tokenHash;
       
-      if (code) {
+      if (activeToken) {
         if (!exchangePromise) {
-          // Store the promise globally so that the second mount awaits the exact same exchange
-          exchangePromise = supabase.auth.exchangeCodeForSession(code).then((res) => {
-            // Immediately remove code from the URL once code is exchanged successfully
-            window.history.replaceState({}, document.title, window.location.pathname);
-            return res;
-          });
+          if (activeToken.startsWith("pkce_")) {
+            // It's a PKCE code! Use exchangeCodeForSession
+            exchangePromise = supabase.auth.exchangeCodeForSession(activeToken).then((res) => {
+              // Immediately remove token parameters from the URL once verified successfully
+              window.history.replaceState({}, document.title, window.location.pathname);
+              return res;
+            });
+          } else {
+            // It's a standard token_hash! Use verifyOtp
+            exchangePromise = supabase.auth.verifyOtp({
+              token_hash: activeToken,
+              type: "recovery",
+            }).then((res) => {
+              // Immediately remove token parameters from the URL once verified successfully
+              window.history.replaceState({}, document.title, window.location.pathname);
+              return res;
+            });
+          }
         }
         
         try {
           await exchangePromise;
         } catch (err) {
-          console.error("Error exchanging code for session:", err);
-        }
-      } else if (tokenHash) {
-        if (!exchangePromise) {
-          // Store the promise globally to verify token_hash directly
-          exchangePromise = supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: "recovery",
-          }).then((res) => {
-            // Immediately remove token_hash from the URL once verified successfully
-            window.history.replaceState({}, document.title, window.location.pathname);
-            return res;
-          });
-        }
-        
-        try {
-          await exchangePromise;
-        } catch (err) {
-          console.error("Error verifying token hash:", err);
+          console.error("Error exchanging/verifying token:", err);
         }
       }
 
