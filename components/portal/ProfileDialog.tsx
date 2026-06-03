@@ -101,6 +101,14 @@ export function ProfileDialog({
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+          console.error("User not authenticated for avatar upload:", authError);
+          toast.error("Ошибка авторизации. Пожалуйста, войдите в систему снова.");
+          setPending(false);
+          return;
+        }
+        
         let fileToUpload = avatarFile;
         try {
           const compressionResult = await compressImageToTarget(avatarFile, { targetKB: 50 });
