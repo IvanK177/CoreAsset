@@ -217,7 +217,7 @@ export function DevicesClientView({
     return (
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="hidden lg:block lg:w-1/3 space-y-3">
-          <div className="bg-card p-3 rounded-xl border border-border/60 shadow-sm flex items-center gap-2">
+          <div className="bg-card p-3 rounded-xl border border-border shadow-sm flex items-center gap-2">
             <Building className="w-4 h-4 text-muted-foreground shrink-0" />
             <Select
               value={buildingFilter}
@@ -235,7 +235,7 @@ export function DevicesClientView({
             </Select>
           </div>
           {/* Main type filter inside sidebar listing */}
-          <div className="bg-card p-3 rounded-xl border border-border/60 shadow-sm space-y-1">
+          <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-1">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Тип устройства</p>
             <div className="grid grid-cols-2 gap-1">
               {typeFilterOptions.map((opt) => (
@@ -246,7 +246,7 @@ export function DevicesClientView({
                     "px-2 py-1.5 rounded-lg text-left text-xs font-medium transition-colors",
                     activeTypeFilter === opt.value
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      : "text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-900/50"
                   )}
                 >
                   {opt.label}
@@ -262,14 +262,14 @@ export function DevicesClientView({
             onSearchChange={setSearchQuery}
             compact
           />
-          <div className="rounded-xl bg-card border border-border/50 shadow-sm overflow-hidden max-h-[400px] overflow-y-auto custom-scrollbar">
+          <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden max-h-[400px] overflow-y-auto custom-scrollbar">
             {filteredDevices.map((d) => (
               <button
                 key={d.id}
                 onClick={() => setSelectedId(d.id)}
                 className={cn(
-                  "w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-border/50 last:border-b-0",
-                  d.id === selectedId ? "bg-accent/60" : "hover:bg-muted/40"
+                  "w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-border last:border-b-0",
+                  d.id === selectedId ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-50 dark:hover:bg-slate-900/50"
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -282,7 +282,7 @@ export function DevicesClientView({
           </div>
         </div>
 
-        <div className="w-full lg:w-2/3 rounded-xl bg-card border border-border/60 shadow-sm p-4 md:p-6 space-y-6">
+        <div className="w-full lg:w-2/3 rounded-xl bg-card border border-border shadow-sm p-4 md:p-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <button onClick={() => setSelectedId(null)} className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0">
@@ -317,7 +317,7 @@ export function DevicesClientView({
             </div>
           </div>
 
-          <div className="rounded-xl border border-border/65 bg-muted/30 p-4 space-y-3">
+          <div className="rounded-xl border border-border bg-slate-50 dark:bg-slate-900/20 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Основные данные / Характеристики</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
@@ -374,7 +374,7 @@ export function DevicesClientView({
             );
           })()}
 
-          <div className="rounded-xl border border-border/65 p-4 space-y-3">
+          <div className="rounded-xl border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплён за сотрудником</h3>
               <button
@@ -385,7 +385,7 @@ export function DevicesClientView({
               </button>
             </div>
             {selectedEmployee ? (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/40">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-border">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-sm font-bold">
                     {selectedEmployee.full_name.charAt(0)}
@@ -410,7 +410,7 @@ export function DevicesClientView({
             )}
           </div>
 
-          <div className="rounded-xl border border-border/65 p-4 space-y-3">
+          <div className="rounded-xl border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Установленное ПО</h3>
               <button
@@ -425,7 +425,7 @@ export function DevicesClientView({
             ) : (
               <div className="space-y-2">
                 {normalizedInstalls.map((inst) => (
-                  <div key={inst.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/40">
+                  <div key={inst.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-border">
                     <div>
                       <p className="text-sm font-medium text-foreground">
                         <Key className="w-3 h-3 text-muted-foreground inline mr-1" />
@@ -450,7 +450,7 @@ export function DevicesClientView({
             )}
           </div>
 
-          <div className="rounded-xl border border-border/65 p-4 space-y-3">
+          <div className="rounded-xl border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">История инцидентов</h3>
               <button
@@ -468,7 +468,7 @@ export function DevicesClientView({
                   <a
                     key={inc.id}
                     href={`/incidents?selectedId=${inc.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/70 border border-border/40 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 dark:hover:bg-slate-900/40 border border-border transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-muted-foreground" />
@@ -536,9 +536,9 @@ export function DevicesClientView({
   return (
     <div className="space-y-4">
       {/* Top Filter Bar with Main Types Filter */}
-      <div className="flex flex-col gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm">
+      <div className="flex flex-col gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
         {/* Main Category type filter tabs */}
-        <div className="flex items-center gap-1 bg-muted/40 border border-border/60 p-1 rounded-xl self-start overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900/30 border border-border p-1 rounded-xl self-start overflow-x-auto max-w-full">
           {typeFilterOptions.map((opt) => (
             <button
               key={opt.value}
@@ -546,7 +546,7 @@ export function DevicesClientView({
               className={cn(
                 "px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all",
                 activeTypeFilter === opt.value
-                  ? "bg-card text-foreground shadow-sm"
+                  ? "bg-card text-foreground shadow-sm border border-border/30"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -581,7 +581,7 @@ export function DevicesClientView({
         </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border/50 shadow-sm overflow-x-auto">
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-x-auto">
         {filteredDevices.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
             <Monitor className="w-10 h-10 mx-auto opacity-40 mb-3" />
@@ -590,7 +590,7 @@ export function DevicesClientView({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-muted/50 border-b border-border/60">
+              <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-border">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Инв. номер</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Тип устройства</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Название / Модель</th>
@@ -604,7 +604,7 @@ export function DevicesClientView({
                 <tr
                   key={d.id}
                   onClick={() => setSelectedId(d.id)}
-                  className="hover:bg-muted/30 transition-colors cursor-pointer border-b border-border/60 last:border-b-0"
+                  className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer border-b border-border last:border-b-0"
                 >
                   <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">{d.inventory_number}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{getDeviceTypeLabel(d.device_type)}</td>

@@ -123,7 +123,7 @@ export function EmployeesClientView({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left: Narrow list */}
         <div className="hidden lg:block lg:w-1/3 space-y-3">
-          <div className="bg-card p-3 rounded-xl border border-border/60 shadow-sm flex items-center gap-2">
+          <div className="bg-card p-3 rounded-xl border border-border shadow-sm flex items-center gap-2">
             <Building className="w-4 h-4 text-muted-foreground shrink-0" />
             <Select
               value={buildingFilter}
@@ -174,14 +174,14 @@ export function EmployeesClientView({
             </Select>
           </div>
 
-          <div className="rounded-xl bg-card border border-border/60 shadow-sm overflow-hidden">
+          <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
             {filteredEmployees.map((e) => (
               <button
                 key={e.id}
                 onClick={() => setSelectedId(e.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border/50 last:border-b-0",
-                  e.id === selectedId ? "bg-accent/60" : "hover:bg-muted/40"
+                  "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border last:border-b-0",
+                  e.id === selectedId ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-50 dark:hover:bg-slate-900/50"
                 )}
               >
                 <div className={cn(
@@ -200,7 +200,7 @@ export function EmployeesClientView({
         </div>
 
         {/* Right: Detail panel */}
-        <div className="w-full lg:w-2/3 rounded-xl bg-card border border-border/60 shadow-sm p-4 md:p-6 space-y-6">
+        <div className="w-full lg:w-2/3 rounded-xl bg-card border border-border shadow-sm p-4 md:p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -283,7 +283,7 @@ export function EmployeesClientView({
           </div>
 
           {/* Block 1: Contact Info */}
-          <div className="rounded-xl border border-border/65 bg-muted/30 p-4 space-y-3">
+          <div className="rounded-xl border border-border bg-slate-50 dark:bg-slate-900/20 p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Контактная информация</h3>
             <div className="grid grid-cols-2 gap-3">
               <ContactRow icon={Mail} label="Email" value={selectedEmployee.email} />
@@ -294,7 +294,7 @@ export function EmployeesClientView({
           </div>
 
           {/* Block 2: Assigned Devices */}
-          <div className="rounded-xl border border-border/65 p-4 space-y-3">
+          <div className="rounded-xl border border-border p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Закреплённые устройства</h3>
             {selectedDevices.length === 0 ? (
               <p className="text-sm text-muted-foreground py-2">Нет привязанных устройств</p>
@@ -307,7 +307,7 @@ export function EmployeesClientView({
                     <Link
                       key={dev.id}
                       href={`/devices/${dev.id}`}
-                      className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 hover:bg-muted/70 border border-border/40 transition-colors font-mono"
+                      className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 dark:hover:bg-slate-900/40 border border-border transition-colors font-mono"
                     >
                       <DeviceIcon className="w-4 h-4 text-gray-400 shrink-0" />
                       <span className="text-sm font-medium text-gray-900">
@@ -327,7 +327,7 @@ export function EmployeesClientView({
           </div>
 
           {/* Block 3: Incident History */}
-          <div className="rounded-xl border border-border/65 p-4 space-y-3">
+          <div className="rounded-xl border border-border p-4 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">История заявок</h3>
             {selectedIncidents.length === 0 ? (
               <p className="text-sm text-muted-foreground py-2">Инцидентов нет</p>
@@ -337,7 +337,7 @@ export function EmployeesClientView({
                   <Link
                     key={inc.id}
                     href={`/incidents?selectedId=${inc.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/70 border border-border/40 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 dark:hover:bg-slate-900/40 border border-border transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <AlertTriangle className="w-4 h-4 text-gray-400 shrink-0" />
@@ -362,7 +362,7 @@ export function EmployeesClientView({
   return (
     <div className="space-y-4">
       {/* Search + Status Filter + Building Filter */}
-      <div className="flex items-center gap-3 flex-wrap bg-card p-4 rounded-xl border border-border/60 shadow-sm">
+      <div className="flex items-center gap-3 flex-wrap bg-card p-4 rounded-xl border border-border shadow-sm">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -413,7 +413,7 @@ export function EmployeesClientView({
         </span>
       </div>
 
-      <div className="rounded-xl bg-card border border-border/50 shadow-sm overflow-x-auto">
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-x-auto">
         {filteredEmployees.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
             <Users className="w-10 h-10 mx-auto opacity-40 mb-3" />
@@ -422,7 +422,7 @@ export function EmployeesClientView({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-muted/50 border-b border-border/60">
+              <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-border">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Сотрудник</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Должность / Отдел</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email</th>
@@ -436,7 +436,7 @@ export function EmployeesClientView({
                 <tr
                   key={e.id}
                   onClick={() => setSelectedId(e.id)}
-                  className="hover:bg-muted/30 transition-colors cursor-pointer border-b border-border/60 last:border-b-0"
+                  className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer border-b border-border last:border-b-0"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">

@@ -116,7 +116,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50 transition-colors duration-150;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground font-sans tracking-tight;
@@ -176,10 +176,6 @@ html {
   backface-visibility: hidden;
   perspective: 1000px;
   will-change: transform, opacity;
-}
-
-*, *::before, *::after {
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .content-visibility-auto {
