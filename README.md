@@ -84,6 +84,7 @@ npm run dev
 2. В разделе **Environment Variables** добавьте:
    - `NEXT_PUBLIC_SUPABASE_URL` = `https://XXX.supabase.co`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = ваш anon key
+   - `NEXT_PUBLIC_SITE_URL` = `https://core-asset-api.vercel.app` (ваш домен развертывания; отвечает за формирование корректной ссылки сброса пароля в письмах Supabase Auth)
 3. Нажмите **Deploy** — всё остальное Vercel сделает автоматически
 
 ---

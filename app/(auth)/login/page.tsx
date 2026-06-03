@@ -198,7 +198,7 @@ export default function LoginPage() {
 
           {/* Params Message */}
           {paramsMessage && (
-            <div className={`text-sm px-3 py-2 rounded-lg ${paramsMessage.error ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50 border border-green-200'}`}>
+            <div className={`text-sm px-3 py-2 rounded-lg border ${paramsMessage.error ? 'text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-900/30' : 'text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/20 dark:border-green-900/30'}`}>
               {paramsMessage.error && <p>{paramsMessage.error}</p>}
               {paramsMessage.success && <p className="font-semibold">{paramsMessage.success}</p>}
             </div>
@@ -206,7 +206,7 @@ export default function LoginPage() {
 
           {/* Reset Message */}
           {resetMessage && (
-            <div className={`text-sm px-3 py-2 rounded-lg ${resetMessage.error ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50 border border-green-200'}`}>
+            <div className={`text-sm px-3 py-2 rounded-lg border ${resetMessage.error ? 'text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/20 dark:border-red-900/30' : 'text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/20 dark:border-green-900/30'}`}>
               {resetMessage.error && <p>{resetMessage.error}</p>}
               {resetMessage.success && <p className="font-semibold">{resetMessage.success}</p>}
             </div>

@@ -235,7 +235,7 @@ export async function resetPassword(email: string) {
   }
 
   const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://core-asset-api.vercel.app";
 
   // Request secure reset password link (does not leak if email exists or not)
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
