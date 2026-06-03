@@ -34,7 +34,6 @@ export async function createIncident(formData: FormData) {
     device_id: parsed.data.device_id || null,
     employee_id: parsed.data.employee_id || null,
   };
-  console.log("[createIncident] Inserting incident with device_id:", insertData.device_id);
 
   const { data, error } = await supabase.from("incidents").insert(insertData).select("id").single();
 

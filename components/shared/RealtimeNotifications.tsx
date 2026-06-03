@@ -37,6 +37,12 @@ interface RoomRequestRecord {
   description?: string;
 }
 
+interface SupportRequestRecord {
+  id?: string;
+  message?: string;
+  status?: string;
+}
+
 export function RealtimeNotifications({ role }: RealtimeNotificationsProps) {
   useEffect(() => {
     const supabase = createClient();
@@ -98,7 +104,7 @@ export function RealtimeNotifications({ role }: RealtimeNotificationsProps) {
                 if (eventType === "UPDATE") msg = `Заявка АХЧ #${newReq?.id?.substring(0, 4)} изменена (Статус: ${newReq?.status})`;
                 if (eventType === "DELETE") msg = `Удалена заявка АХЧ`;
               } else if (table === "support_requests") {
-                const newReq = newRecord as any;
+                const newReq = newRecord as SupportRequestRecord | null;
                 title = `Обращение в поддержку`;
                 if (eventType === "INSERT") msg = `Создано новое обращение в поддержку`;
                 if (eventType === "UPDATE") msg = `Обращение #${newReq?.id?.substring(0, 4)} изменено (Статус: ${newReq?.status})`;
@@ -168,7 +174,7 @@ export function RealtimeNotifications({ role }: RealtimeNotificationsProps) {
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "support_requests" },
           (payload) => {
-            const newRecord = payload.new as any;
+            const newRecord = payload.new as SupportRequestRecord;
             toast.success(`Поступило новое обращение в поддержку`, {
               description: newRecord.message?.substring(0, 60) + "...",
               duration: 8000,

@@ -100,7 +100,7 @@ export default async function MyTasksPage() {
     .filter((i) => i.assigned_to === specialistId)
     .map((i) => i.id);
 
-  let rawMessages: any[] = [];
+  let rawMessages: Message[] = [];
   if (assignedIncidentIds.length > 0) {
     const { data, error: msgError } = await dataClient
       .from("incident_messages")

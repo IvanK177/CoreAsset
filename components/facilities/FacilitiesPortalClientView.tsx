@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { cn, formatDateTimeRu, BUILDING_ADDRESSES, extractJoinObject } from "@/lib/utils";
 import { AlertTriangle, Clock, CheckCircle2, User, Building, Wrench, Loader2, Camera, Image as ImageIcon, X, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -63,7 +63,7 @@ interface AddIncidentDialogProps {
 export function AddIncidentDialog({ open, onOpenChange, devices, employees, defaultDeviceId, defaultEmployeeId }: AddIncidentDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const form = useForm<IncidentDialogValues>({
@@ -89,7 +89,9 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
     }
   }, [open, defaultDeviceId, defaultEmployeeId, form]);
 
-  const selectedEmployeeId = form.watch("employee_id");
+  const selectedEmployeeId = useWatch({ control: form.control, name: "employee_id" });
+  const selectedPriority = useWatch({ control: form.control, name: "priority" });
+  const selectedDeviceId = useWatch({ control: form.control, name: "device_id" });
   const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
   const selectedEmployeeRoom = selectedEmployee?.room;
 
@@ -179,7 +181,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
             <div className="space-y-2">
               <Label>Приоритет</Label>
               <Select
-                value={form.watch("priority")}
+                value={selectedPriority}
                 onValueChange={(v) => form.setValue("priority", v as "low" | "medium" | "high" | "critical")}
                 items={PRIORITY_ITEMS}
               >
@@ -197,7 +199,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
             <div className="space-y-2">
               <Label>Устройство</Label>
               <Select
-                value={form.watch("device_id")}
+                value={selectedDeviceId}
                 onValueChange={(v) => form.setValue("device_id", v ?? "")}
                 items={Object.fromEntries([
                   ["", "-- Не указано --"],
@@ -218,7 +220,7 @@ export function AddIncidentDialog({ open, onOpenChange, devices, employees, defa
             <div className="space-y-2">
               <Label>Сотрудник</Label>
               <Select
-                value={form.watch("employee_id")}
+                value={selectedEmployeeId}
                 onValueChange={(v) => form.setValue("employee_id", v ?? "")}
                 items={Object.fromEntries([
                   ["", "-- Не указан --"],

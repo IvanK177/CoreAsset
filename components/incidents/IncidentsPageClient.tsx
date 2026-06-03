@@ -50,10 +50,6 @@ interface RoomRequestRow {
 interface IncidentsPageClientProps {
   incidents: IncidentRow[];
   roomRequests: RoomRequestRow[];
-  openCount: number;
-  inProgressCount: number;
-  resolvedCount: number;
-  cancelledCount: number;
   devices: Device[];
   employees: Employee[];
   initialSelectedId?: string | null;
@@ -62,10 +58,6 @@ interface IncidentsPageClientProps {
 export function IncidentsPageClient({
   incidents,
   roomRequests,
-  openCount,
-  inProgressCount,
-  resolvedCount,
-  cancelledCount,
   devices,
   employees,
   initialSelectedId,
@@ -117,10 +109,6 @@ export function IncidentsPageClient({
       {activeMainTab === "it" ? (
         <IncidentsClientView
           incidents={incidents}
-          openCount={openCount}
-          inProgressCount={inProgressCount}
-          resolvedCount={resolvedCount}
-          cancelledCount={cancelledCount}
           initialSelectedId={initialSelectedId}
         />
       ) : (

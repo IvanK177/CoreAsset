@@ -16,11 +16,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   type RawIncident = Awaited<ReturnType<typeof getCachedIncidentsWithRelations>>[number];
   type RawRoomRequest = Awaited<ReturnType<typeof getCachedRoomRequests>>[number];
 
-  // Count by status
-  const openCount = allIncidents.filter((i: RawIncident) => i.status === "open").length;
-  const inProgressCount = allIncidents.filter((i: RawIncident) => i.status === "in_progress").length;
-  const resolvedCount = allIncidents.filter((i: RawIncident) => i.status === "resolved").length;
-  const cancelledCount = allIncidents.filter((i: RawIncident) => i.status === "cancelled").length;
+
 
   // Normalize device and employee joins
   const normalizedIncidents = allIncidents.map((inc: RawIncident) => ({
@@ -46,10 +42,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
     <IncidentsPageClient
       incidents={normalizedIncidents}
       roomRequests={normalizedRoomRequests}
-      openCount={openCount}
-      inProgressCount={inProgressCount}
-      resolvedCount={resolvedCount}
-      cancelledCount={cancelledCount}
+
       devices={devices}
       employees={activeEmployees}
       initialSelectedId={selectedId ?? null}

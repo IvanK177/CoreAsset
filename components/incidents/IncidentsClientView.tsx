@@ -42,10 +42,6 @@ interface IncidentRow {
 
 interface IncidentsClientViewProps {
   incidents: IncidentRow[];
-  openCount: number;
-  inProgressCount: number;
-  resolvedCount: number;
-  cancelledCount: number;
   initialSelectedId?: string | null;
 }
 
@@ -128,10 +124,6 @@ function getMonthlyStats(incidentsList: IncidentRow[], building: string) {
 
 export function IncidentsClientView({
   incidents,
-  openCount,
-  inProgressCount,
-  resolvedCount,
-  cancelledCount,
   initialSelectedId,
 }: IncidentsClientViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId ?? null);

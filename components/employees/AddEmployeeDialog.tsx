@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -55,7 +55,7 @@ interface AddEmployeeDialogProps {
 export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const form = useForm<EmployeeDialogValues>({
@@ -68,8 +68,10 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
       phone: "",
       telegram: "",
       role: "employee",
-    },
+    }
   });
+
+  const selectedRole = useWatch({ control: form.control, name: "role" });
 
   const onSubmit = async (data: EmployeeDialogValues) => {
     setPending(true);
@@ -165,7 +167,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
             <div className="space-y-2">
               <Label>Роль</Label>
               <Select
-                value={form.watch("role")}
+                value={selectedRole}
                 onValueChange={(v) => form.setValue("role", v as "admin" | "employee" | "it_specialist" | "facilities" | "developer")}
                 items={ROLE_ITEMS}
               >

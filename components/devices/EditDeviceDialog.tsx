@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -167,7 +167,7 @@ export function EditDeviceDialog({ open, onOpenChange, device, templates }: Edit
     setExistingPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const deviceType = form.watch("device_type");
+  const deviceType = useWatch({ control: form.control, name: "device_type" });
 
   const templateItems: Record<string, React.ReactNode> = {
     "": "Без шаблона",

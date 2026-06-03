@@ -1,4 +1,5 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import type { Tables } from "@/types/database.types";
 import { cookies } from "next/headers";
 import { daysUntilExpiry } from "@/lib/utils";
 import DashboardLayoutClient from "@/components/layout/DashboardLayoutClient";
@@ -39,7 +40,7 @@ export default async function CommonLayout({ children }: { children: React.React
     const { data } = await dataClient
       .from("employees")
       .select("id, full_name, position, email, role, room, phone, telegram, building, avatar_url")
-      .eq("role", role as any)
+      .eq("role", role as Tables<"employees">["role"])
       .limit(1)
       .single();
     employeeData = data;

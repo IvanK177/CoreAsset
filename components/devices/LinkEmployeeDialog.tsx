@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -55,15 +55,17 @@ export function LinkEmployeeDialog({
 }: LinkEmployeeDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const form = useForm<LinkEmployeeValues>({
     resolver: zodResolver(linkEmployeeSchema),
     defaultValues: {
       employee_id: currentEmployeeId ?? "",
-    },
+    }
   });
+
+  const selectedEmployeeId = useWatch({ control: form.control, name: "employee_id" });
 
   const onSubmit = async (data: LinkEmployeeValues) => {
     setPending(true);
@@ -103,7 +105,7 @@ export function LinkEmployeeDialog({
           <div className="space-y-2">
             <Label>Сотрудник</Label>
             <Select
-              value={form.watch("employee_id") ?? ""}
+              value={selectedEmployeeId ?? ""}
               onValueChange={(v) => form.setValue("employee_id", v === "__none__" ? "" : v)}
               items={Object.fromEntries([
                 ["__none__", "Не закреплён"],

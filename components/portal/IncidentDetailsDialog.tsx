@@ -13,7 +13,7 @@ import {
 import { IncidentStatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { formatDateTimeRu, extractJoinObject } from "@/lib/utils";
-import { Calendar, Monitor, Wrench, FileText, XCircle, Loader2, User, CheckCircle, Cpu, Keyboard, Mouse, Printer, HelpCircle, X } from "lucide-react";
+import { Calendar, Monitor, Wrench, FileText, XCircle, Loader2, User, CheckCircle, X } from "lucide-react";
 import { cancelPortalIncident } from "@/lib/actions/portal";
 import { DecompressedText } from "@/components/shared/DecompressedText";
 import { TicketChat, Message } from "@/components/TicketChat";

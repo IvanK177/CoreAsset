@@ -18,7 +18,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#1e3a5f" },
     { media: "(prefers-color-scheme: dark)", color: "#0f172a" }
   ]
-} as any;
+} as Viewport;
 
 export const metadata: Metadata = {
   title: "CoreAsset — Управление IT-активами",

@@ -15,7 +15,8 @@ if (process.env.NODE_ENV === "development") {
 
   // Override dns.lookup globally to force using our overridden DNS servers for Supabase domains
   const originalLookup = dns.lookup;
-  dns.lookup = function (hostname, options, callback) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dns.lookup = function (hostname: string, options: any, callback: any) {
     const cb = typeof options === "function" ? options : callback;
     const opts = typeof options === "object" ? options : {};
 
@@ -34,6 +35,7 @@ if (process.env.NODE_ENV === "development") {
     } else {
       return originalLookup(hostname, opts, cb);
     }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 }
 

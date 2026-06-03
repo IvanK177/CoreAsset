@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -54,7 +54,7 @@ interface AddLicenseDialogProps {
 export function AddLicenseDialog({ open, onOpenChange }: AddLicenseDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const form = useForm<LicenseDialogValues>({
@@ -71,6 +71,8 @@ export function AddLicenseDialog({ open, onOpenChange }: AddLicenseDialogProps) 
       notes: "",
     },
   });
+
+  const selectedLicenseType = useWatch({ control: form.control, name: "license_type" });
 
   const onSubmit = async (data: LicenseDialogValues) => {
     setPending(true);
@@ -154,7 +156,7 @@ export function AddLicenseDialog({ open, onOpenChange }: AddLicenseDialogProps) 
             <div className="space-y-2">
               <Label>Тип лицензии</Label>
               <Select
-                value={form.watch("license_type")}
+                value={selectedLicenseType}
                 onValueChange={(v) => form.setValue("license_type", v as "perpetual" | "subscription")}
                 items={LICENSE_TYPE_ITEMS}
               >

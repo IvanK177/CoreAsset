@@ -12,7 +12,6 @@ self.addEventListener('install', (event) => {
       ]).catch((err) => console.log('Failed to cache assets during install:', err));
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -66,4 +65,10 @@ self.addEventListener('fetch', (event) => {
         });
       })
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

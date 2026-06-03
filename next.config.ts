@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
+import dns from "dns";
 
 // Local development network workarounds (bypasses DNS issues & SSL decryption firewalls in RU networks)
 if (process.env.NODE_ENV === "development") {
-  const dns = require("dns");
   try {
     dns.setServers(["8.8.8.8", "1.1.1.1"]);
   } catch (e) {

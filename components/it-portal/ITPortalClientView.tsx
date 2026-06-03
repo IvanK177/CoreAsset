@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { AlertTriangle, CheckCircle2, Clock, Loader2, Monitor, User, Wrench, Building, X, Camera, Image as ImageIcon, BarChart3, MessageSquare } from "lucide-react";
 import { cn, extractJoinObject, BUILDING_ADDRESSES, formatDateTimeRu } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +12,8 @@ import { TicketChat, Message } from "@/components/TicketChat";
 import { takeIncidentToWork, resolveIncident } from "@/lib/actions/it-portal";
 import { ITPortalIncidentDetailsDialog } from "./ITPortalIncidentDetailsDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { TaskCalendar, CalendarTask } from "@/components/TaskCalendar";
 import { calculateDeadline } from "@/lib/utils/sla";

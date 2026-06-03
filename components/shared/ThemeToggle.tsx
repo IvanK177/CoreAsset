@@ -16,6 +16,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     const savedTheme = localStorage.getItem("theme");
     const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const initialTheme = savedTheme === "dark" || (!savedTheme && systemPrefersDark) ? "dark" : "light";
+    // eslint-disable-next-line
     setTheme(initialTheme);
   }, []);
 

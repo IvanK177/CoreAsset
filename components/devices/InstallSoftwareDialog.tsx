@@ -50,7 +50,7 @@ export function InstallSoftwareDialog({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedLicenseIds, setSelectedLicenseIds] = useState<string[]>([]);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const today = new Date().toISOString().split("T")[0];

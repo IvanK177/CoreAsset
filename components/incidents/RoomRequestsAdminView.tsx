@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn, formatDateTimeRu, BUILDING_ADDRESSES } from "@/lib/utils";
-import { AlertTriangle, Clock, CheckCircle2, User, Building, X } from "lucide-react";
+import { AlertTriangle, User, Building, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DecompressedText } from "@/components/shared/DecompressedText";
 import {
@@ -146,9 +146,6 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
           </div>
         ) : (
           filteredRequests.map((req) => {
-            const isOpen = req.status === "open";
-            const isInProgress = req.status === "in_progress";
-
             return (
               <button
                 key={req.id}

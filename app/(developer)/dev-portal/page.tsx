@@ -27,7 +27,7 @@ export default async function DevPortalPage() {
     `)
     .order("created_at", { ascending: false });
 
-  const normalized = (supportRequests ?? []).map((req: any) => ({
+  const normalized = (supportRequests ?? []).map((req) => ({
     id: req.id,
     message: req.message,
     status: req.status,
