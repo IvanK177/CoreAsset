@@ -252,3 +252,31 @@ export async function resetPassword(email: string) {
   };
 }
 
+/** Exchange PKCE code or verify OTP token for session on the server side to access cookies */
+export async function exchangeCode(code: string) {
+  try {
+    const supabase = await createClient();
+    
+    // Try exchanging as PKCE code first (this is the default when PKCE is active)
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (!exchangeError) {
+      return { success: true };
+    }
+    
+    // If that fails, fall back to verifyOtp (in case it is a standard token_hash)
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: code,
+      type: "recovery",
+    });
+    
+    if (verifyError) {
+      console.error("Exchange error:", exchangeError.message, "Verify error:", verifyError.message);
+      return { error: exchangeError.message };
+    }
+    
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || "Failed to exchange code" };
+  }
+}
+

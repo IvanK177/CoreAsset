@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, Loader2, Monitor } from "lucide-react";
+import { exchangeCode } from "../login/actions";
 
 // Keep track of the code exchange promise globally to prevent double exchange in React Strict Mode
 let exchangePromise: Promise<any> | null = null;
@@ -34,11 +35,11 @@ export default function ResetPasswordPage() {
       
       if (activeToken) {
         if (!exchangePromise) {
-          // Always use verifyOtp for recovery to avoid code_verifier issues across devices/environments
-          exchangePromise = supabase.auth.verifyOtp({
-            token_hash: activeToken,
-            type: "recovery",
-          }).then((res) => {
+          // Exchange code or verify OTP on the server side where we have access to cookies (like code_verifier)
+          exchangePromise = exchangeCode(activeToken).then((res) => {
+            if (res.error) {
+              throw new Error(res.error);
+            }
             // Immediately remove token parameters from the URL once verified successfully
             window.history.replaceState({}, document.title, window.location.pathname);
             return res;
