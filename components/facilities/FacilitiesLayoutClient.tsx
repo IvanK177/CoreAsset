@@ -73,6 +73,7 @@ export default function FacilitiesLayoutClient({
           <FacilitiesSidebar
             openRequests={openRequests}
             userName={userName}
+            onClose={() => setSidebarOpen(false)}
           />
         </div>
       </div>

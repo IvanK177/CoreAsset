@@ -106,9 +106,9 @@ export function LinkEmployeeDialog({
             <Label>Сотрудник</Label>
             <Select
               value={selectedEmployeeId ?? ""}
-              onValueChange={(v) => form.setValue("employee_id", v === "__none__" ? "" : v)}
+              onValueChange={(v) => form.setValue("employee_id", v)}
               items={Object.fromEntries([
-                ["__none__", "Не закреплён"],
+                ["", "Не закреплён"],
                 ...activeEmployees.map((emp) => [emp.id, `${emp.full_name} (${emp.position ?? "—"})`]),
               ])}
             >
@@ -116,7 +116,7 @@ export function LinkEmployeeDialog({
                 <SelectValue placeholder="Выберите сотрудника" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">Не закреплён</SelectItem>
+                <SelectItem value="">Не закреплён</SelectItem>
                 {activeEmployees.map((emp) => (
                   <SelectItem key={emp.id} value={emp.id}>
                     {emp.full_name} ({emp.position ?? "—"})

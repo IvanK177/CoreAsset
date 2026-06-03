@@ -17,6 +17,17 @@ export function DeleteConfirmDialog({ onConfirm, description }: DeleteConfirmDia
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const handleConfirm = () => {
+    startTransition(async () => {
+      try {
+        await onConfirm();
+        setOpen(false);
+      } catch (err) {
+        console.error("Delete confirmation error:", err);
+      }
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="destructive" size="sm" className="gap-2" disabled={isPending}><Trash2 className="w-4 h-4" /> Удалить</Button>} />
@@ -33,7 +44,7 @@ export function DeleteConfirmDialog({ onConfirm, description }: DeleteConfirmDia
             variant="destructive"
             disabled={isPending}
             className="gap-2"
-            onClick={() => { startTransition(() => { onConfirm(); }); }}
+            onClick={handleConfirm}
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
             {isPending ? "Удаление…" : "Удалить"}

@@ -29,6 +29,17 @@ export function ConfirmActionDialog({
 }: ConfirmActionDialogProps) {
   const [isPending, startTransition] = useTransition();
 
+  const handleConfirm = () => {
+    startTransition(async () => {
+      try {
+        await onConfirm();
+        onOpenChange(false);
+      } catch (err) {
+        console.error("Action confirmation error:", err);
+      }
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -42,7 +53,7 @@ export function ConfirmActionDialog({
             variant={variant}
             disabled={isPending}
             className="gap-2"
-            onClick={() => { startTransition(() => { onConfirm(); }); }}
+            onClick={handleConfirm}
           >
             {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
             {isPending ? `${confirmLabel}…` : confirmLabel}

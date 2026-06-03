@@ -14,13 +14,14 @@ import { ThemeToggle } from "@/components/shared/ThemeToggle";
 interface FacilitiesSidebarProps {
   openRequests: number;
   userName?: string;
+  onClose?: () => void;
 }
 
 const nav = [
   { href: "/facilities-portal", label: "Заявки АХЧ", icon: ClipboardList },
 ];
 
-export default function FacilitiesSidebar({ openRequests, userName }: FacilitiesSidebarProps) {
+export default function FacilitiesSidebar({ openRequests, userName, onClose }: FacilitiesSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -45,6 +46,7 @@ export default function FacilitiesSidebar({ openRequests, userName }: Facilities
             <Link
               key={href}
               href={href}
+              onClick={() => onClose?.()}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
                 active

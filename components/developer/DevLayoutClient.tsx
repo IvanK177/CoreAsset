@@ -78,6 +78,7 @@ export default function DevLayoutClient({
             openRequests={openRequests}
             userName={userName}
             employee={employee}
+            onClose={() => setSidebarOpen(false)}
           />
         </div>
       </div>

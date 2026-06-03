@@ -13,6 +13,7 @@ interface DevSidebarProps {
   openRequests: number;
   userName?: string;
   employee?: EmployeeProfileData | null;
+  onClose?: () => void;
 }
 
 const nav = [
@@ -20,7 +21,7 @@ const nav = [
   { href: "/support", label: "Поддержка", icon: HelpCircle },
 ];
 
-export default function DevSidebar({ openRequests, userName, employee }: DevSidebarProps) {
+export default function DevSidebar({ openRequests, userName, employee, onClose }: DevSidebarProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -46,6 +47,7 @@ export default function DevSidebar({ openRequests, userName, employee }: DevSide
             <Link
               key={href}
               href={href}
+              onClick={() => onClose?.()}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
                 active
