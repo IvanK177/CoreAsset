@@ -27,9 +27,9 @@ export default function DashboardLayoutClient({
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row">
       {/* Mobile Top Navigation Header */}
-      <header className="lg:hidden flex items-center justify-between px-4 h-16 bg-[#1a2035] text-white border-b border-white/10 shrink-0 sticky top-0 z-40">
+      <header className="lg:hidden flex items-center justify-between px-4 h-16 bg-sidebar text-sidebar-foreground border-b border-sidebar-border shrink-0 sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#2563eb]">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-sidebar-primary">
             <MonitorIcon className="w-5 h-5 text-white" />
           </div>
           <div>

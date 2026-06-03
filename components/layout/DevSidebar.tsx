@@ -26,7 +26,7 @@ export default function DevSidebar({ openRequests, userName, employee, onClose }
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 w-[220px] flex flex-col bg-[#1a2035] text-white">
+    <aside className="fixed inset-y-0 left-0 z-50 w-[220px] flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 shrink-0">
         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600">

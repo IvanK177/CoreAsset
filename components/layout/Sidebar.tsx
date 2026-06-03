@@ -52,10 +52,10 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 w-[220px] flex flex-col bg-[#1a2035] text-white">
+    <aside className="fixed inset-y-0 left-0 z-50 w-[220px] flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 shrink-0">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2563eb]">
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sidebar-primary">
           <MonitorIcon className="w-5 h-5 text-white" />
         </div>
         <div>
@@ -81,7 +81,7 @@ export default function Sidebar({ openIncidents, expiringLicenses, attentionCoun
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
                 active
-                  ? "bg-[#2563eb] text-white"
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
                   : "text-gray-400 hover:bg-white/5 hover:text-white"
               )}
             >
