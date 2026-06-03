@@ -17,6 +17,19 @@ TRUNCATE TABLE
 CASCADE;
 
 -- ============================================================
+-- 0.5. employees — Сотрудники
+-- ============================================================
+INSERT INTO public.employees (id, full_name, position, email, role, is_active, building) VALUES
+  ('689eed46-7a0b-4e2f-bb51-717585ce0e21', 'Миняев Иван Геннадьевич', 'Директор', 'minyaevivan44@gmail.com', 'employee'::public.user_role, true, 'Главный офис'),
+  ('f3e4523e-3f0e-49d5-b229-18ed555fc675', 'Копаев Иван Александрович ', 'Системный администратор', 'Ivankop17@yandex.ru', 'it_specialist'::public.user_role, true, 'Главный офис'),
+  ('93ac4a41-f75e-4495-9470-86f80f891105', 'Антон', 'Специалист', 'ivanov@gmail.com', 'employee'::public.user_role, true, 'Главный офис'),
+  ('96459dfc-bda5-47c1-b379-2bebe1ec536a', 'человекㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ⠀паук', 'Герой', 'sotrud@gmail.com', 'employee'::public.user_role, true, 'Главный офис'),
+  ('a0000000-0000-0000-0000-000000000001', 'Администратор Демо', 'Администратор', 'admin@corp.ru', 'admin'::public.user_role, true, 'Главный офис'),
+  ('f0000000-0000-0000-0000-000000000001', 'АХЧ Специалист Демо', 'Специалист АХЧ', 'facilities@corp.ru', 'facilities'::public.user_role, true, 'Главный офис'),
+  ('d0000000-0000-0000-0000-000000000001', 'Разработчик Демо', 'Разработчик', 'developer@corp.ru', 'developer'::public.user_role, true, 'Главный офис')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
 -- 1. computer_templates — Шаблоны конфигураций устройств
 -- ============================================================
 INSERT INTO public.computer_templates (id, name, description, computer_type, hardware) VALUES

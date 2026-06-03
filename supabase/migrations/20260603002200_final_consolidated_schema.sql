@@ -406,7 +406,6 @@ CREATE POLICY "Allow public read on buckets" ON storage.buckets
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow authenticated uploads on ticket-attachments" ON storage.objects;
-CREATE POLICY "Allow authenticated uploads on ticket-attachments" ON storage.objects;
 CREATE POLICY "Allow authenticated uploads on ticket-attachments" ON storage.objects
   FOR INSERT TO authenticated WITH CHECK (bucket_id = 'ticket-attachments');
 

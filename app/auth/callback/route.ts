@@ -95,6 +95,8 @@ export async function GET(request: NextRequest) {
       ? "/it-portal"
       : employee.role === "facilities"
       ? "/facilities-portal"
+      : employee.role === "developer"
+      ? "/dev-portal"
       : "/portal";
 
   // Build final redirect response, preserving all auth cookies
