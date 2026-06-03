@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { sendMessage } from "@/lib/actions/messages";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Camera, X, Image as ImageIcon } from "lucide-react";
 import { formatDateTimeRu } from "@/lib/utils";
 
 interface SenderInfo {
@@ -18,6 +18,7 @@ export interface Message {
   text: string;
   created_at: string;
   sender?: SenderInfo | SenderInfo[] | null;
+  photo_urls?: string[] | null;
 }
 
 interface TicketChatProps {
@@ -31,6 +32,17 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [photoPreviews]);
   
   // Store sender details cache in state to comply with React rules of render
   const [senderDetails, setSenderDetails] = useState<Record<string, { name: string; avatarUrl: string | null }>>(() => {
@@ -95,11 +107,11 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
           // Fetch sender details if not in state cache
           let senderInfo = newMsg.sender_id ? senderDetailsRef.current[newMsg.sender_id] : null;
           if (!senderInfo && newMsg.sender_id) {
-            const { data } = await supabase
+            const { data } = (await supabase
               .from("employees")
               .select("full_name, avatar_url")
-              .eq("id", newMsg.sender_id)
-              .single();
+              .eq("id", newMsg.sender_id as string)
+              .single()) as any;
             senderInfo = {
               name: data?.full_name ?? "Пользователь",
               avatarUrl: data?.avatar_url ?? null,
@@ -130,17 +142,89 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
     };
   }, [incidentId]);
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      setPhotos((prev) => [...prev, ...selectedFiles]);
+      const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+      setPhotoPreviews((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(photoPreviews[index]);
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || sending) return;
-
     const textToSend = inputText.trim();
-    setInputText("");
-    setSending(true);
+    const hasText = !!textToSend;
+    const hasPhotos = photos.length > 0;
 
-    const res = await sendMessage(incidentId, textToSend);
+    if ((!hasText && !hasPhotos) || sending) return;
+
+    setSending(true);
+    setInputText("");
+
+    const uploadedPhotoUrls: string[] = [];
+
+    if (hasPhotos) {
+      try {
+        const { compressImageToTarget } = await import("@/lib/image/compressImage");
+        const supabase = createClient();
+
+        for (const file of photos) {
+          let fileToUpload = file;
+          try {
+            const compressionResult = await compressImageToTarget(file);
+            fileToUpload = compressionResult.file;
+          } catch (compressErr) {
+            console.warn("Compression failed, using original:", compressErr);
+          }
+
+          const fileExt = fileToUpload.name.split(".").pop();
+          const uuid = typeof crypto !== "undefined" && "randomUUID" in crypto 
+            ? crypto.randomUUID() 
+            : `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          const fileName = `${uuid}.${fileExt}`;
+          const filePath = `chat/${incidentId}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, fileToUpload, {
+              contentType: fileToUpload.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.error("Chat photo upload error:", uploadError);
+            alert(`Ошибка при загрузке фото ${file.name}`);
+            setSending(false);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+
+          uploadedPhotoUrls.push(publicUrl);
+        }
+      } catch (err) {
+        console.error("Chat attachment upload exception:", err);
+        alert("Не удалось загрузить фотографии в чат");
+        setSending(false);
+        return;
+      }
+    }
+
+    const res = await sendMessage(incidentId, textToSend, uploadedPhotoUrls);
     if (res && res.error) {
       alert(res.error);
+    } else {
+      setPhotos([]);
+      setPhotoPreviews([]);
     }
     setSending(false);
   };
@@ -194,7 +278,22 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
                         : "bg-gray-100 dark:bg-slate-800 text-gray-800 rounded-tl-none"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
+                    {msg.text && (
+                      <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
+                    )}
+                    {msg.photo_urls && msg.photo_urls.length > 0 && (
+                      <div className={`mt-1.5 flex flex-wrap gap-1.5 ${isOwn ? "justify-end" : "justify-start"}`}>
+                        {msg.photo_urls.map((url, idx) => (
+                          <div 
+                            key={idx} 
+                            onClick={() => setPreviewImageUrl(url)}
+                            className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden border border-black/10 cursor-pointer hover:opacity-90 transition-opacity bg-white"
+                          >
+                            <img src={url} alt={`Вложение ${idx + 1}`} className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <span
                       className={`block text-[9px] mt-1 text-right ${
                         isOwn ? "text-blue-100" : "text-gray-400 dark:text-gray-500"
@@ -210,8 +309,46 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         )}
       </div>
 
+      {/* Selected Photos Preview */}
+      {photoPreviews.length > 0 && (
+        <div className="border-t border-gray-100 p-2 bg-gray-50/50 flex flex-wrap gap-2">
+          {photoPreviews.map((preview, index) => (
+            <div key={index} className="relative w-14 h-14 rounded-lg border overflow-hidden bg-white shrink-0">
+              <img src={preview} alt="Превью" className="object-cover w-full h-full" />
+              <button
+                type="button"
+                onClick={() => removePhoto(index)}
+                className="absolute top-0.5 right-0.5 bg-black/70 hover:bg-black/90 text-white rounded-full p-0.5 cursor-pointer transition-colors"
+                title="Удалить"
+                disabled={sending}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Message Input Form */}
       <form onSubmit={handleSend} className="border-t border-gray-100 p-2 bg-gray-50 flex gap-2">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handlePhotoChange}
+          multiple
+          accept="image/*"
+          className="hidden"
+          disabled={sending}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={sending}
+          className="h-8 w-8 shrink-0 flex items-center justify-center bg-gray-200/60 hover:bg-gray-200 text-gray-500 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+          title="Прикрепить фото"
+        >
+          <Camera className="w-4 h-4" />
+        </button>
         <input
           type="text"
           value={inputText}
@@ -222,12 +359,35 @@ export function TicketChat({ incidentId, currentUserId, initialMessages }: Ticke
         />
         <button
           type="submit"
-          disabled={sending || !inputText.trim()}
+          disabled={sending || (!inputText.trim() && photos.length === 0)}
           className="h-8 w-8 shrink-0 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors cursor-pointer"
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>
       </form>
+
+      {/* Photo Preview Overlay */}
+      {previewImageUrl && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setPreviewImageUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImageUrl(null)}
+            className="absolute top-4 right-4 bg-black/60 hover:bg-black/85 text-white rounded-full p-2 cursor-pointer transition-colors z-50 focus:outline-none"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="relative max-w-full max-h-[90vh] rounded-xl overflow-hidden bg-black/50 p-1 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={previewImageUrl}
+              alt="Просмотр изображения"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

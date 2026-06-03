@@ -120,7 +120,7 @@ export function ProfileDialog({
           .from("ticket-attachments")
           .upload(filePath, fileToUpload, {
             contentType: fileToUpload.type,
-            upsert: true,
+            upsert: false,
           });
 
         if (uploadError) {

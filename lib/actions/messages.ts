@@ -75,9 +75,12 @@ export async function getIncidentMessages(incidentId: string) {
   return data ?? [];
 }
 
-export async function sendMessage(incidentId: string, text: string) {
-  if (!text || !text.trim()) {
-    return { error: "Текст сообщения не может быть пустым" };
+export async function sendMessage(incidentId: string, text: string, photoUrls?: string[]) {
+  const hasText = text && text.trim();
+  const hasPhotos = photoUrls && photoUrls.length > 0;
+
+  if (!hasText && !hasPhotos) {
+    return { error: "Сообщение не может быть пустым" };
   }
 
   const employee = await getCurrentEmployee();
@@ -109,7 +112,8 @@ export async function sendMessage(incidentId: string, text: string) {
     .insert({
       incident_id: incidentId,
       sender_id: employee.id,
-      text: text.trim(),
+      text: (text ?? "").trim(),
+      photo_urls: photoUrls ?? [],
     });
 
   if (error) {

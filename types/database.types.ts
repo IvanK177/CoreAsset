@@ -199,6 +199,7 @@ export type Database = {
           created_at: string
           id: string
           incident_id: string
+          photo_urls: string[] | null
           sender_id: string
           text: string
         }
@@ -206,6 +207,7 @@ export type Database = {
           created_at?: string
           id?: string
           incident_id: string
+          photo_urls?: string[] | null
           sender_id: string
           text: string
         }
@@ -213,6 +215,7 @@ export type Database = {
           created_at?: string
           id?: string
           incident_id?: string
+          photo_urls?: string[] | null
           sender_id?: string
           text?: string
         }
