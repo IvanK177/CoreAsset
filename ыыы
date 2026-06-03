@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Восстановление доступа — CoreAsset</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #090d16; color: #f8fafc; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #090d16;">
+    <tr>
+      <td style="padding: 60px 20px;" align="center">
+        <!-- Main Container -->
+        <table role="presentation" style="max-width: 560px; width: 100%; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45); border-collapse: collapse; overflow: hidden;">
+          
+          <!-- Logo & Header Section -->
+          <tr>
+            <td style="padding: 48px 40px 32px 40px; text-align: center;">
+              <!-- Mini Icon Wrapper -->
+              <table role="presentation" style="margin: 0 auto 20px auto; border-collapse: collapse;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); width: 64px; height: 64px; border-radius: 18px; text-align: center; vertical-align: middle; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);">
+                    <!-- Simplified Monitor SVG Icon -->
+                    <span style="font-size: 28px; line-height: 64px; color: #ffffff; display: block; font-weight: bold;">🖥️</span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; tracking-tight: -0.025em;">
+                CoreAsset
+              </h1>
+              <p style="margin: 6px 0 0 0; color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                Система учёта IT-активов
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 0 48px 40px 48px;">
+              <div style="height: 1px; background-color: #1f2937; margin-bottom: 36px;"></div>
+              
+              <h2 style="margin: 0 0 16px 0; color: #ffffff; font-size: 20px; font-weight: 700; text-align: center;">
+                Восстановление доступа
+              </h2>
+              
+              <p style="margin: 0 0 24px 0; color: #9ca3af; font-size: 15px; line-height: 1.6; text-align: center;">
+                Был получен запрос на сброс пароля для вашей учётной записи в системе CoreAsset.
+              </p>
+              
+              <p style="margin: 0 0 32px 0; color: #9ca3af; font-size: 15px; line-height: 1.6; text-align: center;">
+                Нажмите кнопку ниже, чтобы задать новый пароль. Ссылка действительна в течение одного часа:
+              </p>
+              
+              <!-- Call to Action Button -->
+              <table role="presentation" style="margin: 32px auto; border-collapse: collapse;">
+                <tr>
+                  <td style="border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); text-align: center;">
+                    <a href="{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery" style="display: inline-block; padding: 16px 36px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; border-radius: 12px; letter-spacing: -0.01em; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
+                      Сбросить пароль
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Alternative URL Block -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin-top: 36px;">
+                <tr>
+                  <td style="background-color: #0b0f19; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #4b5563; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                      Если кнопка не работает:
+                    </p>
+                    <a href="{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery" style="color: #60a5fa; font-size: 13px; text-decoration: none; word-break: break-all; font-family: monospace;">
+                      {{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <div style="height: 1px; background-color: #1f2937; margin-top: 40px; margin-bottom: 24px;"></div>
+              
+              <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.5; text-align: center; font-style: italic;">
+                Если вы не отправляли данный запрос, просто проигнорируйте это письмо. Ваши учётные данные в безопасности.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Premium Footer Section -->
+          <tr>
+            <td style="background-color: #0f172a; padding: 32px 48px; text-align: center; border-top: 1px solid #1f2937;">
+              <p style="margin: 0 0 6px 0; color: #9ca3af; font-size: 14px; font-weight: 600;">
+                CoreAsset © 2026
+              </p>
+              <p style="margin: 0; color: #4b5563; font-size: 12px; line-height: 1.4;">
+                Система автоматизации и управления ресурсами IT-инфраструктуры.<br>
+                По вопросам поддержки: <a href="mailto:kopaev1748@gmail.com" style="color: #9ca3af; text-decoration: underline;">kopaev1748@gmail.com</a>
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
