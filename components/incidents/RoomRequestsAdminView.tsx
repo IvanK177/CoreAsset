@@ -101,7 +101,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
       {/* Filters Bar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-1 overflow-x-auto max-w-full">
           {tabs.map((tab) => (
             <button
               key={tab.value}
@@ -109,8 +109,8 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
               className={cn(
                 "px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 whitespace-nowrap cursor-pointer",
                 activeTab === tab.value
-                  ? "bg-[#2563eb] text-white"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-[#2563eb] dark:bg-[#3b82f6] text-white"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               {tab.label} {getCounts(tab.value)}
@@ -120,9 +120,9 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
 
         {/* Building Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">Корпус:</span>
+          <span className="text-xs text-muted-foreground font-medium">Корпус:</span>
           <Select value={buildingFilter} onValueChange={(val) => setBuildingFilter(val ?? "all")}>
-            <SelectTrigger className="w-[200px] h-9 bg-white text-xs">
+            <SelectTrigger className="w-[200px] h-9 bg-background text-foreground border-border/60 text-xs">
               <SelectValue placeholder="Все корпуса" />
             </SelectTrigger>
             <SelectContent>
@@ -140,7 +140,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
       {/* Requests List */}
       <div className="max-h-[600px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
         {filteredRequests.length === 0 ? (
-          <div className="py-16 text-center text-gray-500 bg-white border border-gray-100 rounded-2xl">
+          <div className="py-16 text-center text-muted-foreground bg-card border border-border/60 rounded-2xl">
             <AlertTriangle className="w-10 h-10 mx-auto opacity-40 mb-3" />
             <p className="text-sm">Заявок АХЧ не найдено</p>
           </div>
@@ -150,7 +150,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
               <button
                 key={req.id}
                 onClick={() => setSelectedRequest(req)}
-                className="w-full flex items-center justify-between p-4 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer text-left"
+                className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 text-card-foreground shadow-sm hover:shadow-md transition-all cursor-pointer text-left"
               >
                 <div className="flex-1 min-w-0">
                   {/* Top tags */}
@@ -173,20 +173,20 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                   </div>
 
                   {/* Description preview */}
-                  <p className="text-sm font-semibold text-gray-900 truncate pr-4">
+                  <p className="text-sm font-semibold text-card-foreground truncate pr-4">
                     <DecompressedText text={req.description} truncate={100} />
                   </p>
 
                   {/* Metadata */}
-                  <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-2 flex-wrap">
+                  <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
                     <span className="flex items-center gap-1">
-                      <User className="w-3 h-3 text-gray-400" />
+                      <User className="w-3 h-3 text-muted-foreground" />
                       {req.employee?.full_name ?? "Сотрудник"}
                       {req.room && ` (Каб. ${req.room})`}
                     </span>
                     <span>·</span>
                     <span className="flex items-center gap-1">
-                      <Building className="w-3 h-3 text-gray-400" />
+                      <Building className="w-3 h-3 text-muted-foreground" />
                       {req.employee?.building ?? "—"}
                     </span>
                     <span>·</span>
@@ -208,12 +208,12 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
 
       {/* Details Dialog */}
       <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
-        <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border/60 rounded-2xl p-6">
           {selectedRequest && (
             <>
               <DialogHeader className="space-y-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-0.5 rounded">
+                  <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded border border-border/40">
                     {getShortId(selectedRequest.id)}
                   </span>
                   <Badge variant="outline" className={cn("text-xs font-semibold", typeColors[selectedRequest.type])}>
@@ -223,19 +223,19 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                     {statusLabels[selectedRequest.status] || selectedRequest.status}
                   </Badge>
                 </div>
-                <DialogTitle className="text-lg font-bold text-gray-900">
+                <DialogTitle className="text-lg font-bold text-card-foreground">
                   Заявка АХЧ: Кабинет {selectedRequest.room}
                 </DialogTitle>
-                <DialogDescription className="text-xs text-gray-400">
+                <DialogDescription className="text-xs text-muted-foreground">
                   Создана: {formatDateTimeRu(selectedRequest.created_at)}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="py-4 space-y-4">
                 {/* Description */}
-                <div className="space-y-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Описание проблемы</h4>
-                  <DecompressedText text={selectedRequest.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
+                <div className="space-y-1 bg-muted/40 p-4 rounded-xl border border-border/60">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Описание проблемы</h4>
+                  <DecompressedText text={selectedRequest.description} className="text-sm text-card-foreground whitespace-pre-wrap leading-relaxed" />
                 </div>
 
                  {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
@@ -263,14 +263,14 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                 )}
 
                 {selectedRequest.status === "resolved" && (
-                  <div className="space-y-1 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
-                    <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Выполненная работа</h4>
+                  <div className="space-y-1 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                    <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Выполненная работа</h4>
                     {selectedRequest.resolution && (
-                      <p className="text-sm text-emerald-900 whitespace-pre-wrap mb-2">{selectedRequest.resolution}</p>
+                      <p className="text-sm text-emerald-900 dark:text-emerald-100 whitespace-pre-wrap mb-2">{selectedRequest.resolution}</p>
                     )}
                     {selectedRequest.assignee?.full_name && (
-                      <p className="text-xs text-gray-500">
-                        Исполнитель: <span className="font-semibold text-gray-700">{selectedRequest.assignee.full_name}</span>
+                      <p className="text-xs text-muted-foreground">
+                        Исполнитель: <span className="font-semibold text-card-foreground">{selectedRequest.assignee.full_name}</span>
                       </p>
                     )}
                   </div>
@@ -301,16 +301,16 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
                 )}
 
                 {/* Author info */}
-                <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50/50 p-4 rounded-xl border border-gray-100/50">
+                <div className="grid grid-cols-2 gap-4 text-sm bg-muted/30 p-4 rounded-xl border border-border/40">
                   <div>
-                    <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Автор</h5>
-                    <p className="font-medium text-gray-900">{selectedRequest.employee?.full_name ?? "—"}</p>
-                    <p className="text-xs text-gray-500">{selectedRequest.employee?.position ?? "—"}</p>
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Автор</h5>
+                    <p className="font-medium text-card-foreground">{selectedRequest.employee?.full_name ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">{selectedRequest.employee?.position ?? "—"}</p>
                   </div>
                   <div>
-                    <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Размещение</h5>
-                    <p className="font-medium text-gray-900">Кабинет {selectedRequest.room}</p>
-                    <p className="text-xs text-gray-500 truncate max-w-full" title={selectedRequest.employee?.building ?? ""}>
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Размещение</h5>
+                    <p className="font-medium text-card-foreground">Кабинет {selectedRequest.room}</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-full" title={selectedRequest.employee?.building ?? ""}>
                       {selectedRequest.employee?.building ?? "—"}
                     </p>
                   </div>
@@ -320,7 +320,7 @@ export function RoomRequestsAdminView({ requests }: RoomRequestsAdminViewProps) 
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setSelectedRequest(null)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors cursor-pointer"
                 >
                   Закрыть
                 </button>

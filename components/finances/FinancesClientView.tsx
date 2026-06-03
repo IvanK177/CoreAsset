@@ -227,13 +227,13 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
   return (
     <div className="space-y-6">
       {/* Building Filter Bar */}
-      <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <Building className="w-4 h-4 text-gray-400 shrink-0" />
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Корпус:</span>
+      <div className="flex items-center gap-2 bg-card p-4 rounded-xl border border-border/60 text-card-foreground shadow-sm">
+        <Building className="w-4 h-4 text-muted-foreground shrink-0" />
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Корпус:</span>
         <select
           value={buildingFilter}
           onChange={(e) => handleBuildingChange(e.target.value)}
-          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
+          className="h-9 rounded-lg border border-border/60 bg-background text-foreground px-3 text-sm focus:border-blue-500 focus:outline-none max-w-[240px] truncate"
         >
           <option value="all">Все корпуса</option>
           {Object.keys(BUILDING_ADDRESSES).map((b) => (
@@ -275,13 +275,13 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
       </div>
 
       {/* Bar Chart */}
-      <div className="rounded-xl bg-white shadow-sm p-5">
+      <div className="rounded-xl bg-card border border-border/60 text-card-foreground shadow-sm p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Расходы по месяцам</h2>
+          <h2 className="text-lg font-semibold text-card-foreground">Расходы по месяцам</h2>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 font-semibold focus:border-blue-500 focus:outline-none"
+            className="h-9 rounded-lg border border-border/60 bg-background text-foreground px-3 text-sm font-semibold focus:border-blue-500 focus:outline-none"
           >
             <option value={2026}>2026 год</option>
             <option value={2027}>2027 год</option>
@@ -298,7 +298,7 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
                   className="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
                   title={`${month.value.toLocaleString("ru-RU")} ₽`}
                 >
-                  <span className="text-[10px] text-gray-500 font-semibold opacity-80 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[10px] text-muted-foreground font-semibold opacity-80 group-hover:opacity-100 transition-opacity">
                     {month.value > 0 ? `${(month.value / 1000).toFixed(0)}k` : "0"}
                   </span>
                   <div className="w-full relative" style={{ height: "160px" }}>
@@ -306,8 +306,8 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
                       className={cn(
                         "absolute bottom-0 w-full rounded-t-md transition-all group-hover:brightness-95",
                         month.isCurrent ? "bg-[#2563eb]" :
-                        month.isPast ? "bg-[#93c5fd]" :
-                        "bg-gray-400"
+                        month.isPast ? "bg-[#93c5fd] dark:bg-blue-600/60" :
+                        "bg-gray-200 dark:bg-slate-700"
                       )}
                       style={{ height: `${heightPct}%`, minHeight: month.value > 0 ? "4px" : "0" }}
                       title={`${month.value.toLocaleString("ru-RU")} ₽`}
@@ -315,7 +315,7 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
                   </div>
                   <span className={cn(
                     "text-xs",
-                    month.isCurrent ? "text-[#2563eb] font-semibold" : "text-gray-500"
+                    month.isCurrent ? "text-[#2563eb] dark:text-[#3b82f6] font-semibold" : "text-muted-foreground"
                   )}>
                     {month.label}
                   </span>
@@ -327,51 +327,51 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
       </div>
 
       {/* Breakdown Table */}
-      <div className="rounded-xl bg-white shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="rounded-xl bg-card border border-border/60 text-card-foreground shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-border/60">
+          <h2 className="text-lg font-semibold text-card-foreground">
             Разбивка по ПО — {currentMonthName} {selectedYear}
           </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Программа</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Вендор</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Тип</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Цена / ед.</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Мест / Установок</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Итого</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Доля</th>
+              <tr className="bg-muted/40 dark:bg-muted/10 border-b border-border/60">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Программа</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Вендор</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Тип</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Цена / ед.</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Мест / Установок</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Итого</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Доля</th>
               </tr>
             </thead>
             <tbody>
               {breakdown.map((item) => {
                 const share = grandTotal > 0 ? (item.total / grandTotal) * 100 : 0;
                 return (
-                  <tr key={`${item.type}-${item.name}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{item.vendor}</td>
+                  <tr key={`${item.type}-${item.name}`} className="border-b border-border/40 last:border-b-0 hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-card-foreground">{item.name}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{item.vendor}</td>
                     <td className="px-4 py-3">
                       {item.type === "subscription" ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded">
                           <Package className="w-3 h-3" /> Подписка
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded">
                           <Key className="w-3 h-3" /> Бессрочная
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.pricePerUnit.toLocaleString("ru-RU")} ₽</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{item.pricePerUnit.toLocaleString("ru-RU")} ₽</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
                       {item.seats}
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.total.toLocaleString("ru-RU")} ₽</td>
+                    <td className="px-4 py-3 text-sm font-medium text-card-foreground">{item.total.toLocaleString("ru-RU")} ₽</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
                           <div
                             className={cn(
                               "h-full rounded-full",
@@ -380,7 +380,7 @@ export function FinancesClientView({ licenses, installations }: FinancesClientVi
                             style={{ width: `${Math.min(share, 100)}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-600">{share.toFixed(1)}%</span>
+                        <span className="text-xs text-muted-foreground">{share.toFixed(1)}%</span>
                       </div>
                     </td>
                   </tr>
@@ -418,13 +418,13 @@ function MetricCard({
   iconTextColor: string;
 }) {
   return (
-    <div className="rounded-xl bg-white p-5 shadow-sm flex items-center gap-4">
+    <div className="rounded-xl bg-card border border-border/60 text-card-foreground p-5 shadow-sm flex items-center gap-4">
       <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg", iconBgColor)}>
         <Icon className={cn("w-5 h-5", iconTextColor)} />
       </div>
       <div>
-        <p className="text-2xl font-bold tracking-tight text-gray-900">{value}</p>
-        <p className="text-sm text-gray-500">{label}</p>
+        <p className="text-2xl font-bold tracking-tight text-card-foreground">{value}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
       </div>
     </div>
   );

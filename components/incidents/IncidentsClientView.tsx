@@ -211,7 +211,7 @@ export function IncidentsClientView({
       const dateText = formatDateTimeRu(inc.created_at);
 
       html += `<tr>
-        <td>#T${inc.id.slice(0, 4)}</td>
+        <td>#T${inc.id.slice(0, 8)}</td>
         <td>${inc.description}</td>
         <td>${priorityText}</td>
         <td>${statusText}</td>
@@ -234,30 +234,32 @@ export function IncidentsClientView({
 
   const renderExportDialog = () => (
     <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border/60">
         <DialogHeader>
           <DialogTitle>Экспорт отчета в Excel</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-muted-foreground">
             Выберите диапазон дат для фильтрации инцидентов в отчете. Оставьте поля пустыми, чтобы выгрузить за всё время.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="export-start-date" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Дата начала</Label>
+            <Label htmlFor="export-start-date" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Дата начала</Label>
             <Input
               id="export-start-date"
               type="date"
               value={exportStartDate}
               onChange={(e) => setExportStartDate(e.target.value)}
+              className="bg-background text-foreground border-border/60"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="export-end-date" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Дата окончания</Label>
+            <Label htmlFor="export-end-date" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Дата окончания</Label>
             <Input
               id="export-end-date"
               type="date"
               value={exportEndDate}
               onChange={(e) => setExportEndDate(e.target.value)}
+              className="bg-background text-foreground border-border/60"
             />
           </div>
         </div>
@@ -298,7 +300,7 @@ export function IncidentsClientView({
               <select
                 value={buildingFilter}
                 onChange={(e) => setBuildingFilter(e.target.value)}
-                className="w-full h-8 rounded-lg border border-gray-200 bg-white px-2.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate cursor-pointer"
+                className="w-full h-8 rounded-lg border border-border/60 bg-background px-2.5 text-xs text-foreground focus:border-blue-500 focus:outline-none truncate cursor-pointer"
               >
                 <option value="all">Все корпуса</option>
                 {Object.keys(BUILDING_ADDRESSES).map((building) => (
@@ -309,7 +311,7 @@ export function IncidentsClientView({
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value as "all" | IncidentPriority)}
-                className="w-full h-8 rounded-lg border border-gray-200 bg-white px-2.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate cursor-pointer"
+                className="w-full h-8 rounded-lg border border-border/60 bg-background px-2.5 text-xs text-foreground focus:border-blue-500 focus:outline-none truncate cursor-pointer"
               >
                 {Object.entries(PRIORITY_ITEMS).map(([key, label]) => (
                   <option key={key} value={key}>{label as string}</option>
@@ -321,19 +323,21 @@ export function IncidentsClientView({
                 key={inc.id}
                 onClick={() => setSelectedId(inc.id)}
                 className={cn(
-                  "w-full p-3 rounded-lg text-left transition-colors",
-                  inc.id === selectedId ? "bg-white shadow-sm" : "bg-gray-100 hover:bg-gray-200"
+                  "w-full p-3 rounded-lg text-left transition-colors cursor-pointer",
+                  inc.id === selectedId 
+                    ? "bg-card border border-border/60 text-card-foreground shadow-sm" 
+                    : "bg-muted/40 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
                 )}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
+                  <span className="text-xs text-muted-foreground font-mono">#T{inc.id.slice(0, 8)}</span>
                   <PriorityBadge priority={inc.priority} />
                   <IncidentStatusBadge status={inc.status} />
                 </div>
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-foreground dark:text-slate-200 truncate">
                   <DecompressedText text={inc.title || inc.description} truncate={80} />
                 </p>
-                <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mt-0.5">
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap mt-0.5">
                   <span>
                     {inc.device
                       ? `${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`
@@ -351,38 +355,38 @@ export function IncidentsClientView({
           </div>
 
           {/* Right: Detail panel */}
-          <div className="w-full lg:w-2/3 rounded-xl bg-white shadow-sm p-4 md:p-6 space-y-5">
+          <div className="w-full lg:w-2/3 rounded-xl bg-card border border-border/60 text-card-foreground shadow-sm p-4 md:p-6 space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded">#T{selectedIncident.id.slice(0, 4)}</span>
+                <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded border border-border/40">#T{selectedIncident.id.slice(0, 8)}</span>
                 <PriorityBadge priority={selectedIncident.priority} />
                 <IncidentStatusBadge status={selectedIncident.status} />
               </div>
               <button
                 onClick={() => setSelectedId(null)}
-                className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+                className="p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{selectedIncident.title || "Инцидент IT"}</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-xl font-bold text-card-foreground">{selectedIncident.title || "Инцидент IT"}</h2>
+              <p className="text-sm text-muted-foreground mt-1">
                 {selectedIncident.incident_type === "hardware" ? "Аппаратная проблема" :
                  selectedIncident.incident_type === "software" ? "Программная проблема" :
                  selectedIncident.incident_type === "network" ? "Сетевая проблема" : "Другое"}
               </p>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Описание</h4>
-              <DecompressedText text={selectedIncident.description} className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed" />
+            <div className="bg-muted/40 p-4 rounded-xl border border-border/60">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Описание</h4>
+              <DecompressedText text={selectedIncident.description} className="text-sm text-card-foreground whitespace-pre-wrap leading-relaxed" />
             </div>
 
             {selectedIncident.photo_urls && selectedIncident.photo_urls.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   Фотографии к заявке ({selectedIncident.photo_urls.length})
                 </h4>
                 <div className="grid grid-cols-3 gap-2">
@@ -392,7 +396,7 @@ export function IncidentsClientView({
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 hover:opacity-90 transition-opacity"
+                      className="relative aspect-video rounded-lg overflow-hidden border border-border/60 hover:opacity-90 transition-opacity"
                     >
                       <img
                         src={url}
@@ -431,12 +435,12 @@ export function IncidentsClientView({
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-muted/40 rounded-lg p-3 border border-border/40">
                 <div className="flex items-center gap-2 mb-1">
-                  <Monitor className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-500">Устройство</span>
+                  <Monitor className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Устройство</span>
                 </div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-card-foreground">
                   {selectedIncident.device ? (
                     <>
                       {deviceTypeEmojis[selectedIncident.device.device_type] || "🔌"}{" "}
@@ -447,49 +451,49 @@ export function IncidentsClientView({
                   ) : "—"}
                 </p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-muted/40 rounded-lg p-3 border border-border/40">
                 <div className="flex items-center gap-2 mb-1">
-                  <Users className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-500">Сотрудник</span>
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Сотрудник</span>
                 </div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-card-foreground">
                   {selectedIncident.employee?.full_name ?? "Не указан"}
                   {selectedIncident.employee?.room && ` (Каб. ${selectedIncident.employee.room})`}
                 </p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-muted/40 rounded-lg p-3 border border-border/40">
                 <div className="flex items-center gap-2 mb-1">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-500">Создан</span>
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Создан</span>
                 </div>
-                <p className="text-sm font-medium text-gray-900">{formatDateTimeRu(selectedIncident.created_at)}</p>
+                <p className="text-sm font-medium text-card-foreground">{formatDateTimeRu(selectedIncident.created_at)}</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-muted/40 rounded-lg p-3 border border-border/40">
                 <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-500">Приоритет</span>
+                  <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Приоритет</span>
                 </div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-card-foreground">
                   {selectedIncident.priority === "critical" ? "Критический" :
                    selectedIncident.priority === "high" ? "Высокий" :
                    selectedIncident.priority === "medium" ? "Средний" : "Низкий"}
                 </p>
               </div>
               {selectedIncident.status === "resolved" && (
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="bg-muted/40 rounded-lg p-3 border border-border/40">
                   <div className="flex items-center gap-2 mb-1">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs text-gray-500">Решено кем</span>
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Решено кем</span>
                   </div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-card-foreground">
                     {selectedIncident.assignee?.full_name ?? "IT-специалист"}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">ИЗМЕНИТЬ СТАТУС</h3>
+            <div className="border border-border/60 rounded-lg p-4 bg-muted/10">
+              <h3 className="text-sm font-semibold text-card-foreground mb-3">ИЗМЕНИТЬ СТАТУС</h3>
               <div className="flex flex-wrap items-center gap-3">
                 {selectedIncident.status === "open" && (
                   <button
@@ -546,16 +550,16 @@ export function IncidentsClientView({
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Tabs */}
-        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-1 overflow-x-auto max-w-full">
           {tabs.map((tab) => (
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 whitespace-nowrap",
+                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 whitespace-nowrap cursor-pointer",
                 activeTab === tab.value
-                  ? "bg-[#2563eb] text-white"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-[#2563eb] dark:bg-[#3b82f6] text-white"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               {tab.label} {getCounts(tab.value)}
@@ -566,11 +570,11 @@ export function IncidentsClientView({
         <div className="flex items-center gap-4">
           {/* Building Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium">Корпус:</span>
+            <span className="text-xs text-muted-foreground font-medium">Корпус:</span>
             <select
               value={buildingFilter}
               onChange={(e) => setBuildingFilter(e.target.value)}
-              className="w-[180px] h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate cursor-pointer"
+              className="w-[180px] h-9 rounded-lg border border-border/60 bg-background px-3 text-xs text-foreground focus:border-blue-500 focus:outline-none truncate cursor-pointer"
             >
               <option value="all">Все корпуса</option>
               {Object.keys(BUILDING_ADDRESSES).map((building) => (
@@ -581,11 +585,11 @@ export function IncidentsClientView({
 
           {/* Priority Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium">Приоритет:</span>
+            <span className="text-xs text-muted-foreground font-medium">Приоритет:</span>
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value as "all" | IncidentPriority)}
-              className="w-[140px] h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-blue-500 focus:outline-none truncate cursor-pointer"
+              className="w-[140px] h-9 rounded-lg border border-border/60 bg-background px-3 text-xs text-foreground focus:border-blue-500 focus:outline-none truncate cursor-pointer"
             >
               {Object.entries(PRIORITY_ITEMS).map(([key, label]) => (
                 <option key={key} value={key}>{label as string}</option>
@@ -600,7 +604,7 @@ export function IncidentsClientView({
         {/* Left: Incident cards list */}
         <div className="lg:col-span-3 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
           {filteredIncidents.length === 0 ? (
-            <div className="py-16 text-center text-gray-500">
+            <div className="py-16 text-center text-muted-foreground">
               <AlertTriangle className="w-10 h-10 mx-auto opacity-40 mb-3" />
               <p className="text-sm">Инцидентов нет</p>
             </div>
@@ -609,18 +613,18 @@ export function IncidentsClientView({
               <button
                 key={inc.id}
                 onClick={() => setSelectedId(inc.id)}
-                className="w-full flex items-center justify-between p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 text-card-foreground shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
+                    <span className="text-xs text-muted-foreground font-mono">#T{inc.id.slice(0, 8)}</span>
                     <PriorityBadge priority={inc.priority} />
                     <IncidentStatusBadge status={inc.status} />
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 truncate">
+                  <p className="text-sm font-semibold text-card-foreground truncate">
                     <DecompressedText text={inc.title || inc.description} truncate={100} />
                   </p>
-                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
                     <span>
                       {inc.device
                         ? `${deviceTypeEmojis[inc.device.device_type] || "🔌"} ${inc.device.inventory_number}`
@@ -636,7 +640,7 @@ export function IncidentsClientView({
                     )}
                   </p>
                 </div>
-                <span className="text-gray-400 ml-4">›</span>
+                <span className="text-muted-foreground ml-4">›</span>
               </button>
             ))
           )}
@@ -644,37 +648,37 @@ export function IncidentsClientView({
 
         {/* Right: Statistics Card */}
         <div className="lg:col-span-1 space-y-4 self-start">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+          <div className="rounded-2xl border border-border/60 bg-card text-card-foreground p-5 shadow-sm space-y-4">
             <div>
-              <h3 className="font-bold text-gray-950 text-sm tracking-tight flex items-center gap-2">
+              <h3 className="font-bold text-card-foreground text-sm tracking-tight flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-blue-600" />
                 Статистика по месяцам
               </h3>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 {buildingFilter === "all" ? "Все корпуса" : `Корпус: ${buildingFilter}`}
               </p>
             </div>
 
             {stats.length === 0 ? (
-              <p className="text-xs text-gray-500 text-center py-4">Нет данных для статистики</p>
+              <p className="text-xs text-muted-foreground text-center py-4">Нет данных для статистики</p>
             ) : (
               <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                <div className="grid grid-cols-[2fr_1fr_1fr_1fr] text-[10px] font-bold text-gray-400 uppercase tracking-wider pb-1 border-b border-gray-100">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr] text-[10px] font-bold text-muted-foreground uppercase tracking-wider pb-1 border-b border-border/60">
                   <span>Месяц</span>
                   <span className="text-right">Решено</span>
                   <span className="text-right">Открыто</span>
                   <span className="text-right">Всего</span>
                 </div>
                 {stats.map((row) => (
-                  <div key={row.monthKey} className="grid grid-cols-[2fr_1fr_1fr_1fr] items-center text-xs py-2 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 rounded px-1 -mx-1">
-                    <span className="font-medium text-gray-800 truncate" title={row.monthName}>{row.monthName}</span>
-                    <span className="text-right font-semibold text-emerald-600">
+                  <div key={row.monthKey} className="grid grid-cols-[2fr_1fr_1fr_1fr] items-center text-xs py-2 border-b border-border/40 last:border-b-0 hover:bg-muted/20 rounded px-1 -mx-1">
+                    <span className="font-medium text-card-foreground truncate" title={row.monthName}>{row.monthName}</span>
+                    <span className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
                       {row.resolved}
                     </span>
-                    <span className="text-right font-semibold text-amber-600">
+                    <span className="text-right font-semibold text-amber-600 dark:text-amber-400">
                       {row.open}
                     </span>
-                    <span className="text-right font-bold text-gray-900">
+                    <span className="text-right font-bold text-card-foreground">
                       {row.total}
                     </span>
                   </div>

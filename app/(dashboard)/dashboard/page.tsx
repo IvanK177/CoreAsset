@@ -90,8 +90,8 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Дашборд</h1>
-        <p className="text-sm text-gray-500 mt-1">{currentDate}</p>
+        <h1 className="text-2xl font-bold text-foreground">Дашборд</h1>
+        <p className="text-sm text-muted-foreground mt-1">{currentDate}</p>
       </div>
 
       {/* 5 Metric Cards */}
@@ -146,10 +146,10 @@ export default async function DashboardPage() {
       {/* Bottom: Two columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Recent Incidents (2/3) */}
-        <div className="lg:col-span-2 rounded-xl bg-white shadow-sm p-4 sm:p-5">
+        <div className="lg:col-span-2 rounded-xl bg-card border border-border/60 text-card-foreground shadow-sm p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Последние заявки</h2>
-            <Link href="/incidents" className="text-sm text-[#2563eb] font-medium hover:underline flex items-center gap-1">
+            <h2 className="text-lg font-semibold text-card-foreground">Последние заявки</h2>
+            <Link href="/incidents" className="text-sm text-[#2563eb] dark:text-[#3b82f6] font-medium hover:underline flex items-center gap-1">
               Все заявки <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -168,10 +168,10 @@ export default async function DashboardPage() {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400 font-mono">#T{inc.id.slice(0, 4)}</span>
-                        <span className="text-sm font-semibold text-gray-900 truncate">{inc.description}</span>
+                        <span className="text-xs text-muted-foreground font-mono">#T{inc.id.slice(0, 8)}</span>
+                        <span className="text-sm font-semibold text-card-foreground truncate">{inc.description}</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {device?.inventory_number ?? "—"}
                       </p>
                     </div>
@@ -202,8 +202,8 @@ export default async function DashboardPage() {
                   return (
                     <div key={l.id} className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{l.software_name ?? "—"}</p>
-                        <p className="text-xs text-gray-500">{l.vendor ?? "—"}</p>
+                        <p className="text-sm font-medium text-card-foreground">{l.software_name ?? "—"}</p>
+                        <p className="text-xs text-muted-foreground">{l.vendor ?? "—"}</p>
                       </div>
                       <span className="text-xs font-medium text-red-600">через {days} дн.</span>
                     </div>
@@ -214,33 +214,33 @@ export default async function DashboardPage() {
           )}
 
           {/* Employees */}
-          <div className="rounded-xl bg-white shadow-sm p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Сотрудники</h3>
+          <div className="rounded-xl bg-card border border-border/60 text-card-foreground shadow-sm p-4">
+            <h3 className="text-sm font-semibold text-card-foreground mb-3">Сотрудники</h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Активных</span>
-                <span className="text-sm font-semibold text-gray-900">{activeEmployees}</span>
+                <span className="text-sm text-muted-foreground">Активных</span>
+                <span className="text-sm font-semibold text-card-foreground">{activeEmployees}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Уволенных</span>
-                <span className="text-sm font-semibold text-gray-900">{dismissedEmployees}</span>
+                <span className="text-sm text-muted-foreground">Уволенных</span>
+                <span className="text-sm font-semibold text-card-foreground">{dismissedEmployees}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Тикетов решено</span>
-                <span className="text-sm font-semibold text-gray-900">{resolvedTickets}</span>
+                <span className="text-sm text-muted-foreground">Тикетов решено</span>
+                <span className="text-sm font-semibold text-card-foreground">{resolvedTickets}</span>
               </div>
             </div>
           </div>
 
           {/* License Usage */}
-          <div className="rounded-xl bg-white shadow-sm p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Использование лицензий</h3>
+          <div className="rounded-xl bg-card border border-border/60 text-card-foreground shadow-sm p-4">
+            <h3 className="text-sm font-semibold text-card-foreground mb-3">Использование лицензий</h3>
             <div className="space-y-3">
               {licenseUsage.map((lu) => (
                 <div key={lu.name}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-700">{lu.name}</span>
-                    <span className="text-sm font-medium text-gray-900">{lu.used}/{lu.total}</span>
+                    <span className="text-sm text-muted-foreground">{lu.name}</span>
+                    <span className="text-sm font-medium text-card-foreground">{lu.used}/{lu.total}</span>
                   </div>
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
